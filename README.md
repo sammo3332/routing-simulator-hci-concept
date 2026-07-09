@@ -1,15 +1,21 @@
 # Fast-Failover Routing Simulator
 
-Dieser Prototyp ist im Rahmen meiner Bachelorarbeit entstanden. Die App simuliert Fast-Failover-Konzepte beim Routing und visualisiert die entsprechenden Netzabläufe. 
+Ein Prototyp zur Simulation und Visualisierung von Fast-Failover-Konzepten in Netzwerk-Topologien, entwickelt im Rahmen meiner Bachelorarbeit. Das Tool ermöglicht es, Netzwerkausfälle in Echtzeit zu simulieren und die Performance der Routing-Algorithmen zu analysieren.
 
-## Dokumentation
-Das offizielle PDF-Handout zur Arbeit inklusive aller Architektur- und Netzwerkdiagramme liegt im Ordner `/docs`.
+## Hauptfunktionen
+* Import von Netzwerk-Topologien (GML/JSON).
+* Live-Simulation von Kanten-Ausfällen.
+* Echtzeit-Berechnung kanten-disjunkter Ausweichpfade via Bonsai-Heuristik.
+* Metrik-Analyse: Delivery Rate & Stretch.
 
 ## Tech Stack
-* React
-* Vite
+* **Frontend:** React, Vite
+* **Backend-Logik:** NetworkX (Python-basiert, angebunden via API)
 
-## Lokales Setup
-1. Repository klonen
-2. `npm install`
-3. `npm run dev`
+## Setup
+1. Repository klonen.
+2. `npm install` ausführen.
+3. `npm run dev` zum Starten der Anwendung.
+
+## Dokumentation
+Detaillierte Architektur-Diagramme und das Handout zur Bachelorarbeit befinden sich im Ordner `/docs`.

@@ -1,9 +1,15 @@
 # Architektur-Übersicht
 
-Der Fokus bei diesem Prototyp liegt auf einer sauberen Trennung von UI und Geschäftslogik. Die Codebase ist strikt modular aufgebaut, um Wartbarkeit und Skalierbarkeit zu sichern:
+Das System folgt einer strikten Trennung zwischen Präsentationsschicht und Logikschicht. Durch die Entkopplung von UI und Berechnungs-Engines wird die Anwendung auch bei komplexen Netzwerk-Simulationen performant gehalten
 
-* **`/components`**: Beinhaltet die reinen UI-Bausteine (Presentational Components). Sie kümmern sich ausschließlich um das Rendering und bleiben frei von komplexer Logik.
-* **`/hooks`**: Custom Hooks übernehmen das lokale und globale State-Management sowie die UI-Logik.
-* **`/services`**: Die eigentliche Kernlogik – also die Routing-Algorithmen und die Failover-Simulation – ist in dedizierte Services ausgelagert.
+## Schichtenmodell
+* **Frontend (Präsentationsschicht):** Verantwortlich für das UI-Rendering, den State-Management-Flow via `st.session_state` und die Graphen-Visualisierung.
+* **Backend (Logikschicht):** Kapselt die Berechnungs-Engines (Bonsai & Greedy) hinter einem Strategy-Pattern-Controller, was eine einfache Erweiterbarkeit um neue Algorithmen ermöglicht 
 
-Dieses Setup hält die React-Komponenten schlank und macht die Netzwerklogik unabhängig von der Oberfläche testbar. Weitere Details und visuelle Architektur-Diagramme sind im `/docs`-Ordner dokumentiert.
+## Datenfluss
+1. **Input:** Topologie-Parser verarbeitet die Eingabedateien
+2. **State:** Der Session-State steuert die Ausfälle und triggert bei Änderungen eine Neuberechnung
+3. **Engine:** Die Engine liefert das berechnete Graph-Objekt zurück an das Frontend, welches den Graphen neu rendert 
+
+## Diagramme
+Ein detaillierter Überblick über den Datenfluss und die Architektur-Komponenten findet sich in `docs/system_architecture.png`.
