@@ -113,7 +113,7 @@ export default function App() {
           <div style={{ padding:"12px 15px", borderTop:"1px solid #252b3b", fontSize:10, color:"#3e4860", lineHeight:1.75, marginTop:"auto" }}>
             TU Dortmund · Informatik LS 4<br />
             Algorithmen & Komplexität<br />
-            Sam Taleb — HCI UI Concept
+            Houssam Taleb — HCI UI Concept
             <div style={{ marginTop:5, display:"inline-block", background:"#1f2438", border:"1px solid #252b3b", borderRadius:4, padding:"2px 8px", fontSize:9, color:"#3b82f6", ...S.mono }}>Research Blueprint</div>
           </div>
         </aside>
