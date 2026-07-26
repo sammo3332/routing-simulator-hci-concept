@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { T1, S } from "../styles/sharedStyles";
 
-export default function FileUploader({ onFile }) {
+export default function FileUploader({ onFile, disabled = false }) {
   const [drag, setDrag]   = useState(false);
   const [fname, setFname] = useState(null);
   const inputRef          = useRef(null);
@@ -9,12 +9,12 @@ export default function FileUploader({ onFile }) {
   const handle = f => {
     if (!f) return;
     setFname(f.name);
-    onFile && onFile(f.name);
+    onFile?.(f);
   };
 
   return (
     <div
-      onClick={() => inputRef.current?.click()}
+      onClick={() => !disabled && inputRef.current?.click()}
       onDragOver={e => { e.preventDefault(); setDrag(true); }}
       onDragLeave={() => setDrag(false)}
       onDrop={e => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files[0]); }}
@@ -25,15 +25,15 @@ export default function FileUploader({ onFile }) {
         transition:"all .18s", marginBottom:10,
       }}
     >
-      <input ref={inputRef} type="file" accept=".json,.gml" style={{ display:"none" }} onChange={e => handle(e.target.files[0])} />
+      <input ref={inputRef} type="file" accept=".json,.xml" disabled={disabled} style={{ display:"none" }} onChange={e => handle(e.target.files[0])} />
       <div style={{ fontSize:17, marginBottom:5 }}>{fname ? "📄" : "📁"}</div>
       {fname
         ? <div style={{ fontSize:10, color:T1, fontWeight:700, ...S.mono, wordBreak:"break-all" }}>{fname}</div>
         : <>
-            <div style={{ fontSize:11, fontWeight:700, color:"#7a8499", marginBottom:3 }}>JSON/GML Datei hochladen</div>
+            <div style={{ fontSize:11, fontWeight:700, color:"#7a8499", marginBottom:3 }}>TopoHub-JSON / SNDlib-XML</div>
             <div style={{ fontSize:9, color:"#3e4860" }}>Drag & Drop oder klicken</div>
             <div style={{ marginTop:6, display:"inline-flex", gap:4 }}>
-              {[".json",".gml"].map(ext => (
+              {[".json",".xml"].map(ext => (
                 <span key={ext} style={{ fontSize:8, fontWeight:700, padding:"1px 5px", borderRadius:3, background:"#1f2438", border:"1px solid #2e3650", color:"#3b82f6", ...S.mono }}>{ext}</span>
               ))}
             </div>

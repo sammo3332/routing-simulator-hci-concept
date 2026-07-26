@@ -1,0 +1,23 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "name": "topohub-mini",
+    "stats": {
+      "nodes": 4,
+      "links": 4
+    }
+  },
+  "nodes": [
+    {"id": 0, "name": "Berlin", "pos": [13.405, 52.52]},
+    {"id": 1, "name": "Dortmund", "pos": [7.465, 51.514]},
+    {"id": 2, "name": "Frankfurt", "pos": [8.682, 50.11]},
+    {"id": 3, "name": "Hamburg", "pos": [9.994, 53.551]}
+  ],
+  "edges": [
+    {"source": 0, "target": 1, "dist": 421.5},
+    {"source": 1, "target": 2, "dist": 221.0},
+    {"source": 0, "target": 3, "dist": 255.0},
+    {"source": 3, "target": 2, "dist": 492.0}
+  ]
+}

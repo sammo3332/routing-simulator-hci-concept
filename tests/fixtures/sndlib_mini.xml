@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<network xmlns="http://sndlib.zib.de/network" version="1.0">
+  <networkStructure>
+    <nodes coordinatesType="geographical">
+      <node id="A">
+        <coordinates><x>7.0</x><y>51.0</y></coordinates>
+      </node>
+      <node id="B">
+        <coordinates><x>8.0</x><y>50.0</y></coordinates>
+      </node>
+      <node id="T">
+        <coordinates><x>9.0</x><y>49.0</y></coordinates>
+      </node>
+    </nodes>
+    <links>
+      <link id="A_B">
+        <source>A</source><target>B</target>
+        <preInstalledModule><capacity>100.0</capacity><cost>2.0</cost></preInstalledModule>
+      </link>
+      <link id="B_T">
+        <source>B</source><target>T</target>
+        <preInstalledModule><capacity>200.0</capacity><cost>3.0</cost></preInstalledModule>
+      </link>
+    </links>
+  </networkStructure>
+</network>
