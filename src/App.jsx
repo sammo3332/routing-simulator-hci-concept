@@ -48,6 +48,39 @@ export default function App() {
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const weightMode = simulation?.routing.weight_mode ?? "hop_count";
+  const failedEdges = simulation
+    ? topology.edges.filter(edge => simulation.failures.failed_edge_ids.includes(edge.id))
+    : [];
+  const unreachableNodeIds = simulation?.result.affected_node_ids ?? [];
+  const unreachableNodeIdSet = new Set(unreachableNodeIds);
+  const reroutedNodeIds = (simulation?.result.changed_node_ids ?? [])
+    .filter(nodeId => !unreachableNodeIdSet.has(nodeId));
+  const reachableCount = simulation?.result.reachable_node_count ?? 0;
+  const nodeCount = simulation?.result.node_count ?? 0;
+  const networkStatus = unreachableNodeIds.length
+    ? { label: "Teilnetz unerreichbar", color: RED, background: "rgba(255,64,64,.10)" }
+    : failedEdges.length
+      ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
+      : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
+  const failedEdgeSummary = failedEdges.length
+    ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
+    : "keine";
+  const interpretation = simulation
+    ? `${failedEdges.length} aktive${failedEdges.length === 1 ? "r" : ""} Kantenausfall${failedEdges.length === 1 ? "" : "e"} (${failedEdgeSummary}); `
+      + `${reroutedNodeIds.length} umgeleitete Route${reroutedNodeIds.length === 1 ? "" : "n"}`
+      + `${reroutedNodeIds.length
+        ? reroutedNodeIds.length <= 5
+          ? ` (${reroutedNodeIds.join(", ")})`
+          : " (siehe Routingzusammenfassung)"
+        : ""}; `
+      + `${unreachableNodeIds.length} unerreichbare Knoten`
+      + `${unreachableNodeIds.length
+        ? unreachableNodeIds.length <= 5
+          ? ` (${unreachableNodeIds.join(", ")})`
+          : " (siehe Routingzusammenfassung)"
+        : ""}. `
+      + `Zielknoten: ${targetNodeId}. Erreichbarkeit: ${reachableCount}/${nodeCount}.`
+    : "";
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d0f14", color: "#e2e8f4", fontFamily: "system-ui,-apple-system,sans-serif", fontSize: 13, overflow: "hidden" }}>
@@ -70,7 +103,7 @@ export default function App() {
             <Metric label="Topologie" value={topology.name || topology.topology_id} color="#60a5fa" />
             <Metric label="Knoten / Kanten" value={`${topology.nodes.length} / ${topology.edges.length}`} />
             <Metric label="Ausfälle" value={failedCount} color={failedCount ? RED : "#22c55e"} />
-            <Metric label="Betroffen" value={affectedCount} color={affectedCount ? RED : "#22c55e"} />
+            <Metric label="Unerreichbar" value={affectedCount} color={affectedCount ? RED : "#22c55e"} />
           </>
         )}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: loading ? GOLD : "#22c55e", fontWeight: 700 }}>
@@ -111,6 +144,10 @@ export default function App() {
 
           <SidebarSection title="Kantenfehler" accent={RED}>
             <SelectField label="Kante" value={selectedLinkId} onChange={setSelectedLinkId} options={routingLinkOptions} />
+            <div style={{ marginBottom: 9, padding: "7px 8px", borderRadius: 6, background: "#181c2c", border: "1px solid #252b3b", color: failedEdges.length ? "#ff9a9a" : "#64708a", fontSize: 9.5, lineHeight: 1.45, overflowWrap: "anywhere" }}>
+              <strong>Aktive Ausfälle ({failedEdges.length}):</strong>{" "}
+              {failedEdges.length ? failedEdgeSummary : "keine"}
+            </div>
             <button
               onClick={selectedLinkFailed ? restoreSelectedLink : simulateLinkFailure}
               disabled={!simulation || !selectedLinkId || loading}
@@ -127,13 +164,6 @@ export default function App() {
             </button>
           </SidebarSection>
 
-          <div style={{ padding: 15, color: "#64708a", fontSize: 10, lineHeight: 1.65 }}>
-            <strong style={{ color: "#9aa5bb" }}>Darstellung</strong><br />
-            <span style={{ color: T2 }}>●</span> Baseline-Route<br />
-            <span style={{ color: T1 }}>●</span> Aktuelle Route<br />
-            <span style={{ color: RED }}>●</span> Ausfall / unerreichbar<br />
-            <span style={{ color: GOLD }}>●</span> Zielknoten
-          </div>
         </aside>
 
         <main style={{ flex: 1, minWidth: 0, padding: 12, display: "grid", gridTemplateRows: "minmax(330px, 1fr) 190px minmax(180px, .65fr)", gap: 9 }}>
@@ -142,17 +172,42 @@ export default function App() {
               Netzwerkzustand
               {simulation && <span style={{ marginLeft: 8, color: "#64708a", fontSize: 10, fontWeight: 500 }}>{topology.source}</span>}
             </div>
+            {simulation && (
+              <div style={{ padding: "8px 12px", borderBottom: "1px solid #252b3b", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", background: networkStatus.background }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 900, color: networkStatus.color }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: networkStatus.color }} />
+                  {networkStatus.label}
+                </div>
+                <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount}`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Aktive Kantenausfälle" value={failedEdges.length} color={failedEdges.length ? RED : "#22c55e"} />
+                <Metric label="Umgeleitete Routen" value={reroutedNodeIds.length} color={reroutedNodeIds.length ? T2 : "#22c55e"} />
+                <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+              </div>
+            )}
             <div style={{ flex: 1, minHeight: 0 }}>
               {!simulation ? <EmptyState /> : (
                 <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", height: "100%", display: "block" }}>
                   {graphLinks.map(link => (
                     <g key={link.id} onClick={() => setSelectedLinkId(link.id)} style={{ cursor: "pointer" }}>
+                      {link.baseline && !link.failed && (
+                        <line
+                          x1={link.sourcePosition.x}
+                          y1={link.sourcePosition.y}
+                          x2={link.targetPosition.x}
+                          y2={link.targetPosition.y}
+                          stroke={T2}
+                          strokeWidth={link.current ? 7 : 3}
+                          strokeDasharray={link.current ? "2 5" : undefined}
+                          opacity={link.current ? .8 : 1}
+                          strokeLinecap="round"
+                        />
+                      )}
                       <line
                         x1={link.sourcePosition.x}
                         y1={link.sourcePosition.y}
                         x2={link.targetPosition.x}
                         y2={link.targetPosition.y}
-                        stroke={link.color}
+                        stroke={link.failed ? RED : link.current ? T1 : link.baseline ? T2 : "#31394d"}
                         strokeWidth={link.selected ? 5 : link.current ? 3.5 : 2}
                         strokeDasharray={link.failed ? "8 6" : undefined}
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
@@ -180,6 +235,16 @@ export default function App() {
                 </svg>
               )}
             </div>
+            <div style={{ padding: "7px 12px", borderTop: "1px solid #252b3b", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", color: "#7a8499", fontSize: 9.5 }}>
+              <strong style={{ color: "#9aa5bb" }}>Legende</strong>
+              <span><span style={{ color: T2 }}>━━</span> Route vor dem Ausfall</span>
+              <span><span style={{ color: T1 }}>━━</span> Aktuelle Route</span>
+              <span><span style={{ color: RED }}>┄✕┄</span> Ausgefallene Kante</span>
+              <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
+              <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>
+              <span><span style={{ color: GOLD }}>●</span> Zielknoten</span>
+              <span style={{ color: "#46516a" }}>Überlagerung: violette gestrichelte Kontur + grüne aktuelle Route</span>
+            </div>
           </section>
 
           <section style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 9, minHeight: 0 }}>
@@ -205,7 +270,7 @@ export default function App() {
             </div>
 
             <div style={{ ...panel, background: "#080a0f", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <div style={{ padding: "8px 12px", borderBottom: "1px solid #202635", color: "#64708a", fontSize: 10, ...S.mono }}>event-log · echte API-Antworten</div>
+              <div style={{ padding: "8px 12px", borderBottom: "1px solid #202635", color: "#64708a", fontSize: 10, ...S.mono }}>Ereignisprotokoll</div>
               <div style={{ flex: 1, overflowY: "auto", padding: "7px 10px", fontSize: 10, lineHeight: 1.7, ...S.mono }}>
                 {eventLog.map(item => (
                   <div key={item.id}>
@@ -223,17 +288,14 @@ export default function App() {
             {!simulation ? (
               <div style={{ color: "#64708a" }}>Nach dem Import werden hier die fachlich relevanten Unterschiede zwischen Baseline und Fehlerzustand erklärt.</div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 9 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 9 }}>
                 <Metric label="Ziel" value={simulation.routing.target_node_id} color={GOLD} />
                 <Metric label="Metrik" value={weightMode === "hop_count" ? "Hop-Anzahl" : "Kantengewicht"} color="#a78bfa" />
-                <Metric label="Geänderte Routen" value={simulation.result.changed_node_ids.length} color={T2} />
-                <Metric label="Erreichbarkeit" value={`${simulation.result.reachable_node_count}/${simulation.result.node_count}`} color={affectedCount ? RED : "#22c55e"} />
+                <Metric label="Umgeleitete Routen" value={reroutedNodeIds.length} color={reroutedNodeIds.length ? T2 : "#22c55e"} />
+                <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount}`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
                 <div style={{ gridColumn: "1 / -1", color: "#9aa5bb", lineHeight: 1.55 }}>
-                  {affectedCount
-                    ? `${affectedCount} zuvor erreichbare Knoten können das Ziel nach den ausgewählten Kantenausfällen nicht mehr erreichen.`
-                    : failedCount
-                      ? "Der Fehlerzustand ist aktiv, aber alle zuvor erreichbaren Knoten besitzen weiterhin eine Route zum Ziel."
-                      : "Fehlerfreier Baseline-Zustand. Wähle eine Kante, um die Failover-Visualisierung zu untersuchen."}
+                  {interpretation}
                 </div>
               </div>
             )}
