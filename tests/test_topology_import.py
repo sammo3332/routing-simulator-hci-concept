@@ -53,6 +53,34 @@ def test_loads_sndlib_xml_with_coordinates_capacity_and_cost() -> None:
     assert topology.edges[0].attributes["capacity"] == pytest.approx(100.0)
 
 
+def test_sndlib_routing_cost_takes_precedence_over_module_cost() -> None:
+    payload = b"""<?xml version="1.0"?>
+    <network xmlns="http://sndlib.zib.de/network">
+      <networkStructure>
+        <nodes>
+          <node id="A"/>
+          <node id="T"/>
+        </nodes>
+        <links>
+          <link id="A_T">
+            <source>A</source>
+            <target>T</target>
+            <routingCost>7.5</routingCost>
+            <preInstalledModule>
+              <capacity>100.0</capacity>
+              <cost>0.0</cost>
+            </preInstalledModule>
+          </link>
+        </links>
+      </networkStructure>
+    </network>
+    """
+
+    topology = import_sndlib_xml_bytes(payload)
+
+    assert topology.edges[0].weight == pytest.approx(7.5)
+
+
 def test_topohub_parallel_edges_receive_unique_stable_ids() -> None:
     payload = b"""
     {

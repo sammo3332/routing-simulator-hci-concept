@@ -230,9 +230,21 @@ def import_sndlib_xml_bytes(
             element.get("id", f"{source}--{target}--{index}"),
             f"link[{index}].id",
         )
-        cost_text = _child_text(element, "cost")
+        routing_cost_text = _child_text(element, "routingCost")
+        cost_text = (
+            routing_cost_text
+            if routing_cost_text is not None
+            else _child_text(element, "cost")
+        )
         weight = (
-            _finite_number(cost_text, f"link[{index}].cost")
+            _finite_number(
+                cost_text,
+                (
+                    f"link[{index}].routingCost"
+                    if routing_cost_text is not None
+                    else f"link[{index}].cost"
+                ),
+            )
             if cost_text is not None
             else 1.0
         )
