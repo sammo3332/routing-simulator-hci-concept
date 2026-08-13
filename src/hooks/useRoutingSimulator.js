@@ -88,15 +88,26 @@ export function useRoutingSimulator() {
   };
 
   const handleTopologyFile = async file => {
+    const importTime = timestamp();
     const next = await run(
       `Importiere „${file.name}“…`,
       () => importTopology(file),
     );
     if (next) {
-      addLog(
-        "success",
-        `Topologie geladen: ${next.topology.nodes.length} Knoten, ${next.topology.edges.length} Kanten.`,
-      );
+      setEventLog([
+        {
+          id: ++logId.current,
+          time: importTime,
+          type: "info",
+          msg: `Importiere „${file.name}“…`,
+        },
+        {
+          id: ++logId.current,
+          time: timestamp(),
+          type: "success",
+          msg: `Topologie geladen: ${next.topology.nodes.length} Knoten, ${next.topology.edges.length} Kanten.`,
+        },
+      ]);
     }
   };
 

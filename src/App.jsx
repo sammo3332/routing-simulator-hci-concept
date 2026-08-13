@@ -1,3 +1,4 @@
+import { useState } from "react";
 import FileUploader from "./components/FileUploader";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
@@ -36,6 +37,7 @@ function EmptyState() {
 }
 
 export default function App() {
+  const [eventLogOpen, setEventLogOpen] = useState(false);
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
@@ -48,6 +50,7 @@ export default function App() {
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const weightMode = simulation?.routing.weight_mode ?? "hop_count";
+  const latestEvent = eventLog[eventLog.length - 1];
   const failedEdges = simulation
     ? topology.edges.filter(edge => simulation.failures.failed_edge_ids.includes(edge.id))
     : [];
@@ -58,12 +61,14 @@ export default function App() {
   const reachableCount = simulation?.result.reachable_node_count ?? 0;
   const nodeCount = simulation?.result.node_count ?? 0;
   const networkStatus = unreachableNodeIds.length
-    ? { label: "Teilnetz unerreichbar", color: RED, background: "rgba(255,64,64,.10)" }
+    ? { label: "Eingeschränkte Erreichbarkeit", color: RED, background: "rgba(255,64,64,.10)" }
     : failedEdges.length
       ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
       : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
   const failedEdgeSummary = failedEdges.length
-    ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
+    ? failedEdges.length <= 3
+      ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
+      : failedEdges.map(edge => edge.id).join(", ")
     : "keine";
   const interpretation = simulation
     ? `${failedEdges.length} aktive${failedEdges.length === 1 ? "r" : ""} Kantenausfall${failedEdges.length === 1 ? "" : "e"} (${failedEdgeSummary}); `
@@ -81,6 +86,11 @@ export default function App() {
         : ""}. `
       + `Zielknoten: ${targetNodeId}. Erreichbarkeit: ${reachableCount}/${nodeCount}.`
     : "";
+  const latestStatusText = latestEvent
+    ? latestEvent.msg.startsWith("Routing neu berechnet:")
+      ? `Letzte Berechnung: ${reachableCount} von ${nodeCount} Knoten erreichen das Ziel.`
+      : `Letzter Status: ${latestEvent.msg}`
+    : "Noch keine Ereignisse.";
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d0f14", color: "#e2e8f4", fontFamily: "system-ui,-apple-system,sans-serif", fontSize: 13, overflow: "hidden" }}>
@@ -95,7 +105,7 @@ export default function App() {
         <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg,#2563eb,#7c3aed)", display: "grid", placeItems: "center" }}>↪</div>
         <div>
           <div style={{ fontWeight: 800 }}>Failover Routing Visualizer</div>
-          <div style={{ fontSize: 9, color: "#64708a" }}>Deterministische Referenzstrategie · reale Routingdaten</div>
+          <div style={{ fontSize: 9, color: "#64708a" }}>Interaktive Analyse von Failover-Routingzuständen</div>
         </div>
         {simulation && (
           <>
@@ -128,7 +138,7 @@ export default function App() {
             )}
           </SidebarSection>
 
-          <SidebarSection title="Referenzrouting" accent="#a78bfa">
+          <SidebarSection title="Routing-Einstellungen" accent="#a78bfa">
             <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} />
             <SelectField
               label="Routingmetrik"
@@ -178,7 +188,7 @@ export default function App() {
                   <span style={{ width: 8, height: 8, borderRadius: "50%", background: networkStatus.color }} />
                   {networkStatus.label}
                 </div>
-                <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount}`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount} erreichbar`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
                 <Metric label="Aktive Kantenausfälle" value={failedEdges.length} color={failedEdges.length ? RED : "#22c55e"} />
                 <Metric label="Umgeleitete Routen" value={reroutedNodeIds.length} color={reroutedNodeIds.length ? T2 : "#22c55e"} />
                 <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
@@ -243,11 +253,10 @@ export default function App() {
               <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
               <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>
               <span><span style={{ color: GOLD }}>●</span> Zielknoten</span>
-              <span style={{ color: "#46516a" }}>Überlagerung: violette gestrichelte Kontur + grüne aktuelle Route</span>
             </div>
           </section>
 
-          <section style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 9, minHeight: 0 }}>
+          <section style={{ display: "grid", gridTemplateColumns: eventLogOpen ? "1.25fr 1fr" : "1fr", gap: 9, minHeight: 0 }}>
             <div style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: "8px 12px", borderBottom: "1px solid #252b3b", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Routingzusammenfassung</div>
               <div style={{ overflowY: "auto", flex: 1 }}>
@@ -267,20 +276,36 @@ export default function App() {
                   </table>
                 )}
               </div>
-            </div>
-
-            <div style={{ ...panel, background: "#080a0f", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <div style={{ padding: "8px 12px", borderBottom: "1px solid #202635", color: "#64708a", fontSize: 10, ...S.mono }}>Ereignisprotokoll</div>
-              <div style={{ flex: 1, overflowY: "auto", padding: "7px 10px", fontSize: 10, lineHeight: 1.7, ...S.mono }}>
-                {eventLog.map(item => (
-                  <div key={item.id}>
-                    <span style={{ color: "#46516a" }}>[{item.time}] </span>
-                    <span style={{ color: item.type === "alert" ? RED : item.type === "success" ? T1 : "#9aa5bb" }}>{item.msg}</span>
-                  </div>
-                ))}
-                <div ref={eventLogEndRef} />
+              <div style={{ padding: "6px 10px", borderTop: "1px solid #252b3b", display: "flex", alignItems: "center", gap: 10, minWidth: 0, color: "#7a8499", fontSize: 9.5 }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {latestStatusText}
+                </span>
+                <button
+                  type="button"
+                  aria-expanded={eventLogOpen}
+                  aria-controls="event-log-panel"
+                  onClick={() => setEventLogOpen(open => !open)}
+                  style={{ flexShrink: 0, padding: "5px 8px", borderRadius: 5, border: "1px solid #2e3650", background: "#181c2c", color: "#9aa5bb", fontSize: 9.5, fontWeight: 700, cursor: "pointer" }}
+                >
+                  {eventLogOpen ? "Ereignisprotokoll ausblenden" : `Ereignisprotokoll anzeigen (${eventLog.length})`}
+                </button>
               </div>
             </div>
+
+            {eventLogOpen && (
+              <div id="event-log-panel" style={{ ...panel, background: "#080a0f", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "8px 12px", borderBottom: "1px solid #202635", color: "#64708a", fontSize: 10, ...S.mono }}>Ereignisprotokoll</div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "7px 10px", fontSize: 10, lineHeight: 1.7, ...S.mono }}>
+                  {eventLog.map(item => (
+                    <div key={item.id}>
+                      <span style={{ color: "#46516a" }}>[{item.time}] </span>
+                      <span style={{ color: item.type === "alert" ? RED : item.type === "success" ? T1 : "#9aa5bb" }}>{item.msg}</span>
+                    </div>
+                  ))}
+                  <div ref={eventLogEndRef} />
+                </div>
+              </div>
+            )}
           </section>
 
           <section style={{ ...panel, padding: 14, overflowY: "auto" }}>
