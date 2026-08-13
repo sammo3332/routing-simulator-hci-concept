@@ -113,6 +113,40 @@ def test_minimal_search_stops_at_first_deterministic_size_two_failure() -> None:
     assert result.tested_combinations == 5
 
 
+def test_minimal_search_reports_when_no_failure_exists_within_limit() -> None:
+    graph = topology(
+        [
+            ("a", "A", "B", 1),
+            ("b", "B", "T", 1),
+            ("c", "A", "T", 1),
+        ]
+    )
+
+    result = find_first_minimal_failure(graph, config(), max_k=1)
+
+    assert result.status == "not_found"
+    assert result.failed_edge_ids is None
+    assert result.affected_node_ids == ()
+    assert result.tested_combinations == 3
+    assert result.found_at_k is None
+    assert result.routing_result is None
+
+
+@pytest.mark.parametrize("max_k", [0, -1])
+def test_minimal_search_rejects_non_positive_max_k(max_k: int) -> None:
+    graph = topology([("a", "A", "T", 1)])
+
+    with pytest.raises(ValueError, match="at least 1"):
+        find_first_minimal_failure(graph, config(), max_k=max_k)
+
+
+def test_minimal_search_rejects_max_k_above_edge_count() -> None:
+    graph = topology([("a", "A", "T", 1)])
+
+    with pytest.raises(ValueError, match="must not exceed"):
+        find_first_minimal_failure(graph, config(), max_k=2)
+
+
 def test_tie_break_is_independent_of_edge_input_order() -> None:
     edge_specs = [
         ("e-z", "A", "C", 1),

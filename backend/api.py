@@ -7,10 +7,17 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from .failover_core.models import FailureState, RoutingConfig, RoutingResult, Topology
+from .failover_core.models import (
+    FailureState,
+    RoutingConfig,
+    RoutingResult,
+    SearchResult,
+    Topology,
+)
 from .failover_core.routing import compute_routing_result
+from .failover_core.search import find_first_minimal_failure
 from .failover_core.serialization import _routing_snapshot_to_dict
 from .failover_core.topology_import import (
     DEFAULT_MAX_FILE_SIZE_BYTES,
@@ -100,6 +107,12 @@ class SessionUpdate(BaseModel):
     failed_edge_ids: list[str] | None = None
 
 
+class CriticalFailureSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    max_k: int = Field(ge=1)
+
+
 def _topology_to_dict(topology: Topology) -> dict:
     return {
         "topology_id": topology.topology_id,
@@ -152,6 +165,33 @@ def _session_response(
             "node_count": len(session.topology.nodes),
         },
     }
+
+
+def _search_response(search: SearchResult, max_k: int) -> dict:
+    response = {
+        "status": search.status,
+        "max_k": max_k,
+        "tested_combinations": search.tested_combinations,
+        "found_at_k": search.found_at_k,
+        "failed_edge_ids": (
+            list(search.failed_edge_ids)
+            if search.failed_edge_ids is not None
+            else None
+        ),
+        "affected_node_ids": list(search.affected_node_ids),
+        "result": None,
+    }
+    if search.routing_result is not None:
+        reachable = sum(
+            path is not None
+            for path in search.routing_result.current_paths.values()
+        )
+        response["result"] = {
+            **_routing_snapshot_to_dict(search.routing_result),
+            "reachable_node_count": reachable,
+            "node_count": len(search.routing_result.current_paths),
+        }
+    return response
 
 
 def _evaluate(session: SimulationSession) -> RoutingResult:
@@ -234,6 +274,26 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
         return _session_response(session, _evaluate(session))
+
+    @app.post("/api/sessions/{session_id}/critical-failure-search")
+    def search_critical_failures(
+        session_id: str,
+        request: CriticalFailureSearchRequest,
+    ) -> dict:
+        try:
+            session = sessions.get(session_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="session not found") from error
+
+        try:
+            search = find_first_minimal_failure(
+                session.topology,
+                session.routing,
+                request.max_k,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        return _search_response(search, request.max_k)
 
     return app
 

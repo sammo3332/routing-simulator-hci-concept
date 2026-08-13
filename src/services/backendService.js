@@ -26,3 +26,15 @@ export async function updateSimulationSession(sessionId, patch) {
   });
   return parseResponse(response);
 }
+
+export async function searchCriticalFailures(sessionId, maxK) {
+  const response = await fetch(
+    `/api/sessions/${encodeURIComponent(sessionId)}/critical-failure-search`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ max_k: maxK }),
+    },
+  );
+  return parseResponse(response);
+}

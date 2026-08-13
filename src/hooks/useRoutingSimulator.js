@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { importTopology, updateSimulationSession } from "../services/backendService";
+import {
+  importTopology,
+  searchCriticalFailures,
+  updateSimulationSession,
+} from "../services/backendService";
 import { GOLD, PAD, RED, SVG_H, SVG_W, T1, T2 } from "../styles/sharedStyles";
 
 function timestamp() {
@@ -47,6 +51,8 @@ function layoutNodes(nodes) {
 export function useRoutingSimulator() {
   const [simulation, setSimulation] = useState(null);
   const [selectedLinkId, setSelectedLinkId] = useState("");
+  const [criticalSearchMaxK, setCriticalSearchMaxK] = useState("2");
+  const [criticalSearchResult, setCriticalSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [eventLog, setEventLog] = useState([
@@ -89,11 +95,13 @@ export function useRoutingSimulator() {
 
   const handleTopologyFile = async file => {
     const importTime = timestamp();
+    setCriticalSearchResult(null);
     const next = await run(
       `Importiere „${file.name}“…`,
       () => importTopology(file),
     );
     if (next) {
+      setCriticalSearchMaxK(String(Math.min(2, next.topology.edges.length)));
       setEventLog([
         {
           id: ++logId.current,
@@ -125,12 +133,55 @@ export function useRoutingSimulator() {
   const setTargetNode = targetNodeId => updateSession(
     { target_node_id: targetNodeId },
     `Setze Zielknoten auf ${targetNodeId}.`,
-  );
+  ).then(() => setCriticalSearchResult(null));
 
   const setWeightMode = weightMode => updateSession(
     { weight_mode: weightMode },
     `Wechsle Routingmetrik auf ${weightMode === "hop_count" ? "Hop-Anzahl" : "Kantengewicht"}.`,
-  );
+  ).then(() => setCriticalSearchResult(null));
+
+  const findCriticalFailures = async () => {
+    if (!simulation) return;
+    setLoading(true);
+    setError("");
+    setCriticalSearchResult(null);
+    const maxK = Number(criticalSearchMaxK);
+    addLog(
+      "info",
+      `Suche kritische Kombinationen mit maximal ${maxK} Kantenausfällen.`,
+    );
+    try {
+      const result = await searchCriticalFailures(simulation.session_id, maxK);
+      setCriticalSearchResult(result);
+      if (result.status === "found") {
+        addLog(
+          "success",
+          `Kritische Kombination gefunden: ${result.failed_edge_ids.join(", ")} (${result.affected_node_ids.length} unerreichbare Knoten).`,
+        );
+      } else {
+        addLog(
+          "success",
+          `Keine kritische Kombination mit maximal ${maxK} Ausfällen gefunden.`,
+        );
+      }
+    } catch (requestError) {
+      const message = requestError instanceof Error
+        ? requestError.message
+        : "Unbekannter Fehler";
+      setError(message);
+      addLog("alert", `FEHLER: ${message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyCriticalFailureResult = () => {
+    if (criticalSearchResult?.status !== "found") return;
+    updateSession(
+      { failed_edge_ids: criticalSearchResult.failed_edge_ids },
+      `Übernehme kritische Kombination: ${criticalSearchResult.failed_edge_ids.join(", ")}.`,
+    );
+  };
 
   const simulateLinkFailure = () => {
     if (!simulation || !selectedLinkId) return;
@@ -250,6 +301,11 @@ export function useRoutingSimulator() {
     simulateLinkFailure,
     restoreSelectedLink,
     repairNetwork,
+    criticalSearchMaxK,
+    setCriticalSearchMaxK,
+    criticalSearchResult,
+    findCriticalFailures,
+    applyCriticalFailureResult,
     graphNodes,
     graphLinks,
     routeRows,

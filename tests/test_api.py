@@ -95,3 +95,77 @@ def test_unknown_session_and_unsupported_format_are_reported() -> None:
 
     assert missing.status_code == 404
     assert unsupported.status_code == 415
+
+
+def test_critical_failure_search_finds_first_minimal_set_without_mutating_session() -> None:
+    test_client = client()
+    imported = import_fixture(test_client, "topohub_mini.json")
+    session_id = imported["session_id"]
+
+    response = test_client.post(
+        f"/api/sessions/{session_id}/critical-failure-search",
+        json={"max_k": 2},
+    )
+    session_after_search = test_client.patch(
+        f"/api/sessions/{session_id}",
+        json={},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "found"
+    assert data["max_k"] == 2
+    assert data["found_at_k"] == 2
+    assert len(data["failed_edge_ids"]) == 2
+    assert data["affected_node_ids"]
+    assert data["result"]["reachable_node_count"] < data["result"]["node_count"]
+    assert session_after_search.status_code == 200
+    assert session_after_search.json()["failures"]["failed_edge_ids"] == []
+
+
+def test_critical_failure_search_reports_not_found_within_limit() -> None:
+    test_client = client()
+    imported = import_fixture(test_client, "topohub_mini.json")
+    session_id = imported["session_id"]
+
+    response = test_client.post(
+        f"/api/sessions/{session_id}/critical-failure-search",
+        json={"max_k": 1},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "not_found",
+        "max_k": 1,
+        "tested_combinations": 4,
+        "found_at_k": None,
+        "failed_edge_ids": None,
+        "affected_node_ids": [],
+        "result": None,
+    }
+
+
+def test_critical_failure_search_validates_limit_and_session() -> None:
+    test_client = client()
+    imported = import_fixture(test_client, "sndlib_mini.xml")
+    session_id = imported["session_id"]
+
+    zero = test_client.post(
+        f"/api/sessions/{session_id}/critical-failure-search",
+        json={"max_k": 0},
+    )
+    above_edge_count = test_client.post(
+        f"/api/sessions/{session_id}/critical-failure-search",
+        json={"max_k": 3},
+    )
+    missing = test_client.post(
+        "/api/sessions/not-there/critical-failure-search",
+        json={"max_k": 1},
+    )
+
+    assert zero.status_code == 422
+    assert above_edge_count.status_code == 422
+    assert above_edge_count.json()["detail"] == (
+        "max_k must not exceed the number of edges"
+    )
+    assert missing.status_code == 404

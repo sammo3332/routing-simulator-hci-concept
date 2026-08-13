@@ -45,6 +45,8 @@ export default function App() {
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
     repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
+    criticalSearchMaxK, setCriticalSearchMaxK, criticalSearchResult,
+    findCriticalFailures, applyCriticalFailureResult,
     T1, T2, RED, GOLD, SVG_W, SVG_H,
   } = simulator;
 
@@ -91,6 +93,19 @@ export default function App() {
       ? `Letzte Berechnung: ${reachableCount} von ${nodeCount} Knoten erreichen das Ziel.`
       : `Letzter Status: ${latestEvent.msg}`
     : "Noch keine Ereignisse.";
+  const searchLimitOptions = Array.from(
+    { length: Math.min(3, topology?.edges.length ?? 0) },
+    (_, index) => ({
+      value: String(index + 1),
+      label: `Maximal ${index + 1} gleichzeitige${index ? "" : "r"} Ausfall${index ? "e" : ""}`,
+    }),
+  );
+  const criticalEdges = criticalSearchResult?.status === "found"
+    ? criticalSearchResult.failed_edge_ids.map(edgeId => {
+      const edge = topology.edges.find(item => item.id === edgeId);
+      return edge ? `${edge.id} ${edge.source}–${edge.target}` : edgeId;
+    })
+    : [];
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d0f14", color: "#e2e8f4", fontFamily: "system-ui,-apple-system,sans-serif", fontSize: 13, overflow: "hidden" }}>
@@ -172,6 +187,52 @@ export default function App() {
             >
               Alle Kanten wiederherstellen
             </button>
+          </SidebarSection>
+
+          <SidebarSection title="Automatische Prüfung" accent={GOLD}>
+            <div style={{ color: "#7a8499", fontSize: 9.5, lineHeight: 1.45, marginBottom: 9 }}>
+              Sucht die kleinste Kombination ausgefallener Kanten, durch die Knoten das Ziel nicht mehr erreichen.
+            </div>
+            <SelectField
+              label="Suchgrenze"
+              value={criticalSearchMaxK}
+              onChange={value => {
+                setCriticalSearchMaxK(value);
+              }}
+              options={searchLimitOptions}
+            />
+            <button
+              onClick={findCriticalFailures}
+              disabled={!simulation || loading || !searchLimitOptions.length}
+              style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid rgba(251,191,36,.35)", background: "rgba(251,191,36,.10)", color: GOLD, fontWeight: 800, cursor: "pointer", marginBottom: 8 }}
+            >
+              {loading ? "Prüfung läuft …" : "Kritische Ausfälle suchen"}
+            </button>
+
+            {criticalSearchResult?.status === "found" && (
+              <div role="status" style={{ padding: "8px", borderRadius: 6, border: "1px solid rgba(255,64,64,.30)", background: "rgba(255,64,64,.07)", fontSize: 9.5, lineHeight: 1.5 }}>
+                <div style={{ color: RED, fontWeight: 800, marginBottom: 3 }}>
+                  Kritische Kombination mit {criticalSearchResult.found_at_k} Kanten
+                </div>
+                <div style={{ overflowWrap: "anywhere" }}>{criticalEdges.join(", ")}</div>
+                <div style={{ color: "#9aa5bb", marginTop: 3 }}>
+                  Folge: {criticalSearchResult.affected_node_ids.length} unerreichbare Knoten · {criticalSearchResult.tested_combinations} Kombinationen geprüft
+                </div>
+                <button
+                  onClick={applyCriticalFailureResult}
+                  disabled={loading}
+                  style={{ width: "100%", marginTop: 7, padding: "7px", borderRadius: 5, border: `1px solid ${RED}`, background: "transparent", color: "#ff9a9a", fontWeight: 800, cursor: "pointer" }}
+                >
+                  In Simulation übernehmen
+                </button>
+              </div>
+            )}
+
+            {criticalSearchResult?.status === "not_found" && (
+              <div role="status" style={{ padding: "8px", borderRadius: 6, border: "1px solid rgba(34,197,94,.30)", background: "rgba(34,197,94,.07)", color: "#9ad9ad", fontSize: 9.5, lineHeight: 1.5 }}>
+                Keine kritische Kombination mit maximal {criticalSearchResult.max_k} Ausfällen gefunden. {criticalSearchResult.tested_combinations} Kombinationen wurden geprüft.
+              </div>
+            )}
           </SidebarSection>
 
         </aside>
