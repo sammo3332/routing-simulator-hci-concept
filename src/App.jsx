@@ -1,8 +1,10 @@
 import { useState } from "react";
 import AlgorithmSelector from "./components/AlgorithmSelector";
 import FileUploader from "./components/FileUploader";
+import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
+import { useGraphViewport } from "./hooks/useGraphViewport";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
 
@@ -51,6 +53,12 @@ export default function App() {
     findCriticalFailures, applyCriticalFailureResult,
     T1, T2, RED, GOLD, SVG_W, SVG_H,
   } = simulator;
+  const graphViewport = useGraphViewport({
+    width: SVG_W,
+    height: SVG_H,
+    nodes: graphNodes,
+    resetKey: simulation?.session_id,
+  });
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const routingStrategy = simulation?.routing.strategy ?? "deterministic_shortest_path";
@@ -291,14 +299,45 @@ export default function App() {
                 <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
               </div>
             )}
-            <div style={{ flex: 1, minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+              {simulation && (
+                <GraphZoomControls
+                  scale={graphViewport.viewport.scale}
+                  onZoomIn={graphViewport.zoomIn}
+                  onZoomOut={graphViewport.zoomOut}
+                  onFit={graphViewport.fit}
+                  onReset={graphViewport.reset}
+                />
+              )}
               {!simulation ? <EmptyState /> : (
-                <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", height: "100%", display: "block" }}>
+                <svg
+                  ref={graphViewport.svgRef}
+                  viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+                  tabIndex={0}
+                  aria-label="Netzwerkgraph. Mausrad zum Zoomen, freie Fläche zum Verschieben."
+                  {...graphViewport.svgHandlers}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    cursor: graphViewport.isPanning ? "grabbing" : "grab",
+                    touchAction: "none",
+                  }}
+                >
                   <defs>
                     <marker id="tree-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
                       <path d="M0,0 L7,3.5 L0,7 Z" fill="#a78bfa" />
                     </marker>
                   </defs>
+                  <rect
+                    x={0}
+                    y={0}
+                    width={SVG_W}
+                    height={SVG_H}
+                    fill="transparent"
+                    data-pan-surface="true"
+                  />
+                  <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
                   {graphLinks.map(link => (
                     <g
                       key={link.id}
@@ -322,6 +361,7 @@ export default function App() {
                         stroke="transparent"
                         strokeWidth={16}
                         pointerEvents="stroke"
+                        vectorEffect="non-scaling-stroke"
                       />
                       {link.baseline && !link.failed && (
                         <line
@@ -335,6 +375,7 @@ export default function App() {
                           opacity={link.current ? .8 : 1}
                           strokeLinecap="round"
                           pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
                         />
                       )}
                       <line
@@ -348,6 +389,7 @@ export default function App() {
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
                         pointerEvents="none"
+                        vectorEffect="non-scaling-stroke"
                       />
                       {link.treeArc && !link.failed && (
                         <line
@@ -360,6 +402,7 @@ export default function App() {
                           opacity={.92}
                           markerEnd="url(#tree-arrow)"
                           pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
                         />
                       )}
                       {link.selected && !link.failed && (
@@ -374,6 +417,7 @@ export default function App() {
                           opacity={.95}
                           strokeLinecap="round"
                           pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
                         />
                       )}
                       {link.failed && (
@@ -395,6 +439,7 @@ export default function App() {
                       </g>
                     );
                   })}
+                  </g>
                 </svg>
               )}
             </div>

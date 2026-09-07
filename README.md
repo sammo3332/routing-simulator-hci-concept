@@ -19,6 +19,7 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 - In-Memory-Sessions in einer Python-API
 - React-Visualisierung mit echten API-Ergebnissen
 - Auswahl und gerichtete Darstellung einzelner Aboreszenzen
+- präziser, mauszentrierter SVG-Zoom mit Pan-, Fit- und Reset-Funktion
 - versionierter Szenarioexport im Domänenkern
 
 Round-Robin, RR-Swapping, simulierte Konvergenzzeiten und SQLite gehören nicht
@@ -61,6 +62,7 @@ leitet `/api` während der Entwicklung an die Python-API auf Port 8000 weiter.
 
 ```bash
 npm run test:backend
+npm run test:frontend
 npm run lint
 npm run build
 ```
@@ -71,6 +73,19 @@ geprüft.
 
 Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) dokumentiert.
+
+## Graphansicht bedienen
+
+- Mit dem Mausrad wird am Mauszeiger zwischen 50 % und 600 % gezoomt.
+- `+` und `−` verändern den Zoom in reproduzierbaren Schritten.
+- `Einpassen` zentriert die gesamte Topologie mit Rand im sichtbaren Bereich.
+- `100 %` oder die Taste `0` setzt Zoom und Verschiebung zurück.
+- Durch Ziehen auf einer freien Graphfläche wird die Ansicht verschoben.
+- Die Tasten `+` und `−` steuern den Zoom, wenn der Graph fokussiert ist.
+
+Kanten bleiben unabhängig von der Zoomstufe direkt anklickbar. Ziehen ist nur
+auf der freien Graphfläche aktiv, damit kein Kantenausfall versehentlich durch
+eine Pan-Geste ausgelöst wird.
 
 ## Bonsai kurz ausprobieren
 
