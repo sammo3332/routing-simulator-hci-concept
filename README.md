@@ -9,15 +9,20 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 - Import von TopoHub-Node-Link-JSON und SNDlib-XML
 - validiertes, UI-unabhängiges Graph- und Szenariomodell
 - deterministische kürzeste Pfade zum gewählten Ziel
+- Bonsai-Modus mit globaler Kantenkonnektivität und deterministischer
+  Greedy-Dekomposition
+- zirkuläres Routing über vollständige, arc-disjunkte Aboreszenzen
+- getrennte Erkennung physischer Trennung, Bonsai-Schleife und Sackgasse
 - Baseline- und Fehlerzustand
 - Ausfall und Wiederherstellung einzelner Kanten
 - Erkennung betroffener und umgeleiteter Knoten
 - In-Memory-Sessions in einer Python-API
 - React-Visualisierung mit echten API-Ergebnissen
+- Auswahl und gerichtete Darstellung einzelner Aboreszenzen
 - versionierter Szenarioexport im Domänenkern
 
-Bonsai, Greedy-Vergleiche, simulierte Konvergenzzeiten und SQLite gehören
-nicht zum aktuellen Pflichtumfang.
+Round-Robin, RR-Swapping, simulierte Konvergenzzeiten und SQLite gehören nicht
+zum aktuellen Pflichtumfang.
 
 ## Voraussetzungen
 
@@ -63,3 +68,15 @@ npm run build
 Die Test-Fixtures liegen unter `tests/fixtures`. Zusätzlich wurde der
 SNDlib-XML-Import mit den Legacy-Dateien Abilene, Atlanta und Germany50
 geprüft.
+
+## Bonsai kurz ausprobieren
+
+1. `tests/fixtures/bonsai_routing_failure.json` importieren.
+2. Zielknoten `T` auswählen.
+3. Routingstrategie `Bonsai (Greedy)` auswählen.
+4. In der automatischen Prüfung nach maximal einem Ausfall suchen.
+5. Das Ergebnis in die Simulation übernehmen.
+
+Der Fall zeigt einen weiterhin vorhandenen physischen Pfad von `A` nach `T`,
+während die vorberechnete Bonsai-Strategie in eine Schleife gerät. Technische
+Details und Abgrenzungen stehen in [docs/BONSAI.md](docs/BONSAI.md).

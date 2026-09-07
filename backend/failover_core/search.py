@@ -18,22 +18,44 @@ def find_first_minimal_failure(
 
     edge_ids = tuple(sorted(edge.id for edge in topology.edges))
     tested = 0
+    decomposition = None
+    if routing_config.strategy == "bonsai_greedy":
+        from .bonsai import build_greedy_arborescences
+
+        decomposition = build_greedy_arborescences(
+            topology, routing_config.target_node_id
+        )
     for k in range(1, max_k + 1):
         for candidate in combinations(edge_ids, k):
             tested += 1
-            routing_result = compute_routing_result(
-                topology,
-                routing_config,
-                frozenset(candidate),
-            )
-            if routing_result.affected_node_ids:
+            if decomposition is None:
+                routing_result = compute_routing_result(
+                    topology,
+                    routing_config,
+                    frozenset(candidate),
+                )
+                critical_node_ids = routing_result.affected_node_ids
+                failure_type = "physical_disconnection"
+            else:
+                from .bonsai import compute_bonsai_routing_result
+
+                routing_result = compute_bonsai_routing_result(
+                    topology,
+                    routing_config,
+                    frozenset(candidate),
+                    decomposition=decomposition,
+                )
+                critical_node_ids = routing_result.routing_failure_node_ids
+                failure_type = "routing_failure"
+            if critical_node_ids:
                 return SearchResult(
                     status="found",
                     failed_edge_ids=candidate,
-                    affected_node_ids=routing_result.affected_node_ids,
+                    affected_node_ids=critical_node_ids,
                     tested_combinations=tested,
                     found_at_k=k,
                     routing_result=routing_result,
+                    failure_type=failure_type,
                 )
 
     return SearchResult(

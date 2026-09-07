@@ -4,8 +4,12 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
 WeightMode = Literal["hop_count", "edge_weight"]
+RoutingStrategy = Literal["deterministic_shortest_path", "bonsai_greedy"]
 FailureOrigin = Literal["manual", "automatic_search", "import"]
 SearchStatus = Literal["found", "not_found"]
+BonsaiRouteStatus = Literal[
+    "delivered", "physically_unreachable", "dead_end", "loop"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,7 +49,7 @@ class Topology:
 @dataclass(frozen=True, slots=True)
 class RoutingConfig:
     target_node_id: str
-    strategy: Literal["deterministic_shortest_path"] = "deterministic_shortest_path"
+    strategy: RoutingStrategy = "deterministic_shortest_path"
     weight_mode: WeightMode = "hop_count"
     tie_breaker: Literal[
         "lexicographic_node_and_edge_id"
@@ -93,11 +97,65 @@ class PathResult:
 
 
 @dataclass(frozen=True, slots=True)
+class DirectedArc:
+    edge_id: str
+    source: str
+    target: str
+
+
+@dataclass(frozen=True, slots=True)
+class Arborescence:
+    tree_id: str
+    target_node_id: str
+    arcs: tuple[DirectedArc, ...]
+    next_hop_by_node: Mapping[str, str]
+    edge_id_by_node: Mapping[str, str]
+    depth: int
+
+
+@dataclass(frozen=True, slots=True)
+class RoutingStep:
+    node_id: str
+    tree_id: str
+    action: Literal[
+        "forward",
+        "switch",
+        "delivered",
+        "physically_unreachable",
+        "dead_end",
+        "loop",
+    ]
+    next_node_id: str | None = None
+    edge_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BonsaiRoute:
+    status: BonsaiRouteStatus
+    node_ids: tuple[str, ...]
+    edge_ids: tuple[str, ...]
+    steps: tuple[RoutingStep, ...]
+    switch_count: int
+    physically_reachable: bool
+
+
+@dataclass(frozen=True, slots=True)
 class RoutingResult:
     baseline_paths: Mapping[str, PathResult | None]
     current_paths: Mapping[str, PathResult | None]
     affected_node_ids: tuple[str, ...]
     changed_node_ids: tuple[str, ...]
+    strategy: RoutingStrategy = "deterministic_shortest_path"
+    edge_connectivity: int | None = None
+    arborescences: tuple[Arborescence, ...] = ()
+    route_status_by_node: Mapping[str, BonsaiRouteStatus] = field(
+        default_factory=dict
+    )
+    routing_failure_node_ids: tuple[str, ...] = ()
+    physically_unreachable_node_ids: tuple[str, ...] = ()
+    loop_node_ids: tuple[str, ...] = ()
+    dead_end_node_ids: tuple[str, ...] = ()
+    bonsai_routes: Mapping[str, BonsaiRoute] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,3 +166,4 @@ class SearchResult:
     tested_combinations: int
     found_at_k: int | None
     routing_result: RoutingResult | None
+    failure_type: Literal["physical_disconnection", "routing_failure"] | None = None

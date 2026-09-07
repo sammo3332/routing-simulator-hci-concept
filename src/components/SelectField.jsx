@@ -1,10 +1,10 @@
 import { S } from "../styles/sharedStyles";
 
-export default function SelectField({ label, value, onChange, options }) {
+export default function SelectField({ label, value, onChange, options, disabled = false }) {
   return (
     <div style={{ marginBottom:9 }}>
       <div style={{ fontSize:9, fontWeight:700, color:"#7a8499", textTransform:"uppercase", letterSpacing:".08em", marginBottom:4 }}>{label}</div>
-      <select value={value} onChange={e=>onChange(e.target.value)} style={{ width:"100%", background:"#1f2438", border:"1px solid #2e3650", borderRadius:6, color:"#e2e8f4", fontSize:12, padding:"7px 10px", cursor:"pointer", outline:"none", ...S.sys }}>
+      <select disabled={disabled} value={value} onChange={e=>onChange(e.target.value)} style={{ width:"100%", background:"#1f2438", border:"1px solid #2e3650", borderRadius:6, color:"#e2e8f4", fontSize:12, padding:"7px 10px", cursor:disabled ? "not-allowed" : "pointer", opacity: disabled ? .55 : 1, outline:"none", ...S.sys }}>
         {options.map(option => {
           const item = typeof option === "string" ? { value: option, label: option } : option;
           return <option key={item.value} value={item.value} style={{ background:"#1f2438" }}>{item.label}</option>;
