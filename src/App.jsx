@@ -1,10 +1,12 @@
 import { useState } from "react";
 import AlgorithmSelector from "./components/AlgorithmSelector";
+import DetailsPanelHandle from "./components/DetailsPanelHandle";
 import FileUploader from "./components/FileUploader";
 import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
 import { useGraphViewport } from "./hooks/useGraphViewport";
+import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
 
@@ -59,6 +61,7 @@ export default function App() {
     nodes: graphNodes,
     resetKey: simulation?.session_id,
   });
+  const detailsPanel = useResizableDetailsPanel();
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const routingStrategy = simulation?.routing.strategy ?? "deterministic_shortest_path";
@@ -281,8 +284,8 @@ export default function App() {
 
         </aside>
 
-        <main style={{ flex: 1, minWidth: 0, padding: 12, display: "grid", gridTemplateRows: "minmax(330px, 1fr) 190px minmax(180px, .65fr)", gap: 9 }}>
-          <section style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <main ref={detailsPanel.containerRef} style={{ flex: 1, minWidth: 0, minHeight: 0, padding: 12, display: "flex", flexDirection: "column" }}>
+          <section style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column", flex: "1 1 0", minHeight: 280 }}>
             <div style={{ height: 38, padding: "0 13px", borderBottom: "1px solid #252b3b", display: "flex", alignItems: "center", fontWeight: 800 }}>
               Netzwerkzustand
               {simulation && <span style={{ marginLeft: 8, color: "#64708a", fontSize: 10, fontWeight: 500 }}>{topology.source}</span>}
@@ -455,6 +458,29 @@ export default function App() {
             </div>
           </section>
 
+          <DetailsPanelHandle
+            collapsed={detailsPanel.collapsed}
+            detailsHeight={detailsPanel.detailsHeight}
+            isResizing={detailsPanel.isResizing}
+            summary={simulation
+              ? `Erreichbarkeit ${reachableCount}/${nodeCount} · ${failedEdges.length} Ausfälle · ${routingFailureNodeIds.length} Routingfehler`
+              : "Nach dem Import verfügbar"}
+            onToggle={detailsPanel.toggleCollapsed}
+            handlers={detailsPanel.separatorHandlers}
+          />
+
+          {!detailsPanel.collapsed && (
+            <div
+              id="routing-detail-panels"
+              style={{
+                height: detailsPanel.detailsHeight,
+                flexShrink: 0,
+                minHeight: 0,
+                display: "grid",
+                gridTemplateRows: "minmax(140px, 1fr) minmax(95px, .72fr)",
+                gap: 9,
+              }}
+            >
           <section style={{ display: "grid", gridTemplateColumns: eventLogOpen ? "1.25fr 1fr" : "1fr", gap: 9, minHeight: 0 }}>
             <div style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: "8px 12px", borderBottom: "1px solid #252b3b", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Routingzusammenfassung</div>
@@ -538,6 +564,8 @@ export default function App() {
               </div>
             )}
           </section>
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -20,6 +20,7 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 - React-Visualisierung mit echten API-Ergebnissen
 - Auswahl und gerichtete Darstellung einzelner Aboreszenzen
 - präziser, mauszentrierter SVG-Zoom mit Pan-, Fit- und Reset-Funktion
+- ein- und ausklappbarer, vertikal verstellbarer Ergebnisbereich
 - versionierter Szenarioexport im Domänenkern
 
 Round-Robin, RR-Swapping, simulierte Konvergenzzeiten und SQLite gehören nicht
@@ -86,6 +87,13 @@ Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 Kanten bleiben unabhängig von der Zoomstufe direkt anklickbar. Ziehen ist nur
 auf der freien Graphfläche aktiv, damit kein Kantenausfall versehentlich durch
 eine Pan-Geste ausgelöst wird.
+
+Die Trennleiste `Details` unter dem Graphen vergrößert oder verkleinert den
+gemeinsamen Bereich für Routingzusammenfassung, Ereignisprotokoll und
+Interpretation. `Einklappen` gibt dem Graphen den vollständigen vertikalen
+Arbeitsbereich; die kompakte Statuszeile bleibt sichtbar. Ein Doppelklick oder
+die Taste `Pos1` stellt die Standardgröße wieder her. Mit den Pfeiltasten nach
+oben und unten kann die Trennleiste auch per Tastatur verschoben werden.
 
 ## Bonsai kurz ausprobieren
 
