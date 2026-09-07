@@ -76,7 +76,7 @@
       "additionalProperties": false,
       "required": ["strategy", "target_node_id", "weight_mode", "tie_breaker"],
       "properties": {
-        "strategy": {"const": "deterministic_shortest_path"},
+        "strategy": {"enum": ["deterministic_shortest_path", "bonsai_greedy"]},
         "target_node_id": {"type": "string", "minLength": 1},
         "weight_mode": {"enum": ["hop_count", "edge_weight"]},
         "tie_breaker": {"const": "lexicographic_node_and_edge_id"}

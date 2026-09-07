@@ -51,6 +51,7 @@ function layoutNodes(nodes) {
 export function useRoutingSimulator() {
   const [simulation, setSimulation] = useState(null);
   const [selectedLinkId, setSelectedLinkId] = useState("");
+  const [selectedTreeId, setSelectedTreeId] = useState("T1");
   const [criticalSearchMaxK, setCriticalSearchMaxK] = useState("2");
   const [criticalSearchResult, setCriticalSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -128,6 +129,7 @@ export function useRoutingSimulator() {
         `Routing neu berechnet: ${next.result.reachable_node_count}/${next.result.node_count} Knoten erreichen das Ziel.`,
       );
     }
+    return next;
   };
 
   const setTargetNode = targetNodeId => updateSession(
@@ -139,6 +141,14 @@ export function useRoutingSimulator() {
     { weight_mode: weightMode },
     `Wechsle Routingmetrik auf ${weightMode === "hop_count" ? "Hop-Anzahl" : "Kantengewicht"}.`,
   ).then(() => setCriticalSearchResult(null));
+
+  const setRoutingStrategy = strategy => updateSession(
+    { strategy },
+    `Wechsle Routingstrategie auf ${strategy === "bonsai_greedy" ? "Bonsai (Greedy)" : "Kürzester Pfad"}.`,
+  ).then(next => {
+    if (next) setSelectedTreeId("T1");
+    setCriticalSearchResult(null);
+  });
 
   const findCriticalFailures = async () => {
     if (!simulation) return;
@@ -154,9 +164,12 @@ export function useRoutingSimulator() {
       const result = await searchCriticalFailures(simulation.session_id, maxK);
       setCriticalSearchResult(result);
       if (result.status === "found") {
+        const consequence = result.failure_type === "routing_failure"
+          ? `${result.affected_node_ids.length} Bonsai-Routingfehler`
+          : `${result.affected_node_ids.length} unerreichbare Knoten`;
         addLog(
           "success",
-          `Kritische Kombination gefunden: ${result.failed_edge_ids.join(", ")} (${result.affected_node_ids.length} unerreichbare Knoten).`,
+          `Kritische Kombination gefunden: ${result.failed_edge_ids.join(", ")} (${consequence}).`,
         );
       } else {
         addLog(
@@ -211,6 +224,14 @@ export function useRoutingSimulator() {
   );
 
   const topology = simulation?.topology;
+  const bonsai = simulation?.result.bonsai ?? null;
+  const selectedTree = bonsai?.arborescences.find(
+    tree => tree.tree_id === selectedTreeId,
+  ) ?? bonsai?.arborescences[0] ?? null;
+  const treeArcByEdgeId = useMemo(
+    () => new Map((selectedTree?.arcs ?? []).map(arc => [arc.edge_id, arc])),
+    [selectedTree],
+  );
   const failedEdgeIds = useMemo(
     () => new Set(simulation?.failures.failed_edge_ids ?? []),
     [simulation],
@@ -261,6 +282,7 @@ export function useRoutingSimulator() {
       current,
       baseline,
       selected: edge.id === selectedLinkId,
+      treeArc: treeArcByEdgeId.get(edge.id) ?? null,
       color: failed ? RED : current ? T1 : baseline ? T2 : "#31394d",
     };
   });
@@ -280,6 +302,7 @@ export function useRoutingSimulator() {
       path,
       affected: affectedNodeIds.has(nodeId),
       changed: changedNodeIds.has(nodeId),
+      bonsaiStatus: bonsai?.route_status_by_node[nodeId] ?? null,
     }))
     .sort((left, right) => left.nodeId.localeCompare(right.nodeId));
 
@@ -292,7 +315,15 @@ export function useRoutingSimulator() {
     eventLogEndRef,
     handleTopologyFile,
     setTargetNode,
+    setRoutingStrategy,
     setWeightMode,
+    selectedTreeId,
+    setSelectedTreeId,
+    selectedTree,
+    treeOptions: (bonsai?.arborescences ?? []).map(tree => ({
+      value: tree.tree_id,
+      label: `${tree.tree_id} · Tiefe ${tree.depth}`,
+    })),
     selectedLinkId,
     setSelectedLinkId,
     selectedLinkFailed: failedEdgeIds.has(selectedLinkId),

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from backend.api import SessionStore, create_app
+from backend.failover_core.models import Edge, Node, Topology
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -62,6 +64,54 @@ def test_session_update_changes_target_metric_and_failures() -> None:
     assert data["result"]["affected_node_ids"] == ["A", "B"]
 
 
+def test_session_can_switch_to_bonsai_and_returns_explainable_trees() -> None:
+    test_client = client()
+    imported = import_fixture(test_client, "topohub_mini.json")
+
+    response = test_client.patch(
+        f"/api/sessions/{imported['session_id']}",
+        json={"strategy": "bonsai_greedy"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["routing"]["strategy"] == "bonsai_greedy"
+    bonsai = data["result"]["bonsai"]
+    assert bonsai["edge_connectivity"] == 2
+    assert [tree["tree_id"] for tree in bonsai["arborescences"]] == [
+        "T1",
+        "T2",
+    ]
+    assert all(
+        len(tree["arcs"]) == data["result"]["node_count"] - 1
+        for tree in bonsai["arborescences"]
+    )
+    assert set(bonsai["route_status_by_node"].values()) == {"delivered"}
+
+
+def test_bonsai_api_search_returns_only_routing_critical_failure() -> None:
+    test_client = client()
+    imported = import_fixture(test_client, "bonsai_routing_failure.json")
+    session_id = imported["session_id"]
+    switched = test_client.patch(
+        f"/api/sessions/{session_id}",
+        json={"strategy": "bonsai_greedy", "target_node_id": "T"},
+    )
+
+    response = test_client.post(
+        f"/api/sessions/{session_id}/critical-failure-search",
+        json={"max_k": 1},
+    )
+
+    assert switched.status_code == 200
+    assert response.status_code == 200
+    data = response.json()
+    assert data["failure_type"] == "routing_failure"
+    assert data["failed_edge_ids"] == ["a"]
+    assert "A" in data["affected_node_ids"]
+    assert data["result"]["bonsai"]["route_status_by_node"]["A"] == "loop"
+
+
 def test_invalid_update_does_not_corrupt_session() -> None:
     test_client = client()
     imported = import_fixture(test_client, "sndlib_mini.xml")
@@ -79,6 +129,46 @@ def test_invalid_update_does_not_corrupt_session() -> None:
     assert invalid.status_code == 422
     assert valid.status_code == 200
     assert valid.json()["routing"]["target_node_id"] == "T"
+
+
+def test_invalid_bonsai_switch_is_atomic_and_decomposition_is_cached() -> None:
+    store = SessionStore()
+    directed = Topology(
+        topology_id="directed",
+        directed=True,
+        multigraph=False,
+        nodes=(Node("A"), Node("T")),
+        edges=(Edge("a", "A", "T"),),
+    )
+    directed_session = store.create(directed)
+
+    with pytest.raises(ValueError, match="undirected"):
+        store.update(directed_session.session_id, strategy="bonsai_greedy")
+
+    assert store.get(directed_session.session_id).routing.strategy == (
+        "deterministic_shortest_path"
+    )
+
+    undirected = Topology(
+        topology_id="cycle",
+        directed=False,
+        multigraph=False,
+        nodes=(Node("A"), Node("B"), Node("T")),
+        edges=(
+            Edge("a", "A", "T"),
+            Edge("b", "A", "B"),
+            Edge("c", "B", "T"),
+        ),
+    )
+    session = store.create(undirected)
+    switched = store.update(
+        session.session_id, strategy="bonsai_greedy", target_node_id="T"
+    )
+    updated = store.update(
+        session.session_id, failed_edge_ids=frozenset({"a"})
+    )
+
+    assert switched.bonsai_decomposition is updated.bonsai_decomposition
 
 
 def test_unknown_session_and_unsupported_format_are_reported() -> None:

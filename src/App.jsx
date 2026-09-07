@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AlgorithmSelector from "./components/AlgorithmSelector";
 import FileUploader from "./components/FileUploader";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
@@ -41,7 +42,8 @@ export default function App() {
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
-    handleTopologyFile, setTargetNode, setWeightMode,
+    handleTopologyFile, setTargetNode, setRoutingStrategy, setWeightMode,
+    selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
     repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
@@ -51,19 +53,26 @@ export default function App() {
   } = simulator;
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
+  const routingStrategy = simulation?.routing.strategy ?? "deterministic_shortest_path";
+  const bonsai = simulation?.result.bonsai ?? null;
   const weightMode = simulation?.routing.weight_mode ?? "hop_count";
   const latestEvent = eventLog[eventLog.length - 1];
   const failedEdges = simulation
     ? topology.edges.filter(edge => simulation.failures.failed_edge_ids.includes(edge.id))
     : [];
-  const unreachableNodeIds = simulation?.result.affected_node_ids ?? [];
-  const unreachableNodeIdSet = new Set(unreachableNodeIds);
+  const unreachableNodeIds = bonsai?.physically_unreachable_node_ids
+    ?? simulation?.result.affected_node_ids
+    ?? [];
+  const routingFailureNodeIds = bonsai?.routing_failure_node_ids ?? [];
+  const failedRoutingNodeIdSet = new Set(simulation?.result.affected_node_ids ?? []);
   const reroutedNodeIds = (simulation?.result.changed_node_ids ?? [])
-    .filter(nodeId => !unreachableNodeIdSet.has(nodeId));
+    .filter(nodeId => !failedRoutingNodeIdSet.has(nodeId));
   const reachableCount = simulation?.result.reachable_node_count ?? 0;
   const nodeCount = simulation?.result.node_count ?? 0;
-  const networkStatus = unreachableNodeIds.length
-    ? { label: "Eingeschränkte Erreichbarkeit", color: RED, background: "rgba(255,64,64,.10)" }
+  const networkStatus = routingFailureNodeIds.length
+    ? { label: "Bonsai-Routingfehler", color: RED, background: "rgba(255,64,64,.10)" }
+    : unreachableNodeIds.length
+      ? { label: "Physisch getrennt", color: RED, background: "rgba(255,64,64,.10)" }
     : failedEdges.length
       ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
       : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
@@ -73,20 +82,23 @@ export default function App() {
       : failedEdges.map(edge => edge.id).join(", ")
     : "keine";
   const interpretation = simulation
-    ? `${failedEdges.length} aktive${failedEdges.length === 1 ? "r" : ""} Kantenausfall${failedEdges.length === 1 ? "" : "e"} (${failedEdgeSummary}); `
+    ? `${routingStrategy === "bonsai_greedy" ? `Bonsai mit ${bonsai?.edge_connectivity ?? 0} Aboreszenzen; ` : ""}`
+      + `${failedEdges.length} aktive${failedEdges.length === 1 ? "r" : ""} Kantenausfall${failedEdges.length === 1 ? "" : "e"} (${failedEdgeSummary}); `
       + `${reroutedNodeIds.length} umgeleitete Route${reroutedNodeIds.length === 1 ? "" : "n"}`
       + `${reroutedNodeIds.length
         ? reroutedNodeIds.length <= 5
           ? ` (${reroutedNodeIds.join(", ")})`
           : " (siehe Routingzusammenfassung)"
         : ""}; `
-      + `${unreachableNodeIds.length} unerreichbare Knoten`
+      + `${unreachableNodeIds.length} physisch unerreichbare Knoten`
       + `${unreachableNodeIds.length
         ? unreachableNodeIds.length <= 5
           ? ` (${unreachableNodeIds.join(", ")})`
           : " (siehe Routingzusammenfassung)"
         : ""}. `
-      + `Zielknoten: ${targetNodeId}. Erreichbarkeit: ${reachableCount}/${nodeCount}.`
+      + `; ${routingFailureNodeIds.length} Routingfehler trotz physischer Verbindung`
+      + `${routingFailureNodeIds.length ? ` (${routingFailureNodeIds.join(", ")})` : ""}. `
+      + `Zielknoten: ${targetNodeId}. Erfolgreich zugestellt: ${reachableCount}/${nodeCount}.`
     : "";
   const latestStatusText = latestEvent
     ? latestEvent.msg.startsWith("Routing neu berechnet:")
@@ -155,15 +167,34 @@ export default function App() {
 
           <SidebarSection title="Routing-Einstellungen" accent="#a78bfa">
             <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} />
+            <AlgorithmSelector
+              value={routingStrategy}
+              onChange={setRoutingStrategy}
+              disabled={!simulation || loading}
+            />
             <SelectField
               label="Routingmetrik"
               value={weightMode}
               onChange={setWeightMode}
+              disabled={routingStrategy === "bonsai_greedy"}
               options={[
                 { value: "hop_count", label: "Hop-Anzahl" },
                 { value: "edge_weight", label: "Kantengewicht" },
               ]}
             />
+            {bonsai && (
+              <>
+                <SelectField
+                  label="Aboreszenz anzeigen"
+                  value={selectedTree?.tree_id ?? selectedTreeId}
+                  onChange={setSelectedTreeId}
+                  options={treeOptions}
+                />
+                <div style={{ padding: "7px 8px", borderRadius: 6, background: "rgba(167,139,250,.08)", border: "1px solid rgba(167,139,250,.25)", color: "#c4b5fd", fontSize: 9.5, lineHeight: 1.45 }}>
+                  Kantenkonnektivität k = {bonsai.edge_connectivity}. Die violetten Pfeile zeigen {selectedTree?.tree_id ?? "den gewählten Baum"} in Richtung des Zielknotens.
+                </div>
+              </>
+            )}
             {!simulation && <div style={{ color: "#64708a", fontSize: 10 }}>Nach dem Import verfügbar.</div>}
           </SidebarSection>
 
@@ -191,7 +222,9 @@ export default function App() {
 
           <SidebarSection title="Automatische Prüfung" accent={GOLD}>
             <div style={{ color: "#7a8499", fontSize: 9.5, lineHeight: 1.45, marginBottom: 9 }}>
-              Sucht die kleinste Kombination ausgefallener Kanten, durch die Knoten das Ziel nicht mehr erreichen.
+              {routingStrategy === "bonsai_greedy"
+                ? "Sucht die kleinste Kombination, bei der physisch noch ein Weg existiert, Bonsai das Ziel aber nicht erreicht."
+                : "Sucht die kleinste Kombination ausgefallener Kanten, durch die Knoten das Ziel nicht mehr erreichen."}
             </div>
             <SelectField
               label="Suchgrenze"
@@ -216,7 +249,7 @@ export default function App() {
                 </div>
                 <div style={{ overflowWrap: "anywhere" }}>{criticalEdges.join(", ")}</div>
                 <div style={{ color: "#9aa5bb", marginTop: 3 }}>
-                  Folge: {criticalSearchResult.affected_node_ids.length} unerreichbare Knoten · {criticalSearchResult.tested_combinations} Kombinationen geprüft
+                  Folge: {criticalSearchResult.affected_node_ids.length} {criticalSearchResult.failure_type === "routing_failure" ? "Routingfehler trotz physischer Verbindung" : "unerreichbare Knoten"} · {criticalSearchResult.tested_combinations} Kombinationen geprüft
                 </div>
                 <button
                   onClick={applyCriticalFailureResult}
@@ -258,6 +291,11 @@ export default function App() {
             <div style={{ flex: 1, minHeight: 0 }}>
               {!simulation ? <EmptyState /> : (
                 <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", height: "100%", display: "block" }}>
+                  <defs>
+                    <marker id="tree-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
+                      <path d="M0,0 L7,3.5 L0,7 Z" fill="#a78bfa" />
+                    </marker>
+                  </defs>
                   {graphLinks.map(link => (
                     <g key={link.id} onClick={() => setSelectedLinkId(link.id)} style={{ cursor: "pointer" }}>
                       {link.baseline && !link.failed && (
@@ -284,6 +322,18 @@ export default function App() {
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
                       />
+                      {link.treeArc && !link.failed && (
+                        <line
+                          x1={link.treeArc.source === link.source ? link.sourcePosition.x : link.targetPosition.x}
+                          y1={link.treeArc.source === link.source ? link.sourcePosition.y : link.targetPosition.y}
+                          x2={link.treeArc.target === link.target ? link.targetPosition.x : link.sourcePosition.x}
+                          y2={link.treeArc.target === link.target ? link.targetPosition.y : link.sourcePosition.y}
+                          stroke="#a78bfa"
+                          strokeWidth={3}
+                          opacity={.92}
+                          markerEnd="url(#tree-arrow)"
+                        />
+                      )}
                       {link.failed && (
                         <>
                           <circle cx={link.midpoint.x} cy={link.midpoint.y} r={9} fill="#0d0f14" stroke={RED} strokeWidth={2} />
@@ -314,6 +364,7 @@ export default function App() {
               <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
               <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>
               <span><span style={{ color: GOLD }}>●</span> Zielknoten</span>
+              {bonsai && <span><span style={{ color: "#a78bfa" }}>━━▶</span> Gewählte Aboreszenz</span>}
             </div>
           </section>
 
@@ -323,14 +374,28 @@ export default function App() {
               <div style={{ overflowY: "auto", flex: 1 }}>
                 {!simulation ? <div style={{ padding: 14, color: "#64708a" }}>Noch keine Ergebnisse.</div> : (
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
-                    <thead><tr>{["Knoten", "Status", "Aktueller Pfad", "Kosten"].map(header => <th key={header} style={{ textAlign: "left", padding: "7px 10px", color: "#64708a", background: "#191d2c" }}>{header}</th>)}</tr></thead>
+                    <thead><tr>{["Knoten", "Status", "Aktueller Pfad", routingStrategy === "bonsai_greedy" ? "Wechsel" : "Kosten"].map(header => <th key={header} style={{ textAlign: "left", padding: "7px 10px", color: "#64708a", background: "#191d2c" }}>{header}</th>)}</tr></thead>
                     <tbody>
                       {routeRows.map(row => (
                         <tr key={row.nodeId} style={{ borderTop: "1px solid #202635" }}>
                           <td style={{ padding: "7px 10px", fontWeight: 800 }}>{row.nodeId}</td>
-                          <td style={{ padding: "7px 10px", color: row.affected ? RED : row.changed ? T2 : "#22c55e" }}>{row.affected ? "nicht erreichbar" : row.changed ? "umgeleitet" : row.path ? "erreichbar" : "bereits ohne Baseline-Pfad"}</td>
+                          <td style={{ padding: "7px 10px", color: row.affected ? RED : row.changed ? T2 : "#22c55e" }}>
+                            {row.bonsaiStatus === "physically_unreachable"
+                              ? "physisch unerreichbar"
+                              : row.bonsaiStatus === "loop"
+                                ? "Bonsai-Schleife"
+                                : row.bonsaiStatus === "dead_end"
+                                  ? "Bonsai-Sackgasse"
+                                  : row.bonsaiStatus === "delivered"
+                                    ? row.changed ? "zugestellt · umgeleitet" : "zugestellt"
+                                    : row.affected ? "nicht erreichbar" : row.changed ? "umgeleitet" : row.path ? "erreichbar" : "bereits ohne Baseline-Pfad"}
+                          </td>
                           <td style={{ padding: "7px 10px", ...S.mono }}>{row.path?.node_ids.join(" → ") || "—"}</td>
-                          <td style={{ padding: "7px 10px", ...S.mono }}>{row.path?.total_weight ?? "—"}</td>
+                          <td style={{ padding: "7px 10px", ...S.mono }}>
+                            {routingStrategy === "bonsai_greedy"
+                              ? bonsai?.routes[row.nodeId]?.switch_count ?? "—"
+                              : row.path?.total_weight ?? "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -376,10 +441,10 @@ export default function App() {
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 9 }}>
                 <Metric label="Ziel" value={simulation.routing.target_node_id} color={GOLD} />
-                <Metric label="Metrik" value={weightMode === "hop_count" ? "Hop-Anzahl" : "Kantengewicht"} color="#a78bfa" />
+                <Metric label="Strategie" value={routingStrategy === "bonsai_greedy" ? "Bonsai · Greedy" : "Kürzester Pfad"} color="#a78bfa" />
                 <Metric label="Umgeleitete Routen" value={reroutedNodeIds.length} color={reroutedNodeIds.length ? T2 : "#22c55e"} />
-                <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
-                <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount}`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Physisch getrennt" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Routingfehler" value={routingFailureNodeIds.length} color={routingFailureNodeIds.length ? RED : "#22c55e"} />
                 <div style={{ gridColumn: "1 / -1", color: "#9aa5bb", lineHeight: 1.55 }}>
                   {interpretation}
                 </div>

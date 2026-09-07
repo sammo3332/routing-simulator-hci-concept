@@ -7,9 +7,10 @@ Failover-Routingzuständen. Der fachliche Schwerpunkt liegt auf der verständlic
 Darstellung von Normalbetrieb, Umleitung und Unerreichbarkeit. Es wird keine neue
 Routingheuristik entwickelt.
 
-Als nachvollziehbare Referenzstrategie dient eine deterministische
-Kürzeste-Pfad-Berechnung. Bonsai, Greedy-Vergleiche, SQLite und simulierte
-Konvergenzzeiten sind nicht Bestandteil der implementierten Kernarchitektur.
+Als Referenzstrategien dienen eine deterministische Kürzeste-Pfad-Berechnung und
+eine deterministische Greedy-Dekomposition nach dem Bonsai-Prinzip. SQLite,
+Round-Robin-Vergleiche und simulierte Konvergenzzeiten sind nicht Bestandteil
+der implementierten Kernarchitektur.
 
 ## Systemkontext
 
@@ -21,6 +22,7 @@ flowchart LR
     A --> C["Failover-Domänenkern"]
     C --> P["Topologie-Parser"]
     C --> R["Referenzrouting"]
+    C --> B["Bonsai-Builder und -Routing"]
 ```
 
 Das Frontend wird während der Entwicklung durch Vite bereitgestellt. Requests an
@@ -56,6 +58,7 @@ bereit:
 | `GET` | `/api/health` | Verfügbarkeitsprüfung |
 | `POST` | `/api/sessions/import` | Topologie importieren, Session anlegen und Ausgangszustand berechnen |
 | `PATCH` | `/api/sessions/{session_id}` | Ziel, Metrik oder ausgefallene Kanten ändern und Routing neu berechnen |
+| `POST` | `/api/sessions/{session_id}/critical-failure-search` | Kleinste kritische Ausfallkombination für die aktive Strategie suchen |
 
 Die API validiert Eingaben, koordiniert Sessionzustand und Domänenkern und
 liefert eine für das Frontend normalisierte Antwort.
@@ -91,6 +94,7 @@ Der UI-unabhängige Domänenkern enthält:
 - deterministische Routingberechnung,
 - Szenarioimport und -export,
 - minimale Ausfallsuche als vom UI unabhängige Kernfunktion.
+- Kantenkonnektivität, Greedy-Aboreszenzen und zirkuläre Bonsai-Simulation.
 
 Die Trennung ermöglicht automatisierte Tests ohne Browser und verhindert, dass
 Darstellungslogik in die Routingberechnung einfließt.
@@ -109,6 +113,30 @@ Bei gleichwertigen Pfaden erfolgt ein lexikografisches Tie-Breaking anhand von
 Knoten- und Kanten-IDs. Dadurch liefert derselbe Eingabezustand reproduzierbare
 Ergebnisse. Die Strategie dient als verständliche Grundlage zur Untersuchung der
 Visualisierung und ist kein Forschungsbeitrag zu Routingalgorithmen.
+
+## Bonsai-Strategie
+
+Die Strategie `bonsai_greedy` arbeitet ausschließlich auf ungerichteten
+physischen Topologien. Jede physische Kante wird intern als zwei gerichtete
+Bögen behandelt. Die globale Kantenkonnektivität `k` bestimmt die Zahl der
+vollständigen, paarweise arc-disjunkten Aboreszenzen.
+
+Die Bäume werden nacheinander vom Ziel aus aufgebaut. Kandidaten werden nach
+der resultierenden Tiefe und danach lexikografisch sortiert. Beim Bau von `Ti`
+wird ein Bogen `(u, v)` nur übernommen, wenn im unbenutzten Arc-Graphen ohne
+diesen Bogen noch mindestens `k-i` bogendisjunkte Wege von `u` zum Ziel
+existieren.
+
+Pakete starten auf `T1`. Ist der benötigte physische Link ausgefallen, wird am
+aktuellen Knoten zirkulär zum nächsten Baum gewechselt. Der Trace enthält jeden
+Weiterleitungsschritt und jeden Baumwechsel. Ein wiederholter Zustand aus
+Knoten, Baum und Eingangsrichtung wird als Schleife erkannt.
+
+Die physische Erreichbarkeit wird unabhängig geprüft. Dadurch unterscheidet die
+API `delivered`, `physically_unreachable`, `dead_end` und `loop`. Die
+automatische Suche bewertet im Bonsai-Modus nur `dead_end` und `loop` bei
+weiterhin bestehender physischer Verbindung als routingkritisch. Weitere
+Details stehen in [docs/BONSAI.md](docs/BONSAI.md).
 
 ## Baseline, Fehlerzustand und Ergebnissemantik
 

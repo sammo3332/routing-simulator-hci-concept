@@ -9,6 +9,11 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from .failover_core.bonsai import (
+    BonsaiDecomposition,
+    build_greedy_arborescences,
+    compute_bonsai_routing_result,
+)
 from .failover_core.models import (
     FailureState,
     RoutingConfig,
@@ -33,6 +38,7 @@ class SimulationSession:
     topology: Topology
     routing: RoutingConfig
     failures: FailureState
+    bonsai_decomposition: BonsaiDecomposition | None = None
 
 
 class SessionStore:
@@ -64,6 +70,7 @@ class SessionStore:
         session_id: str,
         *,
         target_node_id: str | None = None,
+        strategy: str | None = None,
         weight_mode: str | None = None,
         failed_edge_ids: frozenset[str] | None = None,
     ) -> SimulationSession:
@@ -74,6 +81,7 @@ class SessionStore:
             routing = replace(
                 session.routing,
                 target_node_id=target_node_id or session.routing.target_node_id,
+                strategy=strategy or session.routing.strategy,
                 weight_mode=weight_mode or session.routing.weight_mode,
             )
             failures = (
@@ -81,7 +89,23 @@ class SessionStore:
                 if failed_edge_ids is not None
                 else session.failures
             )
-            updated = replace(session, routing=routing, failures=failures)
+            bonsai_decomposition = None
+            if routing.strategy == "bonsai_greedy":
+                if (
+                    session.bonsai_decomposition is not None
+                    and session.routing.target_node_id == routing.target_node_id
+                ):
+                    bonsai_decomposition = session.bonsai_decomposition
+                else:
+                    bonsai_decomposition = build_greedy_arborescences(
+                        session.topology, routing.target_node_id
+                    )
+            updated = replace(
+                session,
+                routing=routing,
+                failures=failures,
+                bonsai_decomposition=bonsai_decomposition,
+            )
             node_ids = {node.id for node in updated.topology.nodes}
             edge_ids = {edge.id for edge in updated.topology.edges}
             if updated.routing.target_node_id not in node_ids:
@@ -90,6 +114,11 @@ class SessionStore:
                 raise ValueError(
                     "weight_mode must be 'hop_count' or 'edge_weight'"
                 )
+            if updated.routing.strategy not in {
+                "deterministic_shortest_path",
+                "bonsai_greedy",
+            }:
+                raise ValueError("unsupported routing strategy")
             unknown = sorted(updated.failures.failed_edge_ids - edge_ids)
             if unknown:
                 raise ValueError(
@@ -103,6 +132,7 @@ class SessionUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     target_node_id: str | None = None
+    strategy: str | None = None
     weight_mode: str | None = None
     failed_edge_ids: list[str] | None = None
 
@@ -148,7 +178,7 @@ def _session_response(
     session: SimulationSession, result: RoutingResult
 ) -> dict:
     reachable = sum(path is not None for path in result.current_paths.values())
-    return {
+    response = {
         "session_id": session.session_id,
         "topology": _topology_to_dict(session.topology),
         "routing": {
@@ -163,6 +193,58 @@ def _session_response(
             **_routing_snapshot_to_dict(result),
             "reachable_node_count": reachable,
             "node_count": len(session.topology.nodes),
+        },
+    }
+    if result.strategy == "bonsai_greedy":
+        response["result"]["bonsai"] = _bonsai_result_to_dict(result)
+    return response
+
+
+def _bonsai_result_to_dict(result: RoutingResult) -> dict:
+    return {
+        "edge_connectivity": result.edge_connectivity,
+        "arborescences": [
+            {
+                "tree_id": tree.tree_id,
+                "target_node_id": tree.target_node_id,
+                "depth": tree.depth,
+                "arcs": [
+                    {
+                        "edge_id": arc.edge_id,
+                        "source": arc.source,
+                        "target": arc.target,
+                    }
+                    for arc in tree.arcs
+                ],
+            }
+            for tree in result.arborescences
+        ],
+        "route_status_by_node": dict(sorted(result.route_status_by_node.items())),
+        "routing_failure_node_ids": list(result.routing_failure_node_ids),
+        "physically_unreachable_node_ids": list(
+            result.physically_unreachable_node_ids
+        ),
+        "loop_node_ids": list(result.loop_node_ids),
+        "dead_end_node_ids": list(result.dead_end_node_ids),
+        "routes": {
+            node_id: {
+                "status": route.status,
+                "node_ids": list(route.node_ids),
+                "edge_ids": list(route.edge_ids),
+                "switch_count": route.switch_count,
+                "physically_reachable": route.physically_reachable,
+                "steps": [
+                    {
+                        "node_id": step.node_id,
+                        "tree_id": step.tree_id,
+                        "action": step.action,
+                        "next_node_id": step.next_node_id,
+                        "edge_id": step.edge_id,
+                    }
+                    for step in route.steps
+                ],
+            }
+            for node_id, route in sorted(result.bonsai_routes.items())
         },
     }
 
@@ -181,6 +263,8 @@ def _search_response(search: SearchResult, max_k: int) -> dict:
         "affected_node_ids": list(search.affected_node_ids),
         "result": None,
     }
+    if search.failure_type is not None:
+        response["failure_type"] = search.failure_type
     if search.routing_result is not None:
         reachable = sum(
             path is not None
@@ -191,6 +275,10 @@ def _search_response(search: SearchResult, max_k: int) -> dict:
             "reachable_node_count": reachable,
             "node_count": len(search.routing_result.current_paths),
         }
+        if search.routing_result.strategy == "bonsai_greedy":
+            response["result"]["bonsai"] = _bonsai_result_to_dict(
+                search.routing_result
+            )
     return response
 
 
@@ -204,17 +292,32 @@ def _evaluate(session: SimulationSession) -> RoutingResult:
             status_code=422,
             detail="weight_mode must be 'hop_count' or 'edge_weight'",
         )
+    if session.routing.strategy not in {
+        "deterministic_shortest_path",
+        "bonsai_greedy",
+    }:
+        raise HTTPException(status_code=422, detail="unsupported routing strategy")
     unknown = sorted(session.failures.failed_edge_ids - edge_ids)
     if unknown:
         raise HTTPException(
             status_code=422,
             detail=f"unknown failed edge IDs: {', '.join(unknown)}",
         )
-    return compute_routing_result(
-        session.topology,
-        session.routing,
-        session.failures.failed_edge_ids,
-    )
+    try:
+        if session.routing.strategy == "bonsai_greedy":
+            return compute_bonsai_routing_result(
+                session.topology,
+                session.routing,
+                session.failures.failed_edge_ids,
+                decomposition=session.bonsai_decomposition,
+            )
+        return compute_routing_result(
+            session.topology,
+            session.routing,
+            session.failures.failed_edge_ids,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 def create_app(store: SessionStore | None = None) -> FastAPI:
@@ -262,6 +365,7 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
             session = sessions.update(
                 session_id,
                 target_node_id=update.target_node_id,
+                strategy=update.strategy,
                 weight_mode=update.weight_mode,
                 failed_edge_ids=(
                     frozenset(update.failed_edge_ids)

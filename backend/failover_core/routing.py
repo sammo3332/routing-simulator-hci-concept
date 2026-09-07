@@ -93,6 +93,15 @@ def compute_routing_result(
     config: RoutingConfig,
     failed_edge_ids: frozenset[str] = frozenset(),
 ) -> RoutingResult:
+    if config.strategy == "bonsai_greedy":
+        from .bonsai import compute_bonsai_routing_result
+
+        return compute_bonsai_routing_result(
+            topology, config, failed_edge_ids
+        )
+    if config.strategy != "deterministic_shortest_path":
+        raise ValueError(f"unsupported routing strategy: {config.strategy}")
+
     baseline = _all_paths(topology, config, frozenset())
     current = (
         baseline

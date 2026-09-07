@@ -67,7 +67,10 @@ def validate_scenario(scenario: Scenario) -> None:
         errors.append(
             f"routing target '{scenario.routing.target_node_id}' does not exist"
         )
-    if scenario.routing.strategy != "deterministic_shortest_path":
+    if scenario.routing.strategy not in {
+        "deterministic_shortest_path",
+        "bonsai_greedy",
+    }:
         errors.append("unsupported routing strategy")
     if scenario.routing.weight_mode not in {"hop_count", "edge_weight"}:
         errors.append("unsupported weight_mode")
