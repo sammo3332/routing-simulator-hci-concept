@@ -46,7 +46,7 @@ export default function App() {
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
-    repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
+    toggleLinkFailure, repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
     criticalSearchMaxK, setCriticalSearchMaxK, criticalSearchResult,
     findCriticalFailures, applyCriticalFailureResult,
     T1, T2, RED, GOLD, SVG_W, SVG_H,
@@ -199,6 +199,9 @@ export default function App() {
           </SidebarSection>
 
           <SidebarSection title="Kantenfehler" accent={RED}>
+            <div style={{ color: "#7a8499", fontSize: 9.5, lineHeight: 1.45, marginBottom: 9 }}>
+              Kante im Graphen anklicken, um sie ausfallen zu lassen. Ein weiterer Klick stellt sie wieder her.
+            </div>
             <SelectField label="Kante" value={selectedLinkId} onChange={setSelectedLinkId} options={routingLinkOptions} />
             <div style={{ marginBottom: 9, padding: "7px 8px", borderRadius: 6, background: "#181c2c", border: "1px solid #252b3b", color: failedEdges.length ? "#ff9a9a" : "#64708a", fontSize: 9.5, lineHeight: 1.45, overflowWrap: "anywhere" }}>
               <strong>Aktive Ausfälle ({failedEdges.length}):</strong>{" "}
@@ -302,11 +305,11 @@ export default function App() {
                       role="button"
                       tabIndex={0}
                       aria-label={`Kante ${link.source} nach ${link.target} auswählen`}
-                      onClick={() => setSelectedLinkId(link.id)}
+                      onClick={() => toggleLinkFailure(link.id)}
                       onKeyDown={event => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          setSelectedLinkId(link.id);
+                          toggleLinkFailure(link.id);
                         }
                       }}
                       style={{ cursor: "pointer" }}
@@ -359,7 +362,7 @@ export default function App() {
                           pointerEvents="none"
                         />
                       )}
-                      {link.selected && (
+                      {link.selected && !link.failed && (
                         <line
                           x1={link.sourcePosition.x}
                           y1={link.sourcePosition.y}
