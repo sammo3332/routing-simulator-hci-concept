@@ -69,6 +69,9 @@ Die Test-Fixtures liegen unter `tests/fixtures`. Zusätzlich wurde der
 SNDlib-XML-Import mit den Legacy-Dateien Abilene, Atlanta und Germany50
 geprüft.
 
+Die unabhängige und exhaustive Validierung kleiner Graphen ist in
+[docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) dokumentiert.
+
 ## Bonsai kurz ausprobieren
 
 1. `tests/fixtures/bonsai_routing_failure.json` importieren.
