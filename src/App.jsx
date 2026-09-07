@@ -297,7 +297,29 @@ export default function App() {
                     </marker>
                   </defs>
                   {graphLinks.map(link => (
-                    <g key={link.id} onClick={() => setSelectedLinkId(link.id)} style={{ cursor: "pointer" }}>
+                    <g
+                      key={link.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Kante ${link.source} nach ${link.target} auswählen`}
+                      onClick={() => setSelectedLinkId(link.id)}
+                      onKeyDown={event => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedLinkId(link.id);
+                        }
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <line
+                        x1={link.sourcePosition.x}
+                        y1={link.sourcePosition.y}
+                        x2={link.targetPosition.x}
+                        y2={link.targetPosition.y}
+                        stroke="transparent"
+                        strokeWidth={16}
+                        pointerEvents="stroke"
+                      />
                       {link.baseline && !link.failed && (
                         <line
                           x1={link.sourcePosition.x}
@@ -309,6 +331,7 @@ export default function App() {
                           strokeDasharray={link.current ? "2 5" : undefined}
                           opacity={link.current ? .8 : 1}
                           strokeLinecap="round"
+                          pointerEvents="none"
                         />
                       )}
                       <line
@@ -321,6 +344,7 @@ export default function App() {
                         strokeDasharray={link.failed ? "8 6" : undefined}
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
+                        pointerEvents="none"
                       />
                       {link.treeArc && !link.failed && (
                         <line
@@ -332,13 +356,28 @@ export default function App() {
                           strokeWidth={3}
                           opacity={.92}
                           markerEnd="url(#tree-arrow)"
+                          pointerEvents="none"
+                        />
+                      )}
+                      {link.selected && (
+                        <line
+                          x1={link.sourcePosition.x}
+                          y1={link.sourcePosition.y}
+                          x2={link.targetPosition.x}
+                          y2={link.targetPosition.y}
+                          stroke="#38bdf8"
+                          strokeWidth={6}
+                          strokeDasharray="3 5"
+                          opacity={.95}
+                          strokeLinecap="round"
+                          pointerEvents="none"
                         />
                       )}
                       {link.failed && (
-                        <>
+                        <g pointerEvents="none">
                           <circle cx={link.midpoint.x} cy={link.midpoint.y} r={9} fill="#0d0f14" stroke={RED} strokeWidth={2} />
                           <text x={link.midpoint.x} y={link.midpoint.y + 4} textAnchor="middle" fill={RED} fontSize={12} fontWeight="900">×</text>
-                        </>
+                        </g>
                       )}
                     </g>
                   ))}
