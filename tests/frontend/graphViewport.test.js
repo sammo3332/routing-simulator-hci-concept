@@ -67,3 +67,15 @@ test("fit centers every node inside the padded viewport", () => {
 test("fit handles an empty topology safely", () => {
   assert.deepEqual(fitViewportToNodes([], 800, 410), initialGraphViewport());
 });
+
+test("fit uses the available canvas for a geographically compact topology", () => {
+  const nodes = [
+    { position: { x: 58, y: 100 } },
+    { position: { x: 742, y: 310 } },
+  ];
+  const fitted = fitViewportToNodes(nodes, 800, 410);
+
+  assert.ok(fitted.scale > 1);
+  closeTo(fitted.x + 58 * fitted.scale, 52);
+  closeTo(fitted.x + 742 * fitted.scale, 748);
+});

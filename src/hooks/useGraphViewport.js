@@ -19,14 +19,16 @@ function eventPointInViewBox(svg, clientX, clientY, width, height) {
 export function useGraphViewport({ width, height, nodes, resetKey }) {
   const svgRef = useRef(null);
   const drag = useRef(null);
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
   const [viewport, setViewport] = useState(initialGraphViewport);
   const [isPanning, setIsPanning] = useState(false);
 
   useEffect(() => {
-    setViewport(initialGraphViewport());
+    setViewport(fitViewportToNodes(nodesRef.current, width, height));
     setIsPanning(false);
     drag.current = null;
-  }, [resetKey]);
+  }, [height, resetKey, width]);
 
   const zoomBy = useCallback((factor, point = { x: width / 2, y: height / 2 }) => {
     setViewport(current => zoomViewportAtPoint(current, point, factor));

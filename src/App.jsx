@@ -87,6 +87,7 @@ export default function App() {
     : failedEdges.length
       ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
       : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
+  const showAllNodeLabels = graphViewport.viewport.scale >= 1.25;
   const failedEdgeSummary = failedEdges.length
     ? failedEdges.length <= 3
       ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
@@ -433,12 +434,21 @@ export default function App() {
                   ))}
                   {graphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
+                    const nodeName = node.label || node.id;
+                    const importantNode = node.target || node.affected || node.changed;
+                    const showNodeLabel = showAllNodeLabels || importantNode;
+                    const showMarkerText = String(node.id).length <= 4;
                     return (
                       <g key={node.id}>
+                        <title>{nodeName}</title>
                         {node.target && <circle cx={node.position.x} cy={node.position.y} r={26} fill="none" stroke={GOLD} opacity=".22" strokeWidth="4" />}
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />
-                        <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={9} fontWeight="800">{node.id}</text>
-                        <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9}>{node.label || node.id}</text>
+                        {showMarkerText && (
+                          <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={9} fontWeight="800">{node.id}</text>
+                        )}
+                        {showNodeLabel && (
+                          <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9} fontWeight={importantNode ? 800 : 500}>{nodeName}</text>
+                        )}
                       </g>
                     );
                   })}

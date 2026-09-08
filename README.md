@@ -20,6 +20,7 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 - React-Visualisierung mit echten API-Ergebnissen
 - Auswahl und gerichtete Darstellung einzelner Aboreszenzen
 - präziser, mauszentrierter SVG-Zoom mit Pan-, Fit- und Reset-Funktion
+- automatisches Einpassen neuer Topologien und reduzierte Beschriftungen in der Übersicht
 - ein- und ausklappbarer, vertikal verstellbarer Ergebnisbereich
 - versionierter Szenarioexport im Domänenkern
 
@@ -80,9 +81,14 @@ Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 - Mit dem Mausrad wird am Mauszeiger zwischen 50 % und 600 % gezoomt.
 - `+` und `−` verändern den Zoom in reproduzierbaren Schritten.
 - `Einpassen` zentriert die gesamte Topologie mit Rand im sichtbaren Bereich.
+- Eine neu geladene Topologie wird automatisch eingepasst.
 - `100 %` oder die Taste `0` setzt Zoom und Verschiebung zurück.
 - Durch Ziehen auf einer freien Graphfläche wird die Ansicht verschoben.
 - Die Tasten `+` und `−` steuern den Zoom, wenn der Graph fokussiert ist.
+
+Bei weniger als 125 % Zoom zeigt die Übersicht nur die Namen wichtiger Knoten
+(Ziel, Umleitung oder Fehler). Ab 125 % erscheinen alle Knotennamen. Der
+vollständige Name eines Knotens ist unabhängig davon per Mauszeiger verfügbar.
 
 Kanten bleiben unabhängig von der Zoomstufe direkt anklickbar. Ziehen ist nur
 auf der freien Graphfläche aktiv, damit kein Kantenausfall versehentlich durch
