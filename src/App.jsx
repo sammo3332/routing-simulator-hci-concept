@@ -9,6 +9,7 @@ import { useGraphViewport } from "./hooks/useGraphViewport";
 import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
+import { buildNodeAbbreviations } from "./utils/nodePresentation";
 
 const panel = {
   background: "#131720",
@@ -41,8 +42,24 @@ function EmptyState() {
   );
 }
 
+function GraphNodeTooltip({ node, widthLimit }) {
+  const label = node.label || node.id;
+  const width = Math.min(190, Math.max(72, label.length * 6.2 + 20));
+  const x = Math.min(widthLimit - width - 6, Math.max(6, node.position.x - width / 2));
+  const y = node.position.y > 54 ? node.position.y - 45 : node.position.y + 25;
+  return (
+    <g pointerEvents="none" aria-hidden="true">
+      <rect x={x} y={y} width={width} height={25} rx={5} fill="#080b12" stroke="#64748b" strokeWidth={1.5} />
+      <text x={x + width / 2} y={y + 16.5} textAnchor="middle" fill="#f8fafc" fontSize={10.5} fontWeight="800">{label}</text>
+    </g>
+  );
+}
+
 export default function App() {
   const [eventLogOpen, setEventLogOpen] = useState(false);
+  const [showAllNodeNames, setShowAllNodeNames] = useState(false);
+  const [highlightedSourceNodeId, setHighlightedSourceNodeId] = useState("");
+  const [hoveredNodeId, setHoveredNodeId] = useState("");
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
@@ -87,7 +104,36 @@ export default function App() {
     : failedEdges.length
       ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
       : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
-  const showAllNodeLabels = graphViewport.viewport.scale >= 1.25;
+  const activeSourceNodeId = highlightedSourceNodeId
+    && highlightedSourceNodeId !== targetNodeId
+    && topology?.nodes.some(node => node.id === highlightedSourceNodeId)
+    ? highlightedSourceNodeId
+    : "";
+  const showAllNodeLabels = showAllNodeNames || graphViewport.viewport.scale >= 1.25;
+  const nodeAbbreviations = buildNodeAbbreviations(graphNodes);
+  const sourceNodeOptions = [
+    { value: "", label: "Alle Routen" },
+    ...nodeOptions.filter(option => option.value !== targetNodeId),
+  ];
+  const focusedBaselineEdgeIds = new Set(
+    simulation?.result.baseline_paths?.[activeSourceNodeId]?.edge_ids ?? [],
+  );
+  const focusedCurrentEdgeIds = new Set(
+    simulation?.result.current_paths?.[activeSourceNodeId]?.edge_ids ?? [],
+  );
+  const visibleGraphLinks = activeSourceNodeId
+    ? graphLinks.map(link => ({
+      ...link,
+      baseline: focusedBaselineEdgeIds.has(link.id),
+      current: focusedCurrentEdgeIds.has(link.id),
+    }))
+    : graphLinks;
+  const visibleGraphNodes = [...graphNodes].sort((left, right) => {
+    const leftPriority = left.target ? 2 : left.id === activeSourceNodeId ? 1 : 0;
+    const rightPriority = right.target ? 2 : right.id === activeSourceNodeId ? 1 : 0;
+    return leftPriority - rightPriority;
+  });
+  const hoveredNode = graphNodes.find(node => node.id === hoveredNodeId) ?? null;
   const failedEdgeSummary = failedEdges.length
     ? failedEdges.length <= 3
       ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
@@ -193,6 +239,13 @@ export default function App() {
                 { value: "hop_count", label: "Hop-Anzahl" },
                 { value: "edge_weight", label: "Kantengewicht" },
               ]}
+            />
+            <SelectField
+              label="Route hervorheben"
+              value={activeSourceNodeId}
+              onChange={setHighlightedSourceNodeId}
+              disabled={!simulation}
+              options={sourceNodeOptions}
             />
             {bonsai && (
               <>
@@ -307,10 +360,12 @@ export default function App() {
               {simulation && (
                 <GraphZoomControls
                   scale={graphViewport.viewport.scale}
+                  showAllLabels={showAllNodeNames}
                   onZoomIn={graphViewport.zoomIn}
                   onZoomOut={graphViewport.zoomOut}
                   onFit={graphViewport.fit}
                   onReset={graphViewport.reset}
+                  onToggleLabels={() => setShowAllNodeNames(current => !current)}
                 />
               )}
               {!simulation ? <EmptyState /> : (
@@ -342,7 +397,7 @@ export default function App() {
                     data-pan-surface="true"
                   />
                   <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
-                  {graphLinks.map(link => (
+                  {visibleGraphLinks.map(link => (
                     <g
                       key={link.id}
                       role="button"
@@ -432,26 +487,30 @@ export default function App() {
                       )}
                     </g>
                   ))}
-                  {graphNodes.map(node => {
+                  {visibleGraphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
                     const nodeName = node.label || node.id;
-                    const importantNode = node.target || node.affected || node.changed;
+                    const importantNode = node.target || node.affected || node.changed || node.id === activeSourceNodeId;
                     const showNodeLabel = showAllNodeLabels || importantNode;
-                    const showMarkerText = String(node.id).length <= 4;
                     return (
-                      <g key={node.id}>
+                      <g
+                        key={node.id}
+                        aria-label={`Knoten ${nodeName}`}
+                        onPointerEnter={() => setHoveredNodeId(node.id)}
+                        onPointerLeave={() => setHoveredNodeId("")}
+                        style={{ cursor: "help" }}
+                      >
                         <title>{nodeName}</title>
                         {node.target && <circle cx={node.position.x} cy={node.position.y} r={26} fill="none" stroke={GOLD} opacity=".22" strokeWidth="4" />}
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />
-                        {showMarkerText && (
-                          <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={9} fontWeight="800">{node.id}</text>
-                        )}
+                        <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={8.5} fontWeight="800">{nodeAbbreviations[node.id]}</text>
                         {showNodeLabel && (
                           <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9} fontWeight={importantNode ? 800 : 500}>{nodeName}</text>
                         )}
                       </g>
                     );
                   })}
+                  {hoveredNode && <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />}
                   </g>
                 </svg>
               )}

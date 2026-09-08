@@ -13,10 +13,12 @@ const buttonStyle = {
 
 export default function GraphZoomControls({
   scale,
+  showAllLabels,
   onZoomIn,
   onZoomOut,
   onFit,
   onReset,
+  onToggleLabels,
 }) {
   return (
     <div
@@ -56,6 +58,20 @@ export default function GraphZoomControls({
       </button>
       <button type="button" onClick={onReset} aria-label="Zoom zurücksetzen" title="Auf 100 % zurücksetzen (0)" style={buttonStyle}>
         100 %
+      </button>
+      <button
+        type="button"
+        aria-pressed={showAllLabels}
+        onClick={onToggleLabels}
+        title={showAllLabels ? "Nur wichtige Knotennamen anzeigen" : "Alle Knotennamen anzeigen"}
+        style={{
+          ...buttonStyle,
+          borderColor: showAllLabels ? "#a78bfa" : "#3a435c",
+          background: showAllLabels ? "rgba(124,58,237,.28)" : buttonStyle.background,
+          color: showAllLabels ? "#ddd6fe" : buttonStyle.color,
+        }}
+      >
+        Namen
       </button>
     </div>
   );

@@ -87,8 +87,11 @@ Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 - Die Tasten `+` und `−` steuern den Zoom, wenn der Graph fokussiert ist.
 
 Bei weniger als 125 % Zoom zeigt die Übersicht nur die Namen wichtiger Knoten
-(Ziel, Umleitung oder Fehler). Ab 125 % erscheinen alle Knotennamen. Der
-vollständige Name eines Knotens ist unabhängig davon per Mauszeiger verfügbar.
+(Ziel, hervorgehobene Quelle, Umleitung oder Fehler). Eindeutige Kürzel bleiben
+in allen Knoten sichtbar. Ab 125 % oder über die Schaltfläche `Namen` erscheinen
+alle Knotennamen. Der vollständige Name wird beim Zeigen auf einen Knoten sofort
+in einem Tooltip eingeblendet. Über `Route hervorheben` lässt sich die Darstellung
+auf die Route eines einzelnen Startknotens reduzieren.
 
 Kanten bleiben unabhängig von der Zoomstufe direkt anklickbar. Ziehen ist nur
 auf der freien Graphfläche aktiv, damit kein Kantenausfall versehentlich durch
