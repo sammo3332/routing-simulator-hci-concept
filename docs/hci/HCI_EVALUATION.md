@@ -297,3 +297,6 @@ Die Screenshots belegen nachvollziehbar, wie konkrete Darstellungsprobleme zu
 Änderungen geführt haben. Sie sind damit als formative Designhistorie geeignet.
 Empirische Aussagen über Verständlichkeit oder Gebrauchstauglichkeit dürfen
 jedoch erst nach Durchführung und Auswertung der Studie gemacht werden.
+
+Die technische Prüfliste und der formale Abnahmestand sind separat in
+[`SPRINT_ACCEPTANCE.md`](SPRINT_ACCEPTANCE.md) dokumentiert.
