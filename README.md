@@ -19,7 +19,7 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 - In-Memory-Sessions in einer Python-API
 - React-Visualisierung mit echten API-Ergebnissen
 - Auswahl und gerichtete Darstellung einzelner Aboreszenzen
-- präziser, mauszentrierter SVG-Zoom mit Pan-, Fit- und Reset-Funktion
+- präziser, mauszentrierter SVG-Zoom mit Pan- und Fit-Funktion
 - automatisches Einpassen neuer Topologien und reduzierte Beschriftungen in der Übersicht
 - ein- und ausklappbarer, vertikal verstellbarer Ergebnisbereich
 - versionierter Szenarioexport im Domänenkern
@@ -82,9 +82,9 @@ Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 - `+` und `−` verändern den Zoom in reproduzierbaren Schritten.
 - `Einpassen` zentriert die gesamte Topologie mit Rand im sichtbaren Bereich.
 - Eine neu geladene Topologie wird automatisch eingepasst.
-- `100 %` oder die Taste `0` setzt Zoom und Verschiebung zurück.
 - Durch Ziehen auf einer freien Graphfläche wird die Ansicht verschoben.
-- Die Tasten `+` und `−` steuern den Zoom, wenn der Graph fokussiert ist.
+- Die Tasten `+` und `−` steuern den Zoom, wenn der Graph fokussiert ist;
+  `F` passt die gesamte Topologie wieder ein.
 
 Bei weniger als 125 % Zoom zeigt die Übersicht nur die Namen wichtiger Knoten
 (Ziel, hervorgehobene Quelle, Umleitung oder Fehler). Eindeutige Kürzel bleiben

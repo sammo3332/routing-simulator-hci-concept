@@ -17,7 +17,6 @@ export default function GraphZoomControls({
   onZoomIn,
   onZoomOut,
   onFit,
-  onReset,
   onToggleLabels,
 }) {
   return (
@@ -55,9 +54,6 @@ export default function GraphZoomControls({
       </button>
       <button type="button" onClick={onFit} aria-label="Topologie einpassen" title="Gesamte Topologie einpassen" style={buttonStyle}>
         Einpassen
-      </button>
-      <button type="button" onClick={onReset} aria-label="Zoom zurücksetzen" title="Auf 100 % zurücksetzen (0)" style={buttonStyle}>
-        100 %
       </button>
       <button
         type="button"

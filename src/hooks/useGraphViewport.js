@@ -36,7 +36,6 @@ export function useGraphViewport({ width, height, nodes, resetKey }) {
 
   const zoomIn = useCallback(() => zoomBy(BUTTON_ZOOM_FACTOR), [zoomBy]);
   const zoomOut = useCallback(() => zoomBy(1 / BUTTON_ZOOM_FACTOR), [zoomBy]);
-  const reset = useCallback(() => setViewport(initialGraphViewport()), []);
   const fit = useCallback(() => {
     setViewport(fitViewportToNodes(nodes, width, height));
   }, [height, nodes, width]);
@@ -98,11 +97,11 @@ export function useGraphViewport({ width, height, nodes, resetKey }) {
     } else if (event.key === "-") {
       event.preventDefault();
       zoomOut();
-    } else if (event.key === "0") {
+    } else if (event.key === "f" || event.key === "F") {
       event.preventDefault();
-      reset();
+      fit();
     }
-  }, [reset, zoomIn, zoomOut]);
+  }, [fit, zoomIn, zoomOut]);
 
   return {
     svgRef,
@@ -110,7 +109,6 @@ export function useGraphViewport({ width, height, nodes, resetKey }) {
     isPanning,
     zoomIn,
     zoomOut,
-    reset,
     fit,
     svgHandlers: {
       onWheel,

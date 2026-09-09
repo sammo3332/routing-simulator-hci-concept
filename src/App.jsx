@@ -364,7 +364,6 @@ export default function App() {
                   onZoomIn={graphViewport.zoomIn}
                   onZoomOut={graphViewport.zoomOut}
                   onFit={graphViewport.fit}
-                  onReset={graphViewport.reset}
                   onToggleLabels={() => setShowAllNodeNames(current => !current)}
                 />
               )}
