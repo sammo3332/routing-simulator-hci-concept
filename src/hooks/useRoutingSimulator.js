@@ -218,6 +218,20 @@ export function useRoutingSimulator() {
     );
   };
 
+  const toggleLinkFailure = edgeId => {
+    if (!simulation || !edgeId || loading) return;
+    const failures = new Set(simulation.failures.failed_edge_ids);
+    const restoring = failures.delete(edgeId);
+    if (!restoring) failures.add(edgeId);
+    setSelectedLinkId(edgeId);
+    updateSession(
+      { failed_edge_ids: [...failures] },
+      restoring
+        ? `Stelle Kante ${edgeId} wieder her.`
+        : `Schalte Kante ${edgeId} aus.`,
+    );
+  };
+
   const repairNetwork = () => updateSession(
     { failed_edge_ids: [] },
     "Stelle alle Kanten wieder her.",
@@ -331,6 +345,7 @@ export function useRoutingSimulator() {
     nodeOptions,
     simulateLinkFailure,
     restoreSelectedLink,
+    toggleLinkFailure,
     repairNetwork,
     criticalSearchMaxK,
     setCriticalSearchMaxK,

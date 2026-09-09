@@ -1,10 +1,15 @@
 import { useState } from "react";
 import AlgorithmSelector from "./components/AlgorithmSelector";
+import DetailsPanelHandle from "./components/DetailsPanelHandle";
 import FileUploader from "./components/FileUploader";
+import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
+import { useGraphViewport } from "./hooks/useGraphViewport";
+import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
+import { buildNodeAbbreviations } from "./utils/nodePresentation";
 
 const panel = {
   background: "#131720",
@@ -37,8 +42,24 @@ function EmptyState() {
   );
 }
 
+function GraphNodeTooltip({ node, widthLimit }) {
+  const label = node.label || node.id;
+  const width = Math.min(190, Math.max(72, label.length * 6.2 + 20));
+  const x = Math.min(widthLimit - width - 6, Math.max(6, node.position.x - width / 2));
+  const y = node.position.y > 54 ? node.position.y - 45 : node.position.y + 25;
+  return (
+    <g pointerEvents="none" aria-hidden="true">
+      <rect x={x} y={y} width={width} height={25} rx={5} fill="#080b12" stroke="#64748b" strokeWidth={1.5} />
+      <text x={x + width / 2} y={y + 16.5} textAnchor="middle" fill="#f8fafc" fontSize={10.5} fontWeight="800">{label}</text>
+    </g>
+  );
+}
+
 export default function App() {
   const [eventLogOpen, setEventLogOpen] = useState(false);
+  const [showAllNodeNames, setShowAllNodeNames] = useState(false);
+  const [highlightedSourceNodeId, setHighlightedSourceNodeId] = useState("");
+  const [hoveredNodeId, setHoveredNodeId] = useState("");
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
@@ -46,11 +67,18 @@ export default function App() {
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
-    repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
+    toggleLinkFailure, repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
     criticalSearchMaxK, setCriticalSearchMaxK, criticalSearchResult,
     findCriticalFailures, applyCriticalFailureResult,
     T1, T2, RED, GOLD, SVG_W, SVG_H,
   } = simulator;
+  const graphViewport = useGraphViewport({
+    width: SVG_W,
+    height: SVG_H,
+    nodes: graphNodes,
+    resetKey: simulation?.session_id,
+  });
+  const detailsPanel = useResizableDetailsPanel();
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const routingStrategy = simulation?.routing.strategy ?? "deterministic_shortest_path";
@@ -76,6 +104,36 @@ export default function App() {
     : failedEdges.length
       ? { label: "Failover aktiv", color: GOLD, background: "rgba(251,191,36,.10)" }
       : { label: "Normalbetrieb", color: "#22c55e", background: "rgba(34,197,94,.10)" };
+  const activeSourceNodeId = highlightedSourceNodeId
+    && highlightedSourceNodeId !== targetNodeId
+    && topology?.nodes.some(node => node.id === highlightedSourceNodeId)
+    ? highlightedSourceNodeId
+    : "";
+  const showAllNodeLabels = showAllNodeNames || graphViewport.viewport.scale >= 1.25;
+  const nodeAbbreviations = buildNodeAbbreviations(graphNodes);
+  const sourceNodeOptions = [
+    { value: "", label: "Alle Routen" },
+    ...nodeOptions.filter(option => option.value !== targetNodeId),
+  ];
+  const focusedBaselineEdgeIds = new Set(
+    simulation?.result.baseline_paths?.[activeSourceNodeId]?.edge_ids ?? [],
+  );
+  const focusedCurrentEdgeIds = new Set(
+    simulation?.result.current_paths?.[activeSourceNodeId]?.edge_ids ?? [],
+  );
+  const visibleGraphLinks = activeSourceNodeId
+    ? graphLinks.map(link => ({
+      ...link,
+      baseline: focusedBaselineEdgeIds.has(link.id),
+      current: focusedCurrentEdgeIds.has(link.id),
+    }))
+    : graphLinks;
+  const visibleGraphNodes = [...graphNodes].sort((left, right) => {
+    const leftPriority = left.target ? 2 : left.id === activeSourceNodeId ? 1 : 0;
+    const rightPriority = right.target ? 2 : right.id === activeSourceNodeId ? 1 : 0;
+    return leftPriority - rightPriority;
+  });
+  const hoveredNode = graphNodes.find(node => node.id === hoveredNodeId) ?? null;
   const failedEdgeSummary = failedEdges.length
     ? failedEdges.length <= 3
       ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
@@ -182,6 +240,13 @@ export default function App() {
                 { value: "edge_weight", label: "Kantengewicht" },
               ]}
             />
+            <SelectField
+              label="Route hervorheben"
+              value={activeSourceNodeId}
+              onChange={setHighlightedSourceNodeId}
+              disabled={!simulation}
+              options={sourceNodeOptions}
+            />
             {bonsai && (
               <>
                 <SelectField
@@ -199,6 +264,9 @@ export default function App() {
           </SidebarSection>
 
           <SidebarSection title="Kantenfehler" accent={RED}>
+            <div style={{ color: "#7a8499", fontSize: 9.5, lineHeight: 1.45, marginBottom: 9 }}>
+              Kante im Graphen anklicken, um sie ausfallen zu lassen. Ein weiterer Klick stellt sie wieder her.
+            </div>
             <SelectField label="Kante" value={selectedLinkId} onChange={setSelectedLinkId} options={routingLinkOptions} />
             <div style={{ marginBottom: 9, padding: "7px 8px", borderRadius: 6, background: "#181c2c", border: "1px solid #252b3b", color: failedEdges.length ? "#ff9a9a" : "#64708a", fontSize: 9.5, lineHeight: 1.45, overflowWrap: "anywhere" }}>
               <strong>Aktive Ausfälle ({failedEdges.length}):</strong>{" "}
@@ -270,8 +338,8 @@ export default function App() {
 
         </aside>
 
-        <main style={{ flex: 1, minWidth: 0, padding: 12, display: "grid", gridTemplateRows: "minmax(330px, 1fr) 190px minmax(180px, .65fr)", gap: 9 }}>
-          <section style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <main ref={detailsPanel.containerRef} style={{ flex: 1, minWidth: 0, minHeight: 0, padding: 12, display: "flex", flexDirection: "column" }}>
+          <section style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column", flex: "1 1 0", minHeight: 280 }}>
             <div style={{ height: 38, padding: "0 13px", borderBottom: "1px solid #252b3b", display: "flex", alignItems: "center", fontWeight: 800 }}>
               Netzwerkzustand
               {simulation && <span style={{ marginLeft: 8, color: "#64708a", fontSize: 10, fontWeight: 500 }}>{topology.source}</span>}
@@ -288,16 +356,71 @@ export default function App() {
                 <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
               </div>
             )}
-            <div style={{ flex: 1, minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+              {simulation && (
+                <GraphZoomControls
+                  scale={graphViewport.viewport.scale}
+                  showAllLabels={showAllNodeNames}
+                  onZoomIn={graphViewport.zoomIn}
+                  onZoomOut={graphViewport.zoomOut}
+                  onFit={graphViewport.fit}
+                  onToggleLabels={() => setShowAllNodeNames(current => !current)}
+                />
+              )}
               {!simulation ? <EmptyState /> : (
-                <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", height: "100%", display: "block" }}>
+                <svg
+                  ref={graphViewport.svgRef}
+                  viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+                  tabIndex={0}
+                  aria-label="Netzwerkgraph. Mausrad zum Zoomen, freie Fläche zum Verschieben."
+                  {...graphViewport.svgHandlers}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    cursor: graphViewport.isPanning ? "grabbing" : "grab",
+                    touchAction: "none",
+                  }}
+                >
                   <defs>
                     <marker id="tree-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="strokeWidth">
                       <path d="M0,0 L7,3.5 L0,7 Z" fill="#a78bfa" />
                     </marker>
                   </defs>
-                  {graphLinks.map(link => (
-                    <g key={link.id} onClick={() => setSelectedLinkId(link.id)} style={{ cursor: "pointer" }}>
+                  <rect
+                    x={0}
+                    y={0}
+                    width={SVG_W}
+                    height={SVG_H}
+                    fill="transparent"
+                    data-pan-surface="true"
+                  />
+                  <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
+                  {visibleGraphLinks.map(link => (
+                    <g
+                      key={link.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Kante ${link.source} nach ${link.target} auswählen`}
+                      onClick={() => toggleLinkFailure(link.id)}
+                      onKeyDown={event => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleLinkFailure(link.id);
+                        }
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <line
+                        x1={link.sourcePosition.x}
+                        y1={link.sourcePosition.y}
+                        x2={link.targetPosition.x}
+                        y2={link.targetPosition.y}
+                        stroke="transparent"
+                        strokeWidth={16}
+                        pointerEvents="stroke"
+                        vectorEffect="non-scaling-stroke"
+                      />
                       {link.baseline && !link.failed && (
                         <line
                           x1={link.sourcePosition.x}
@@ -309,6 +432,8 @@ export default function App() {
                           strokeDasharray={link.current ? "2 5" : undefined}
                           opacity={link.current ? .8 : 1}
                           strokeLinecap="round"
+                          pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
                         />
                       )}
                       <line
@@ -321,6 +446,8 @@ export default function App() {
                         strokeDasharray={link.failed ? "8 6" : undefined}
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
+                        pointerEvents="none"
+                        vectorEffect="non-scaling-stroke"
                       />
                       {link.treeArc && !link.failed && (
                         <line
@@ -332,27 +459,58 @@ export default function App() {
                           strokeWidth={3}
                           opacity={.92}
                           markerEnd="url(#tree-arrow)"
+                          pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      )}
+                      {link.selected && !link.failed && (
+                        <line
+                          x1={link.sourcePosition.x}
+                          y1={link.sourcePosition.y}
+                          x2={link.targetPosition.x}
+                          y2={link.targetPosition.y}
+                          stroke="#38bdf8"
+                          strokeWidth={6}
+                          strokeDasharray="3 5"
+                          opacity={.95}
+                          strokeLinecap="round"
+                          pointerEvents="none"
+                          vectorEffect="non-scaling-stroke"
                         />
                       )}
                       {link.failed && (
-                        <>
+                        <g pointerEvents="none">
                           <circle cx={link.midpoint.x} cy={link.midpoint.y} r={9} fill="#0d0f14" stroke={RED} strokeWidth={2} />
                           <text x={link.midpoint.x} y={link.midpoint.y + 4} textAnchor="middle" fill={RED} fontSize={12} fontWeight="900">×</text>
-                        </>
+                        </g>
                       )}
                     </g>
                   ))}
-                  {graphNodes.map(node => {
+                  {visibleGraphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
+                    const nodeName = node.label || node.id;
+                    const importantNode = node.target || node.affected || node.changed || node.id === activeSourceNodeId;
+                    const showNodeLabel = showAllNodeLabels || importantNode;
                     return (
-                      <g key={node.id}>
+                      <g
+                        key={node.id}
+                        aria-label={`Knoten ${nodeName}`}
+                        onPointerEnter={() => setHoveredNodeId(node.id)}
+                        onPointerLeave={() => setHoveredNodeId("")}
+                        style={{ cursor: "help" }}
+                      >
+                        <title>{nodeName}</title>
                         {node.target && <circle cx={node.position.x} cy={node.position.y} r={26} fill="none" stroke={GOLD} opacity=".22" strokeWidth="4" />}
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />
-                        <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={9} fontWeight="800">{node.id}</text>
-                        <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9}>{node.label || node.id}</text>
+                        <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={8.5} fontWeight="800">{nodeAbbreviations[node.id]}</text>
+                        {showNodeLabel && (
+                          <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9} fontWeight={importantNode ? 800 : 500}>{nodeName}</text>
+                        )}
                       </g>
                     );
                   })}
+                  {hoveredNode && <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />}
+                  </g>
                 </svg>
               )}
             </div>
@@ -368,6 +526,29 @@ export default function App() {
             </div>
           </section>
 
+          <DetailsPanelHandle
+            collapsed={detailsPanel.collapsed}
+            detailsHeight={detailsPanel.detailsHeight}
+            isResizing={detailsPanel.isResizing}
+            summary={simulation
+              ? `Erreichbarkeit ${reachableCount}/${nodeCount} · ${failedEdges.length} Ausfälle · ${routingFailureNodeIds.length} Routingfehler`
+              : "Nach dem Import verfügbar"}
+            onToggle={detailsPanel.toggleCollapsed}
+            handlers={detailsPanel.separatorHandlers}
+          />
+
+          {!detailsPanel.collapsed && (
+            <div
+              id="routing-detail-panels"
+              style={{
+                height: detailsPanel.detailsHeight,
+                flexShrink: 0,
+                minHeight: 0,
+                display: "grid",
+                gridTemplateRows: "minmax(140px, 1fr) minmax(95px, .72fr)",
+                gap: 9,
+              }}
+            >
           <section style={{ display: "grid", gridTemplateColumns: eventLogOpen ? "1.25fr 1fr" : "1fr", gap: 9, minHeight: 0 }}>
             <div style={{ ...panel, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: "8px 12px", borderBottom: "1px solid #252b3b", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Routingzusammenfassung</div>
@@ -451,6 +632,8 @@ export default function App() {
               </div>
             )}
           </section>
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "test:backend": "pytest",
+    "test:frontend": "node --test tests/frontend/*.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
