@@ -9,7 +9,7 @@ import { useGraphViewport } from "./hooks/useGraphViewport";
 import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
-import { buildNodeAbbreviations } from "./utils/nodePresentation";
+import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const panel = {
   background: "#131720",
@@ -134,6 +134,9 @@ export default function App() {
     return leftPriority - rightPriority;
   });
   const hoveredNode = graphNodes.find(node => node.id === hoveredNodeId) ?? null;
+  const hoveredNodeLabelVisible = hoveredNode
+    ? isNodeLabelVisible(hoveredNode, showAllNodeLabels, activeSourceNodeId)
+    : false;
   const failedEdgeSummary = failedEdges.length
     ? failedEdges.length <= 3
       ? failedEdges.map(edge => `${edge.id} ${edge.source}–${edge.target}`).join(", ")
@@ -490,16 +493,15 @@ export default function App() {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
                     const nodeName = node.label || node.id;
                     const importantNode = node.target || node.affected || node.changed || node.id === activeSourceNodeId;
-                    const showNodeLabel = showAllNodeLabels || importantNode;
+                    const showNodeLabel = isNodeLabelVisible(node, showAllNodeLabels, activeSourceNodeId);
                     return (
                       <g
                         key={node.id}
                         aria-label={`Knoten ${nodeName}`}
                         onPointerEnter={() => setHoveredNodeId(node.id)}
                         onPointerLeave={() => setHoveredNodeId("")}
-                        style={{ cursor: "help" }}
+                        style={{ cursor: showNodeLabel ? "default" : "help" }}
                       >
-                        <title>{nodeName}</title>
                         {node.target && <circle cx={node.position.x} cy={node.position.y} r={26} fill="none" stroke={GOLD} opacity=".22" strokeWidth="4" />}
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />
                         <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={8.5} fontWeight="800">{nodeAbbreviations[node.id]}</text>
@@ -509,7 +511,9 @@ export default function App() {
                       </g>
                     );
                   })}
-                  {hoveredNode && <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />}
+                  {hoveredNode && !hoveredNodeLabelVisible && (
+                    <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />
+                  )}
                   </g>
                 </svg>
               )}

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildNodeAbbreviations } from "../../src/utils/nodePresentation.js";
+import {
+  buildNodeAbbreviations,
+  isNodeLabelVisible,
+} from "../../src/utils/nodePresentation.js";
 
 test("long node names receive compact deterministic abbreviations", () => {
   assert.deepEqual(
@@ -32,4 +35,15 @@ test("labels and accented names are normalized", () => {
     ]),
     { "node-1": "KOLN", "node-2": "BH" },
   );
+});
+
+test("node labels stay visible only when requested or contextually important", () => {
+  const regularNode = { id: "Dresden" };
+
+  assert.equal(isNodeLabelVisible(regularNode, false), false);
+  assert.equal(isNodeLabelVisible(regularNode, true), true);
+  assert.equal(isNodeLabelVisible(regularNode, false, "Dresden"), true);
+  assert.equal(isNodeLabelVisible({ ...regularNode, target: true }, false), true);
+  assert.equal(isNodeLabelVisible({ ...regularNode, affected: true }, false), true);
+  assert.equal(isNodeLabelVisible({ ...regularNode, changed: true }, false), true);
 });
