@@ -28,13 +28,15 @@ HCI-Evaluation mit Entwicklungsbildern liegt anschließend auf dem Branch
 | npm | 11.9.0 |
 | Implementierung in `main` | `40669bb` |
 | veröffentlichte HCI-Dokumentation | `94f947a` |
+| finale manuelle Browserabnahme | Windows, Python 3.12.10, Chromium-Browser |
+| letzte HCI-Korrektur | `92627fc` |
 
 ## 3. Automatische Abnahme
 
 | Prüfung | Ergebnis |
 |---|---|
 | Backend-Gesamtsuite | 45 von 45 bestanden |
-| Frontend-Logiktests | 14 von 14 bestanden |
+| Frontend-Logiktests | 15 von 15 bestanden |
 | Frontend-Linting | bestanden |
 | Vite-Produktions-Build | bestanden |
 | Format- und Whitespace-Prüfung | bestanden |
@@ -64,36 +66,40 @@ Die vollständige unabhängige Bonsai-Validierung ist in
 
 | Szenario | Automatisch belegt | Historischer Bildbeleg | Finale manuelle Browserabnahme |
 |---|---:|---:|---:|
-| A: Normalzustand verstehen | ja | ja | offen |
-| B: Kantenausfall und Reparatur | ja | ja | offen |
-| C: Routingverfahren und Aboreszenz vergleichen | ja | ja | offen |
-| D: Bonsai-Fehler trotz physischer Verbindung | ja | teilweise | offen |
-| E: Germany50 navigieren | Logik ja | ja | offen |
+| A: Normalzustand verstehen | ja | ja | bestanden |
+| B: Kantenausfall und Reparatur | ja | ja | bestanden |
+| C: Routingverfahren und Aboreszenz vergleichen | ja | ja | bestanden |
+| D: Bonsai-Fehler trotz physischer Verbindung | ja | teilweise | bestanden |
+| E: Germany50 navigieren | Logik ja | ja | bestanden |
 
-„Offen“ bedeutet hier nicht, dass die Funktion fehlt. Die Code- und
-Integrationstests sind bestanden. Für die HCI-Aussage muss jedoch noch eine
-Person die aktuelle veröffentlichte Oberfläche im Browser anhand des
-vorgegebenen Ablaufs bedienen. Ein historischer Screenshot ersetzt keine
-Beobachtung der finalen Version.
+Die finale Oberfläche wurde am 9. September 2026 vom Projektverfasser anhand
+der fünf vorgegebenen Szenarien im Browser bedient. Dies ist eine formative
+Selbstabnahme und kein Ersatz für die noch durchzuführende Benutzerstudie.
 
 ## 6. Manuelle Abnahmecheckliste
 
 Die folgenden Punkte sind auf einem sauberen lokalen Start auszuführen:
 
 ```text
-[ ] Backend und Frontend starten ohne Fehlermeldung.
-[ ] atlanta.xml wird importiert und vollständig eingepasst.
-[ ] Zielknoten und Routingverfahren lassen sich wechseln.
-[ ] Eine Kante kann im Graphen deaktiviert und wiederhergestellt werden.
-[ ] Statusleiste, Graph, Tabelle und Interpretation zeigen denselben Zustand.
-[ ] Bonsai zeigt die gewählte Aboreszenz gerichtet an.
-[ ] Ein erfolgreicher Baumwechsel ist in Pfad und Wechselanzahl erkennbar.
-[ ] Der Bonsai-Fehlerfall wird als Schleife und nicht als physische Trennung erklärt.
-[ ] germany50.xml bleibt mit Kürzeln, Tooltip, Zoom und Einzelroute bedienbar.
+[x] Backend und Frontend starten ohne Fehlermeldung.
+[x] atlanta.xml wird importiert und vollständig eingepasst.
+[x] Zielknoten und Routingverfahren lassen sich wechseln.
+[x] Eine Kante kann im Graphen deaktiviert und wiederhergestellt werden.
+[x] Statusleiste, Graph, Tabelle und Interpretation zeigen denselben Zustand.
+[x] Bonsai zeigt die gewählte Aboreszenz gerichtet an.
+[x] Ein erfolgreicher Baumwechsel ist in Pfad und Wechselanzahl erkennbar.
+[x] Der Bonsai-Fehlerfall wird als Schleife und nicht als physische Trennung erklärt.
+[x] germany50.xml bleibt mit Kürzeln, Tooltip, Zoom und Einzelroute bedienbar.
 [ ] Details lassen sich ein-/ausklappen und vertikal verstellen.
 [ ] Einpassen, Mausradzoom, Plus, Minus und Taste F funktionieren.
 [ ] Im Browser-Entwicklerwerkzeug erscheinen keine neuen Fehler.
 ```
+
+Beim Germany50-Test wurde eine dreifache Knotennamensanzeige aus sichtbarer
+Beschriftung, eigenem Tooltip und Browser-Tooltip entdeckt. Die Korrektur
+`92627fc` entfernt den Browser-Tooltip und zeigt den eigenen Tooltip nur noch,
+wenn der vollständige Name nicht bereits sichtbar ist. Der korrigierte Zustand
+wurde anschließend erneut im Browser geprüft.
 
 ## 7. Fachlich offene Entscheidungen
 
@@ -111,11 +117,13 @@ abgenommenen Sprintumfang.
 
 ## 8. Abnahmeurteil
 
-Der technische Sprint ist **unter Vorbehalt der manuellen Browserprüfung und
-der drei fachlichen Betreuerentscheidungen abnahmefähig**. Es gibt derzeit
-keinen automatisierten Testfehler und keine bekannte Blockade im Kernablauf.
+Der technische Kern des Sprints ist nach automatischer und manueller Prüfung
+**abgenommen**. Offen bleiben drei ergänzende Bedienprüfungen aus Abschnitt 6
+sowie die drei fachlichen Betreuerentscheidungen. Es gibt derzeit keinen
+automatisierten Testfehler und keine bekannte Blockade im Kernablauf.
 
-Neue größere Funktionen sollten erst begonnen werden, nachdem die manuelle
-Checkliste ausgefüllt und die offenen Entscheidungen mit dem Betreuer geklärt
-wurden. Die eigentliche Benutzerstudie folgt anschließend mit dem Protokoll aus
+Neue größere Funktionen sollten erst begonnen werden, nachdem die drei noch
+offenen Bedienprüfungen ausgeführt und die fachlichen Entscheidungen mit dem
+Betreuer geklärt wurden. Die eigentliche Benutzerstudie folgt anschließend mit
+dem Protokoll aus
 [`HCI_EVALUATION.md`](HCI_EVALUATION.md).
