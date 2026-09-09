@@ -75,6 +75,11 @@ geprüft.
 
 Die unabhängige und exhaustive Validierung kleiner Graphen ist in
 [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) dokumentiert.
+Die formative Entwicklungsevaluation, Nutzungsszenarien und das Protokoll für
+eine kleine Benutzerstudie stehen in
+[docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md).
+Der technische und fachliche Abnahmestand ist in
+[docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) zusammengefasst.
 
 ## Graphansicht bedienen
 

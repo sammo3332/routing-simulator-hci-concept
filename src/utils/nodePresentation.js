@@ -29,3 +29,13 @@ export function buildNodeAbbreviations(nodes) {
     return [node.id, abbreviation];
   }));
 }
+
+export function isNodeLabelVisible(node, showAllLabels, activeSourceNodeId = "") {
+  return Boolean(
+    showAllLabels
+    || node.target
+    || node.affected
+    || node.changed
+    || node.id === activeSourceNodeId,
+  );
+}
