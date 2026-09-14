@@ -14,7 +14,7 @@ ab:
 - physischer Linkausfall deaktiviert beide Richtungen,
 - separate Bewertung von physischer Erreichbarkeit und Routingerfolg.
 
-Referenz: [Bonsai: Efficient Fast Failover Routing Using Small Arborescences](https://schmiste.github.io/dsn19.pdf)
+Primärquelle: Foerster, Kamisiński, Pignolet, Schmid und Trédan (2019), [*Bonsai: Efficient Fast Failover Routing Using Small Arborescences*](https://doi.org/10.1109/DSN.2019.00039), DSN 2019, S. 276–288. Eine frei zugängliche [Autorenfassung](https://schmiste.github.io/dsn19.pdf) ist ebenfalls verfügbar.
 
 ## Module
 
