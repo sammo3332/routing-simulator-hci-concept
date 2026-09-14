@@ -69,6 +69,7 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | D-08 | [docs/handout.pdf](handout.pdf) | 7-seitiges PoC-Handout, Blob `65c1e9c275db626a16f4c11cfafdf291f9325267` | **kanonische Archivkopie, fachlich historisch/veraltet**; bytegleich mit der am 14. September 2026 geprüften externen Kopie |
 | D-09 | [docs/system_architecture.png](system_architecture.png) | früher Streamlit-/NetworkX-Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **historisch und durch die Mermaid-Diagramme in `ARCHITECTURE.md` ersetzt**; zuletzt am 9. Juli 2026 geändert |
 | D-10 | [docs/hci/SCREENSHOT_REGISTER.md](hci/SCREENSHOT_REGISTER.md) | Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen und Protokoll für finale Screenshots | **kanonisch für Bildprovenienz und Reproduzierbarkeit** |
+| D-11 | [docs/OPEN_ITEMS.md](OPEN_ITEMS.md) | priorisierte Restarbeiten, Betreuerentscheidungen und Abschlussreihenfolge | **kanonisch für die weitere Projektplanung** |
 
 ## Bild- und Evaluationsnachweise
 
