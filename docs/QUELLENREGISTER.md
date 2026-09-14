@@ -24,15 +24,15 @@ Status:
 
 | ID | Quelle | Verwendung | Status |
 |---|---|---|---|
-| W-01 | Chiesa, M.; Nikolaevskiy, I.; Mitrovic, S.; Gurtov, A.; Antikainen, M.: **Bonsai: Efficient Fast Failover Routing Using Small Arborescences**. DSN 2019. Projektlink: https://schmiste.github.io/dsn19.pdf | Bonsai, kleine Aboreszenzen und Fast-Failover-Kontext | **kanonische wissenschaftliche Primärquelle**; DOI, Seiten und vollständige Proceedings-Angabe vor Abgabe ergänzen |
-| W-02 | SNDlib – Survivable Network Design Library, https://sndlib.zib.de/ | Herkunft und Semantik der SNDlib-XML-Topologien, u. a. Abilene, Atlanta und Germany50 | **ergänzen**: konkrete Datensatzversionen und Download-Datum dokumentieren |
-| W-03 | TopoHub, https://topohub.org/ | Herkunft und Struktur importierter Node-Link-JSON-Topologien | **ergänzen**: konkrete Datensatz-URL, Version und Download-Datum dokumentieren |
+| W-01 | Foerster, K.-T.; Kamisiński, A.; Pignolet, Y.-A.; Schmid, S.; Trédan, G. (2019): **Bonsai: Efficient Fast Failover Routing Using Small Arborescences**. In: *49th Annual IEEE/IFIP International Conference on Dependable Systems and Networks (DSN)*, S. 276–288. DOI: [10.1109/DSN.2019.00039](https://doi.org/10.1109/DSN.2019.00039). Autoren-PDF: https://schmiste.github.io/dsn19.pdf | Bonsai, kleine Aboreszenzen und Fast-Failover-Kontext | **kanonische wissenschaftliche Primärquelle** |
+| W-02 | Orlowski, S.; Wessäly, R.; Pióro, M.; Tomaszewski, A. (2010): **SNDlib 1.0—Survivable Network Design Library**. *Networks*, 55(3), S. 276–286. DOI: [10.1002/net.20371](https://doi.org/10.1002/net.20371). Datensammlung: https://sndlib.zib.de/ | Herkunft und Semantik der SNDlib-XML-Topologien, u. a. Abilene, Atlanta und Germany50 | **kanonische Datensatz-/Formatquelle**; konkrete verwendete Dateien und Abrufdatum zusätzlich dokumentieren |
+| W-03 | Jurkiewicz, P. (2023): **TopoHub: A repository of reference Gabriel graph and real-world topologies for networking research**. *SoftwareX*, 24, Art. 101540. DOI: [10.1016/j.softx.2023.101540](https://doi.org/10.1016/j.softx.2023.101540). Daten/Software: https://www.topohub.org/ und https://github.com/piotrjurkiewicz/topohub | Herkunft und Struktur importierter Node-Link-JSON-Topologien | **kanonische Datensatz-/Softwarequelle**; konkrete Topologie, Version/Commit und Abrufdatum zusätzlich dokumentieren |
 | W-04 | React-Dokumentation, https://react.dev/ | aktuelles Frontend | **aktuell**; 19.2.x gemäß `package.json` |
 | W-05 | FastAPI-Dokumentation, https://fastapi.tiangolo.com/ | aktuelle HTTP-API | **aktuell**; exakte installierte Version aus reproduzierbarer Umgebung ergänzen |
 | W-06 | Vite-Dokumentation, https://vite.dev/ | Build- und Entwicklungsumgebung | **aktuell**; 5.4.x gemäß `package.json` |
 | W-07 | Python-Dokumentation, https://docs.python.org/3/ | Backend-Laufzeit | **aktuell**; Abnahmeumgebung nennt Python 3.12.14 |
-| W-08 | Verwendete Originalquelle der Nielsen-Heuristiken | heuristische HCI-Evaluation | **Beleglücke**: Kriterien werden verwendet, vollständige Literaturangabe fehlt |
-| W-09 | Verwendete Originalausgabe zu Shneidermans „Overview first, zoom and filter, then details-on-demand“ | Großgraph-Übersicht, Kürzel, Tooltip und Detailansicht | **Beleglücke**: genaue Ausgabe und Seitenangabe ergänzen |
+| W-08 | Nielsen, J. (1994): **Enhancing the Explanatory Power of Usability Heuristics**. In: *Proceedings of CHI ’94*, S. 152–158. DOI: [10.1145/191666.191729](https://doi.org/10.1145/191666.191729). Aktuelle Übersicht: https://www.nngroup.com/articles/ten-usability-heuristics/ | heuristische Evaluation, insbesondere Sichtbarkeit des Systemstatus, Kontrolle, Konsistenz, Fehlervermeidung und Fehlerdiagnose | **kanonischer HCI-Beleg** |
+| W-09 | Shneiderman, B. (1996): **The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations**. In: *Proceedings of the 1996 IEEE Symposium on Visual Languages*, S. 336–343. DOI: [10.1109/VL.1996.545307](https://doi.org/10.1109/VL.1996.545307). Autoren-PDF: https://www.cs.umd.edu/~ben/papers/Shneiderman1996eyes.pdf | „Overview first, zoom and filter, then details-on-demand“ als Grundlage für Großgraph-Übersicht, Kürzel, Tooltip und Detailansicht | **kanonischer Visualisierungsbeleg** |
 | W-10 | JSON-, XML- und gegebenenfalls GML-Spezifikation | formale Importformate | **optional**; GML ist derzeit offen und nicht implementiert |
 
 Eine lokale Erläuterung des Bonsai-Papers ist eine abgeleitete Verständnishilfe
@@ -190,7 +190,7 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 - Noch nicht erneut verfügbare Handout-Kopien bei späterem Eingang gegen den dokumentierten SHA-256 vergleichen.
 - `docs/handout.pdf` als kanonische Archivkopie verwenden und gleichhashige externe Dubletten nicht zusätzlich versionieren.
 - Streamlit-/NetworkX-Material in einen Archivbereich verschieben.
-- Literaturdaten für W-01 bis W-03 sowie W-08/W-09 vervollständigen.
+- Für die tatsächlich verwendeten Topologie-Dateien Version beziehungsweise Commit, Abrufdatum und dauerhafte URL ergänzen.
 - Finale Screenshots reproduzierbar protokollieren.
 - Nach Betreuerentscheidung die offene GML-Anforderung schließen.
 - Nach der Benutzerstudie Rohprotokoll, anonymisierte Auswertung und finale
