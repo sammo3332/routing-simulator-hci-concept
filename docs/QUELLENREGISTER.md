@@ -60,14 +60,14 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | ID | Datei | Rolle | Status |
 |---|---|---|---|
 | D-01 | [README.md](../README.md) | Funktionsumfang und Abgrenzung | **kanonisch für implementierten Umfang** |
-| D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur | **kanonisch für Ist-Architektur** |
+| D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur mit aktuellem System- und Sequenzdiagramm | **kanonisch für Ist-Architektur und Ablauf**, Diagrammstand 14. September 2026 |
 | D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | konsolidierte Soll-/Ist-Matrix mit Status, Abgrenzung und offenen Entscheidungen | **kanonisch für den dokumentierten Anforderungsstand**; am 14. September 2026 mit Code, Architektur und Sprint-Abnahme abgeglichen |
 | D-04 | [docs/BONSAI.md](BONSAI.md) | projektspezifische Bonsai-Greedy-Umsetzung und Grenzen | **kanonisch für Implementierungssemantik**, nicht Ersatz für W-01 |
 | D-05 | [docs/BONSAI_VALIDATION.md](BONSAI_VALIDATION.md) | unabhängige und exhaustive Validierung kleiner Graphen | **kanonischer Validierungsnachweis** |
 | D-06 | [docs/hci/HCI_EVALUATION.md](hci/HCI_EVALUATION.md) | formative Evaluation, Nutzungsszenarien und Studienprotokoll | **kanonisch**; empirische Studie noch offen |
 | D-07 | [docs/hci/SPRINT_ACCEPTANCE.md](hci/SPRINT_ACCEPTANCE.md) | technischer Abnahmezustand vom 9. September 2026 | **aktuell mit Einschränkung**; genannte SHAs sind Zwischenstände |
 | D-08 | [docs/handout.pdf](handout.pdf) | 7-seitiges PoC-Handout, Blob `65c1e9c275db626a16f4c11cfafdf291f9325267` | **kanonische Archivkopie, fachlich historisch/veraltet**; bytegleich mit der am 14. September 2026 geprüften externen Kopie |
-| D-09 | [docs/system_architecture.png](system_architecture.png) | früher Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **veraltet als Ist-Architektur**; zuletzt am 9. Juli 2026 geändert |
+| D-09 | [docs/system_architecture.png](system_architecture.png) | früher Streamlit-/NetworkX-Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **historisch und durch die Mermaid-Diagramme in `ARCHITECTURE.md` ersetzt**; zuletzt am 9. Juli 2026 geändert |
 
 ## Bild- und Evaluationsnachweise
 
@@ -111,7 +111,7 @@ Ausfälle.
 | Bonsai-Paper | Lokale Kopie und Link in `docs/BONSAI.md` bezeichnen sehr wahrscheinlich dieselbe Primärpublikation. | Hash der lokalen Kopie gegen das archivierte Original prüfen. |
 | Paper-Erläuterung | Kein Duplikat des Papers, sondern abgeleitete Erklärung. | Getrennt führen und W-01 beim Zitieren priorisieren. |
 | Sequenzdiagramme | Zwei sichtbar unterschiedliche historische Streamlit-Fassungen; keine identischen Duplikate. Eine Fassung enthält Bonsai-/Greedy-Aufrufe explizit, die andere ist verkürzt. | Beide archivieren; keines als aktuelle Ist-Architektur verwenden. |
-| Architekturdiagramme | Lokale Altentwürfe und `docs/system_architecture.png` gehören zur Streamlit-/`st.session_state`-/NetworkX-Familie; `ARCHITECTURE.md` beschreibt den aktuellen React/FastAPI-Stand. | Neues Diagramm aus dem aktuellen Modell erstellen; Altbilder klar als Archiv kennzeichnen. |
+| Architekturdiagramme | Lokale Altentwürfe und `docs/system_architecture.png` gehören zur Streamlit-/`st.session_state`-/NetworkX-Familie. Die Mermaid-Diagramme in `ARCHITECTURE.md` dokumentieren seit 14. September 2026 den aktuellen React/FastAPI-Datenfluss. | Mermaid-System- und Sequenzdiagramme als kanonisch verwenden; Altbilder nur als historische Designprovenienz führen. |
 | UI-Mockup und Repo-Screenshots | Kein Duplikat: Mockup ist Designinput, Screenshots sind ausgeführte Entwicklungszustände. | Getrennte Provenienz beibehalten. |
 | Anforderungen | Ausführlicher Soll-Stand, Handout und `REQUIREMENTS.md` überlappen, besitzen aber verschiedene Rollen. | Soll, Übergabestand und Ist-Abgleich ausdrücklich kennzeichnen. |
 | Gespräche/Chats | Thematische Wiederholungen, aber keine anzunehmenden binären Duplikate. | Entscheidungen nach Datum und Quelle in einem vertraulichen Decision-Log normalisieren. |
@@ -190,8 +190,6 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 - Noch nicht erneut verfügbare Handout-Kopien bei späterem Eingang gegen den dokumentierten SHA-256 vergleichen.
 - `docs/handout.pdf` als kanonische Archivkopie verwenden und gleichhashige externe Dubletten nicht zusätzlich versionieren.
 - Streamlit-/NetworkX-Material in einen Archivbereich verschieben.
-- Aktuelles Architektur- und Sequenzdiagramm für
-  React → FastAPI → SessionStore → Domänenkern erstellen.
 - Literaturdaten für W-01 bis W-03 sowie W-08/W-09 vervollständigen.
 - Finale Screenshots reproduzierbar protokollieren.
 - Nach Betreuerentscheidung die offene GML-Anforderung schließen.
