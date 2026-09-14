@@ -14,16 +14,33 @@ der implementierten Kernarchitektur.
 
 ## Systemkontext
 
+Stand des Diagramms: 14. September 2026.
+
 ```mermaid
-flowchart LR
-    U["Nutzer"] --> F["React-Frontend"]
-    F -->|"HTTP /api"| A["FastAPI"]
-    A --> S["In-Memory SessionStore"]
-    A --> C["Failover-Domänenkern"]
-    C --> P["Topologie-Parser"]
-    C --> R["Referenzrouting"]
-    C --> B["Bonsai-Builder und -Routing"]
+flowchart TB
+    U["Nutzer:in"] -->|"Import, Konfiguration, Ausfall"| F["React-Frontend mit Vite"]
+
+    subgraph Browser["Präsentationsschicht"]
+        F --> V["SVG-Graph, Status, Tabellen und Ereignisprotokoll"]
+        F --> B["Browserzustand: Session-ID und letzte API-Antwort"]
+    end
+
+    F -->|"JSON über HTTP /api"| A["FastAPI"]
+
+    subgraph Backend["Anwendungs- und Domänenschicht"]
+        A --> S["In-Memory SessionStore"]
+        A --> C["UI-unabhängiger Failover-Domänenkern"]
+        C --> I["TopoHub-JSON- und SNDlib-XML-Parser"]
+        C --> R["Shortest Path und Bonsai-Greedy"]
+        C --> X["Ausfallsuche, Validierung und Serialisierung"]
+    end
+
+    A -->|"vollständiger konsistenter Zustand"| F
 ```
+
+Das Diagramm ersetzt die ältere Streamlit-/`st.session_state`-Darstellung in
+`docs/system_architecture.png`. Diese bleibt ausschließlich als historischer
+Entwurfsstand erhalten.
 
 Das Frontend wird während der Entwicklung durch Vite bereitgestellt. Requests an
 `/api` werden an die FastAPI-Anwendung auf `127.0.0.1:8000` weitergeleitet.
@@ -159,28 +176,51 @@ dargestellt. Dadurch entstehen drei fachliche UI-Zustände:
 
 ## Datenfluss
 
+Stand des Diagramms: 14. September 2026.
+
 ```mermaid
 sequenceDiagram
-    actor U as Nutzer
-    participant F as React
+    actor U as Nutzer:in
+    participant F as React-Frontend
     participant A as FastAPI
     participant S as SessionStore
     participant C as Domänenkern
 
-    U->>F: Topologiedatei auswählen
-    F->>A: POST /api/sessions/import
-    A->>C: Datei parsen und validieren
-    A->>S: Session anlegen
-    A->>C: Baseline und aktuellen Zustand berechnen
-    A-->>F: Session, Topologie und Routingergebnis
+    alt Topologie importieren
+        U->>F: TopoHub-JSON oder SNDlib-XML wählen
+        F->>A: POST /api/sessions/import
+        A->>C: Datei parsen und validieren
+        C-->>A: normalisierte Topologie
+        A->>S: neue Session anlegen
+        A->>C: Baseline und aktuellen Zustand berechnen
+        C-->>A: Routing- und Fehlerergebnis
+        A-->>F: Session-ID und vollständiger Zustand
+    else Ziel, Metrik, Strategie oder Ausfälle ändern
+        U->>F: Konfiguration ändern oder Kante schalten
+        F->>A: PATCH /api/sessions/{session_id}
+        A->>S: Session lesen, validieren und atomar ersetzen
+        S-->>A: aktualisierte Session
+        A->>C: Shortest Path oder Bonsai-Greedy auswerten
+        C-->>A: Pfade, Status, Änderungen und Bonsai-Trace
+        A-->>F: vollständiger aktualisierter Zustand
+    end
 
-    U->>F: Ziel, Metrik oder Ausfälle ändern
-    F->>A: PATCH /api/sessions/{id}
-    A->>S: Zustand validieren und ersetzen
-    A->>C: Routing neu berechnen
-    A-->>F: aktualisierter Gesamtzustand
-    F-->>U: Graph, Tabelle und Interpretation aktualisieren
+    opt Kritischen Ausfall suchen
+        U->>F: automatische Prüfung starten
+        F->>A: POST /api/sessions/{session_id}/critical-failure-search
+        A->>S: aktive Session lesen
+        A->>C: minimale Ausfallkombinationen prüfen
+        C-->>A: erster kritischer Fall oder kein Treffer
+        A-->>F: Suchergebnis
+    end
+
+    F->>F: Graph, Status, Tabellen und Ereignisprotokoll rendern
+    F-->>U: Normalzustand, Failover oder Fehlerklasse erklären
 ```
+
+Der Ablauf ist synchron auf Request-Ebene. Er enthält weder Streamlit-Reruns
+noch eine garantierte Hintergrundverarbeitung oder einen festen
+12-ms-Leistungswert.
 
 Die API liefert nach jeder Änderung einen vollständigen konsistenten Zustand.
 Damit benötigt das Frontend keine eigene Rekonstruktion fachlicher
