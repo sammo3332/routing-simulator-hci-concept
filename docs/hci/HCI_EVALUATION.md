@@ -253,6 +253,10 @@ formuliert werden.
 
 ## 7. Screenshot-Protokoll für die Bachelorarbeit
 
+Das separate [Screenshot-Register](SCREENSHOT_REGISTER.md) dokumentiert
+Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen, die sechs fehlenden
+Pflichtaufnahmen und das verbindliche Aufnahmeprotokoll.
+
 Die vorhandenen Bilder dokumentieren die Entwicklung, enthalten aber teilweise
 Browserrahmen oder eingeblendete Browser-Erweiterungen. Für die endgültige
 Arbeit sollten ausgewählte Zustände nochmals kontrolliert aufgenommen werden:
