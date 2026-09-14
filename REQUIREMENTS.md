@@ -45,12 +45,14 @@ Widersprüchen sind der aktuelle Code, die
 | NFA-8 | Reaktionsverhalten | Zustandsänderungen ohne erfundene oder simulierte Leistungswerte konsistent beantworten | **umgesetzt für den Prototypablauf**; keine garantierte Latenz, keine Hintergrund-Worker und kein 12-ms-Zielwert |
 | NFA-9 | Sicherheit beim Import | Dateigröße begrenzen, IDs und Endpunkte validieren sowie DTD-/Entity-Deklarationen in XML ablehnen | **umgesetzt** |
 
-Die HCI-Ziele orientieren sich unter anderem an Sichtbarkeit des Systemstatus,
-Kontrolle, Konsistenz, Fehlervermeidung und „Übersicht zuerst, Details auf
-Anfrage“. Die noch zu vervollständigenden wissenschaftlichen Originalbelege sind
-im [Quellenregister](docs/QUELLENREGISTER.md) als W-08 und W-09 dokumentiert.
-Damit ersetzt diese Fassung den früheren nicht auflösbaren Platzhalter
-`[cite: 1]`.
+Die HCI-Ziele orientieren sich an Nielsens Heuristiken, insbesondere
+Sichtbarkeit des Systemstatus, Kontrolle, Konsistenz, Fehlervermeidung und
+Fehlerdiagnose ([Nielsen 1994](https://doi.org/10.1145/191666.191729)).
+Für große Graphen folgt die Darstellung Shneidermans Prinzip „Overview first,
+zoom and filter, then details-on-demand“
+([Shneiderman 1996](https://doi.org/10.1109/VL.1996.545307)).
+Die vollständigen Angaben stehen im
+[Quellenregister](docs/QUELLENREGISTER.md) unter W-08 und W-09.
 
 ## Verbindliche Abgrenzung von FA-4
 
