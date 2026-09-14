@@ -68,6 +68,7 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | D-07 | [docs/hci/SPRINT_ACCEPTANCE.md](hci/SPRINT_ACCEPTANCE.md) | technischer Abnahmezustand vom 9. September 2026 | **aktuell mit Einschränkung**; genannte SHAs sind Zwischenstände |
 | D-08 | [docs/handout.pdf](handout.pdf) | 7-seitiges PoC-Handout, Blob `65c1e9c275db626a16f4c11cfafdf291f9325267` | **kanonische Archivkopie, fachlich historisch/veraltet**; bytegleich mit der am 14. September 2026 geprüften externen Kopie |
 | D-09 | [docs/system_architecture.png](system_architecture.png) | früher Streamlit-/NetworkX-Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **historisch und durch die Mermaid-Diagramme in `ARCHITECTURE.md` ersetzt**; zuletzt am 9. Juli 2026 geändert |
+| D-10 | [docs/hci/SCREENSHOT_REGISTER.md](hci/SCREENSHOT_REGISTER.md) | Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen und Protokoll für finale Screenshots | **kanonisch für Bildprovenienz und Reproduzierbarkeit** |
 
 ## Bild- und Evaluationsnachweise
 
@@ -107,7 +108,7 @@ Ausfälle.
 
 | Familie | Urteil | Maßnahme |
 |---|---|---|
-| PoC-Handouts | Die am 14. September 2026 geprüfte externe Kopie ist **bytegleich** mit `docs/handout.pdf`: Git-Blob-SHA `65c1e9c275db626a16f4c11cfafdf291f9325267`, SHA-256 `403283e7c4f7625405403ce8e138b74652fc65a1c0bf36ea70227a1a137ce363`, 7 Seiten. PDF-Metadaten: erstellt/geändert am 1. Juli 2026, Autor `HO Ta`, Microsoft Word für Microsoft 365. | `docs/handout.pdf` als einzige kanonische Archivkopie behalten; gleichhashige externe Kopien sind Dubletten. Das Handout bleibt fachlich historisch, weil es GML/JSON, Streamlit-Session-State, entkoppelte Hintergrundberechnung, Delivery Rate/Stretch und die alte Sequenzarchitektur beschreibt. |
+| PoC-Handouts | Die am 14. September 2026 geprüfte externe Kopie ist **bytegleich** mit `docs/handout.pdf`: Git-Blob-SHA `65c1e9c275db626a16f4c11cfafdf291f9325267`, SHA-256 `403283e7c4f7625405403ce8e138b74652fc65a1c0bf36ea70227a1a137ce363`, 7 Seiten. PDF-Metadaten: erstellt/geändert am 1. Juli 2026, erzeugt mit Microsoft Word für Microsoft 365. | `docs/handout.pdf` als einzige kanonische Archivkopie behalten; gleichhashige externe Kopien sind Dubletten. Das Handout bleibt fachlich historisch, weil es GML/JSON, Streamlit-Session-State, entkoppelte Hintergrundberechnung, Delivery Rate/Stretch und die alte Sequenzarchitektur beschreibt. |
 | Bonsai-Paper | Lokale Kopie und Link in `docs/BONSAI.md` bezeichnen sehr wahrscheinlich dieselbe Primärpublikation. | Hash der lokalen Kopie gegen das archivierte Original prüfen. |
 | Paper-Erläuterung | Kein Duplikat des Papers, sondern abgeleitete Erklärung. | Getrennt führen und W-01 beim Zitieren priorisieren. |
 | Sequenzdiagramme | Zwei sichtbar unterschiedliche historische Streamlit-Fassungen; keine identischen Duplikate. Eine Fassung enthält Bonsai-/Greedy-Aufrufe explizit, die andere ist verkürzt. | Beide archivieren; keines als aktuelle Ist-Architektur verwenden. |
@@ -132,7 +133,6 @@ Am 14. September 2026 wurde eine erneut bereitgestellte externe Kopie gegen
 | Binäres Urteil | **exakte Dublette (bytegleich)** |
 | Seitenzahl | 7 |
 | PDF-Erstellung/Änderung | 1. Juli 2026, 21:41:58 +02:00 |
-| Autor-Metadatum | `HO Ta` |
 | Erzeuger | Microsoft Word für Microsoft 365 |
 | Sichtprüfung | alle sieben Seiten renderbar; Anforderungen, alte Architektur/Sequenz, User Stories, Mockup und Tool-Screenshot vorhanden |
 | Kanonisierung | `docs/handout.pdf` als einzige Archivkopie |
@@ -191,7 +191,7 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 - `docs/handout.pdf` als kanonische Archivkopie verwenden und gleichhashige externe Dubletten nicht zusätzlich versionieren.
 - Streamlit-/NetworkX-Material in einen Archivbereich verschieben.
 - Für die tatsächlich verwendeten Topologie-Dateien Version beziehungsweise Commit, Abrufdatum und dauerhafte URL ergänzen.
-- Finale Screenshots reproduzierbar protokollieren.
+- Finale Screenshots F-01 bis F-06 nach dem verbindlichen Protokoll in `docs/hci/SCREENSHOT_REGISTER.md` aufnehmen und die offene Browserabnahme abschließen.
 - Nach Betreuerentscheidung die offene GML-Anforderung schließen.
 - Nach der Benutzerstudie Rohprotokoll, anonymisierte Auswertung und finale
   Ergebnisquelle ergänzen.
