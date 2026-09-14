@@ -14,9 +14,11 @@ Diese Abnahme bewertet den vollständigen Vertikalschnitt aus
 - Graphvisualisierung sowie
 - den Ergänzungen für große Topologien.
 
-Der Implementierungsstand wurde mit Pull Request 2 in `main` integriert. Die
-HCI-Evaluation mit Entwicklungsbildern liegt anschließend auf dem Branch
-`feature/bonsai-greedy-routing`.
+Der Implementierungsstand wurde mit Pull Request 2 in `main` integriert.
+Die HCI-Evaluation und die anschließenden Dokumentationskorrekturen wurden
+danach ebenfalls nach `main` übernommen. Der frühere Hinweis auf
+`feature/bonsai-greedy-routing` beschreibt nur die Entstehungsgeschichte und
+nicht mehr den Ablageort der Dokumentation.
 
 ## 2. Prüfumgebung
 
@@ -28,6 +30,7 @@ HCI-Evaluation mit Entwicklungsbildern liegt anschließend auf dem Branch
 | npm | 11.9.0 |
 | Implementierung in `main` | `40669bb` |
 | veröffentlichte HCI-Dokumentation | `94f947a` |
+| geprüfter Dokumentationsstand vor Abschlussfortschreibung | `75223b8` |
 
 ## 3. Automatische Abnahme
 
@@ -42,6 +45,11 @@ HCI-Evaluation mit Entwicklungsbildern liegt anschließend auf dem Branch
 Die beiden ausgegebenen Python-Warnungen betreffen angekündigte
 Deprecations in Testabhängigkeiten (`Starlette/httpx` und `anyio`). Sie sind
 keine fehlgeschlagenen Produktfunktionen.
+
+Die späteren Commits bis einschließlich `75223b8` änderten ausschließlich
+Dokumentation. Die oben genannten Testergebnisse bleiben der technische
+Abnahmenachweis für `40669bb`; sie werden nicht als erneute Ausführung auf
+einem späteren Dokumentationscommit ausgegeben.
 
 ## 4. Fachliche Referenzprüfungen
 
@@ -77,6 +85,10 @@ vorgegebenen Ablaufs bedienen. Ein historischer Screenshot ersetzt keine
 Beobachtung der finalen Version.
 
 ## 6. Manuelle Abnahmecheckliste
+
+Die Bildprovenienz und das Aufnahmeprotokoll für die finale Abnahme stehen im
+[Screenshot-Register](SCREENSHOT_REGISTER.md). Der priorisierte weitere Ablauf
+steht in [OPEN_ITEMS.md](../OPEN_ITEMS.md).
 
 Die folgenden Punkte sind auf einem sauberen lokalen Start auszuführen:
 
