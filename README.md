@@ -81,6 +81,20 @@ eine kleine Benutzerstudie stehen in
 Der technische und fachliche Abnahmestand ist in
 [docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) zusammengefasst.
 
+## Dokumentationsübersicht
+
+| Dokument | Zweck |
+|---|---|
+| [REQUIREMENTS.md](REQUIREMENTS.md) | konsolidierte Soll-/Ist-Anforderungen, offene Entscheidungen und Abgrenzung |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | aktuelle React/FastAPI-Architektur und Sequenzabläufe |
+| [docs/BONSAI.md](docs/BONSAI.md) | Bonsai-Greedy-Semantik und bewusste Grenzen |
+| [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) | unabhängige fachliche Validierung |
+| [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Evaluation und Studienprotokoll |
+| [docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) | technische und manuelle Abnahme |
+| [docs/hci/SCREENSHOT_REGISTER.md](docs/hci/SCREENSHOT_REGISTER.md) | Bildprovenienz und Protokoll für finale Screenshots |
+| [docs/QUELLENREGISTER.md](docs/QUELLENREGISTER.md) | Literatur-, Quellen- und Versionsregister |
+| [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) | priorisierter Abschlussplan und Entscheidungspunkte |
+
 ## Graphansicht bedienen
 
 - Mit dem Mausrad wird am Mauszeiger zwischen 50 % und 600 % gezoomt.
