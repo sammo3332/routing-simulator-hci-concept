@@ -61,7 +61,7 @@ Beziehungen zu Nachfolgeversionen enthalten.
 |---|---|---|---|
 | D-01 | [README.md](../README.md) | Funktionsumfang und Abgrenzung | **kanonisch für implementierten Umfang** |
 | D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur | **kanonisch für Ist-Architektur** |
-| D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | knapper Soll-/Ist-Auszug | **ergänzend**; unvollständig und mit nicht aufgelöstem `[cite: 1]` |
+| D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | konsolidierte Soll-/Ist-Matrix mit Status, Abgrenzung und offenen Entscheidungen | **kanonisch für den dokumentierten Anforderungsstand**; am 14. September 2026 mit Code, Architektur und Sprint-Abnahme abgeglichen |
 | D-04 | [docs/BONSAI.md](BONSAI.md) | projektspezifische Bonsai-Greedy-Umsetzung und Grenzen | **kanonisch für Implementierungssemantik**, nicht Ersatz für W-01 |
 | D-05 | [docs/BONSAI_VALIDATION.md](BONSAI_VALIDATION.md) | unabhängige und exhaustive Validierung kleiner Graphen | **kanonischer Validierungsnachweis** |
 | D-06 | [docs/hci/HCI_EVALUATION.md](hci/HCI_EVALUATION.md) | formative Evaluation, Nutzungsszenarien und Studienprotokoll | **kanonisch**; empirische Studie noch offen |
@@ -152,11 +152,10 @@ Am 14. September 2026 wurde eine erneut bereitgestellte externe Kopie gegen
 5. **Round-Robin und RR-Swapping** sind nicht Teil des aktuellen Pflichtumfangs.
 6. **SQLite/Persistenz** gehört nicht zur aktuellen Architektur; Sessions sind
    flüchtig und prozesslokal.
-7. **`REQUIREMENTS.md` enthält `[cite: 1]`** ohne auflösbaren
-   Literaturverweis.
-8. **`SPRINT_ACCEPTANCE.md` nennt `40669bb` und `94f947a`** als
-   Abnahmegrundlagen. Der aktuelle `main`-Stand ist `73a2acd…`.
-9. **Empirische Gebrauchstauglichkeit** ist noch nicht nachgewiesen. Das
+7. **`SPRINT_ACCEPTANCE.md` nennt `40669bb` und `94f947a`** als
+   Abnahmegrundlagen. Der aktuelle `main`-Stand ist neuer; die genannten SHAs
+   bleiben als historische Abnahmebasis gültig.
+8. **Empirische Gebrauchstauglichkeit** ist noch nicht nachgewiesen. Das
    Studienprotokoll ist vorhanden, die Benutzerstudie aber noch offen.
 
 ## Kanonische Hierarchie bei Widersprüchen
@@ -194,7 +193,6 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 - Aktuelles Architektur- und Sequenzdiagramm für
   React → FastAPI → SessionStore → Domänenkern erstellen.
 - Literaturdaten für W-01 bis W-03 sowie W-08/W-09 vervollständigen.
-- Den verwaisten `[cite: 1]`-Platzhalter reparieren.
 - Finale Screenshots reproduzierbar protokollieren.
 - Nach Betreuerentscheidung die offene GML-Anforderung schließen.
 - Nach der Benutzerstudie Rohprotokoll, anonymisierte Auswertung und finale
