@@ -1,6 +1,6 @@
 # Formative HCI-Evaluation des Failover Routing Visualizers
 
-Stand: 9. September 2026
+Stand: 15. September 2026
 
 ## 1. Zweck und Status
 
@@ -14,6 +14,26 @@ angenommenen Betreuerperspektive. Es verbindet drei Arten von Evidenz:
 Die Expertenprüfung ist **keine empirische Benutzerstudie**. Es werden daher
 keine Teilnehmenden, Bearbeitungszeiten oder Erfolgsquoten erfunden. Solche
 Ergebnisse dürfen erst nach der tatsächlichen Durchführung eingetragen werden.
+
+### Evaluationsaufbau im Überblick
+
+```mermaid
+flowchart TB
+    UI["Formative Expertenprüfung"]
+    DEV["Vergleich der Entwicklungsstände"]
+    STUDY["Geplante Benutzerstudie"]
+    QUESTIONS["Evaluationsfragen EF-1 bis EF-6"]
+    FINDINGS["Belegte Befunde und Verbesserungen"]
+
+    UI --> QUESTIONS
+    DEV --> QUESTIONS
+    STUDY --> QUESTIONS
+    QUESTIONS --> FINDINGS
+```
+
+Die Expertenprüfung und die dokumentierten Entwicklungsstände liefern bereits
+formative Evidenz. Empirische Aussagen entstehen erst durch die noch
+durchzuführende Benutzerstudie.
 
 ## 2. Evaluationsfragen
 
@@ -147,6 +167,21 @@ Tooltip vorzuziehen.
 
 ## 5. Nutzungsszenarien für die Evaluation
 
+```mermaid
+flowchart TB
+    A["A · Normalzustand verstehen"]
+    B["B · Kantenausfall untersuchen"]
+    C["C · Routingverfahren vergleichen"]
+    D["D · Bonsai-Routingfehler erkennen"]
+    E["E · Große Topologie navigieren"]
+
+    A --> B --> C --> D --> E
+```
+
+Die Reihenfolge führt vom einfachen Ablesen des Systemzustands über eine
+reversible Störung bis zur fachlich anspruchsvollen Fehlerdiagnose und zur
+Navigation einer großen Topologie.
+
 ### Szenario A: Normalzustand verstehen
 
 **Ausgangslage:** `atlanta.xml`, keine Ausfälle, kürzester Pfad.
@@ -209,6 +244,7 @@ im Graphen zu verlieren.
 - Einzeltermine von ungefähr 25 bis 35 Minuten,
 - Think-Aloud während der Aufgaben,
 - identische Topologien und Aufgabenreihenfolge,
+- standardisierte System Usability Scale (SUS) nach den Aufgaben,
 - Bildschirmaufnahme nur nach ausdrücklicher Einwilligung,
 - keine personenbezogenen Daten im Ergebnisbericht.
 
@@ -219,7 +255,26 @@ im Graphen zu verlieren.
 3. Szenarien A bis E nacheinander bearbeiten lassen.
 4. Pro Aufgabe Erfolg, Zeit, Hilfen, Fehlhandlungen und Kommentare notieren.
 5. Nach jeder Aufgabe eine Schwierigkeitseinschätzung von 1 bis 7 erfassen.
-6. Abschließend drei offene Fragen stellen.
+6. Anschließend die zehn standardisierten SUS-Aussagen beantworten lassen.
+7. Abschließend drei offene Fragen stellen.
+
+```mermaid
+flowchart TB
+    CONSENT["Einführung, Datenschutz und Einwilligung"]
+    PRIOR["Vorkenntnisse erfassen"]
+    TASKS["Szenarien A bis E mit Think-Aloud"]
+    RECORD["Erfolg, Zeit, Hilfen und Fehler protokollieren"]
+    RATING["Schwierigkeit je Aufgabe bewerten"]
+    SUS["System Usability Scale ausfüllen"]
+    INTERVIEW["Offene Abschlussfragen"]
+    ANALYSIS["Anonymisiert auswerten"]
+
+    CONSENT --> PRIOR --> TASKS --> RECORD
+    RECORD --> RATING --> SUS --> INTERVIEW --> ANALYSIS
+```
+
+Die SUS wird nach der Nutzung und vor dem offenen Abschlussgespräch erhoben,
+damit die Antworten möglichst die unmittelbare Nutzungserfahrung wiedergeben.
 
 ### 6.3 Neutrale Abschlussfragen
 
