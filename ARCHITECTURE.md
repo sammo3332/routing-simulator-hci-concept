@@ -215,7 +215,7 @@ sequenceDiagram
 
     alt Topologie importieren
         U->>F: TopoHub-JSON oder SNDlib-XML wählen
-        F->>A: POST /api/sessions/import (Datei-Bytes; Dateiname im Query)
+        F->>A: POST /api/sessions/import mit Datei-Bytes
         A->>C: Datei parsen und validieren
         C-->>A: normalisierte Topologie
         A->>S: neue Session anlegen
@@ -224,7 +224,7 @@ sequenceDiagram
         A-->>F: Session-ID und vollständiger Zustand
     else Ziel, Metrik, Strategie oder Ausfälle ändern
         U->>F: Konfiguration ändern oder Kante schalten
-        F->>A: PATCH /api/sessions/{session_id} (JSON)
+        F->>A: PATCH /api/sessions/{session_id} mit JSON
         A->>S: Session lesen, validieren und atomar ersetzen
         S-->>A: aktualisierte Session
         A->>C: Shortest Path oder Bonsai-Greedy auswerten
@@ -234,7 +234,7 @@ sequenceDiagram
 
     opt Kritischen Ausfall suchen
         U->>F: automatische Prüfung starten
-        F->>A: POST /api/sessions/{session_id}/critical-failure-search (JSON)
+        F->>A: POST /api/sessions/{session_id}/critical-failure-search mit JSON
         A->>S: aktive Session lesen
         A->>C: minimale Ausfallkombinationen prüfen
         C-->>A: erster kritischer Fall oder kein Treffer
