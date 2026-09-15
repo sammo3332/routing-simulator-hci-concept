@@ -14,18 +14,19 @@ der implementierten Kernarchitektur.
 
 ## Systemkontext
 
-Stand des Diagramms: 14. September 2026.
+Stand des Diagramms: 15. September 2026.
 
 ```mermaid
 flowchart TB
-    U["Nutzer:in"] -->|"Import, Konfiguration, Ausfall"| F["React-Frontend mit Vite"]
+    U["Nutzer:in"] -->|"Import, Konfiguration, Ausfall"| F["React-Frontend"]
 
     subgraph Browser["Präsentationsschicht"]
         F --> V["SVG-Graph, Status, Tabellen und Ereignisprotokoll"]
-        F --> B["Browserzustand: Session-ID und letzte API-Antwort"]
+        F --> B["Flüchtiger React-Zustand: Session-ID und letzte API-Antwort"]
     end
 
-    F -->|"JSON über HTTP /api"| A["FastAPI"]
+    T["Vite: Entwicklungsserver und Produktions-Build"] -.->|"stellt bereit bzw. erzeugt"| F
+    F -->|"HTTP /api: Datei-Bytes oder JSON"| A["FastAPI"]
 
     subgraph Backend["Anwendungs- und Domänenschicht"]
         A --> S["In-Memory SessionStore"]
@@ -42,10 +43,31 @@ Das Diagramm ersetzt die ältere Streamlit-/`st.session_state`-Darstellung in
 `docs/system_architecture.png`. Diese bleibt ausschließlich als historischer
 Entwurfsstand erhalten.
 
-Das Frontend wird während der Entwicklung durch Vite bereitgestellt. Requests an
-`/api` werden an die FastAPI-Anwendung auf `127.0.0.1:8000` weitergeleitet.
-Frontend und Backend kommunizieren ausschließlich über JSON-basierte
-HTTP-Schnittstellen.
+Das Frontend wird während der Entwicklung durch Vite bereitgestellt; für die
+Produktion erzeugt Vite statische Dateien. Vite ist damit ein Entwicklungs- und
+Build-Werkzeug und kein fachliches Laufzeitmodul. Der lokale Vite-Server leitet
+Requests an `/api` an die FastAPI-Anwendung auf `127.0.0.1:8000` weiter.
+
+Die Kommunikation erfolgt über HTTP. Konfigurationsänderungen und Suchanfragen
+verwenden JSON. Beim Topologieimport sendet das Frontend dagegen die Datei als
+`application/octet-stream`; der Dateiname steht im Queryparameter. Sämtliche
+API-Antworten sind JSON.
+
+### Deploymentstatus
+
+Das Repository enthält derzeit keine Vercel Function, Rewrite-Regel oder andere
+Produktionskonfiguration, die `/api` an die FastAPI-Anwendung weiterleitet. Die
+öffentliche Vercel-URL stellt den statischen Vite-Build bereit. Eine Prüfung am
+15. September 2026 ergab für
+[`GET /api/health`](https://routing-simulator-hci-concept.vercel.app/api/health)
+jedoch `404 NOT_FOUND`.
+
+Damit ist das vollständige System derzeit lokal mit getrennt gestartetem Vite-
+und FastAPI-Prozess funktionsfähig. Das öffentliche Deployment enthält dagegen
+noch kein erreichbares Backend; Import und Simulation können dort deshalb nicht
+als funktionsfähig abgenommen werden. Die Bereitstellung des Backends oder eine
+ausdrückliche Kennzeichnung als reine Frontend-Vorschau ist ein offener
+Deploymentpunkt.
 
 ## Schichten und Verantwortlichkeiten
 
@@ -61,9 +83,11 @@ Die Präsentationsschicht befindet sich unter `src/`. Sie übernimmt:
 - Anzeige von Systemzustand, Erreichbarkeit und Ereignisprotokoll,
 - verständliche Interpretation der Auswirkungen eines Fehlers.
 
-Der Browser hält die für die Interaktion benötigte Session-ID sowie die jeweils
-aktuelle API-Antwort. Die fachliche Routingberechnung findet nicht im Frontend
-statt.
+React hält die für die Interaktion benötigte Session-ID, die jeweils aktuelle
+API-Antwort sowie reine Darstellungszustände in `useState`. Dieser Zustand ist
+nicht in `localStorage`, `sessionStorage` oder einer Browserdatenbank
+persistiert und geht beim Neuladen verloren. Die fachliche Routingberechnung
+findet nicht im Frontend statt.
 
 ### 2. Anwendungsschicht: FastAPI
 
@@ -75,7 +99,7 @@ bereit:
 | `GET` | `/api/health` | Verfügbarkeitsprüfung |
 | `POST` | `/api/sessions/import` | Topologie importieren, Session anlegen und Ausgangszustand berechnen |
 | `PATCH` | `/api/sessions/{session_id}` | Ziel, Metrik oder ausgefallene Kanten ändern und Routing neu berechnen |
-| `POST` | `/api/sessions/{session_id}/critical-failure-search` | Kleinste kritische Ausfallkombination für die aktive Strategie suchen |
+| `POST` | `/api/sessions/{session_id}/critical-failure-search` | Im Shortest-Path-Modus kleinste physisch trennende, im Bonsai-Modus kleinste routingkritische Ausfallkombination suchen |
 
 Die API validiert Eingaben, koordiniert Sessionzustand und Domänenkern und
 liefert eine für das Frontend normalisierte Antwort.
@@ -164,19 +188,22 @@ Für jede Auswertung berechnet der Domänenkern:
 - `changed_node_ids`: Knoten, deren aktueller Pfad von der Baseline abweicht,
 - `affected_node_ids`: zuvor erreichbare Knoten, die das Ziel nicht mehr erreichen.
 
-In der Oberfläche werden unerreichbare Knoten aus
-`affected_node_ids` getrennt von den verbleibenden umgeleiteten Knoten
-dargestellt. Dadurch entstehen drei fachliche UI-Zustände:
+Im Shortest-Path-Modus leitet die Oberfläche unerreichbare Knoten aus
+`affected_node_ids` ab. Im Bonsai-Modus verwendet sie die getrennten Mengen
+`physically_unreachable_node_ids` und `routing_failure_node_ids`. Umgeleitete
+Knoten sind die verbleibenden Einträge aus `changed_node_ids`. Dadurch entstehen
+vier fachliche UI-Zustände:
 
 | Zustand | Bedingung |
 | --- | --- |
 | Normalbetrieb | keine Kante ausgefallen |
-| Failover aktiv | mindestens eine Kante ausgefallen, aber kein Knoten unerreichbar |
-| Teilnetz unerreichbar | mindestens ein zuvor erreichbarer Knoten ohne aktuellen Pfad |
+| Failover aktiv | mindestens eine Kante ausgefallen, aber weder physische Trennung noch Bonsai-Routingfehler |
+| Physisch getrennt | mindestens ein Knoten ist im verbleibenden physischen Graphen vom Ziel getrennt |
+| Bonsai-Routingfehler | mindestens ein physisch erreichbarer Knoten endet mit `dead_end` oder `loop`; dieser Zustand besitzt in der Statusanzeige Vorrang |
 
 ## Datenfluss
 
-Stand des Diagramms: 14. September 2026.
+Stand des Diagramms: 15. September 2026.
 
 ```mermaid
 sequenceDiagram
@@ -188,7 +215,7 @@ sequenceDiagram
 
     alt Topologie importieren
         U->>F: TopoHub-JSON oder SNDlib-XML wählen
-        F->>A: POST /api/sessions/import
+        F->>A: POST /api/sessions/import (Datei-Bytes; Dateiname im Query)
         A->>C: Datei parsen und validieren
         C-->>A: normalisierte Topologie
         A->>S: neue Session anlegen
@@ -197,7 +224,7 @@ sequenceDiagram
         A-->>F: Session-ID und vollständiger Zustand
     else Ziel, Metrik, Strategie oder Ausfälle ändern
         U->>F: Konfiguration ändern oder Kante schalten
-        F->>A: PATCH /api/sessions/{session_id}
+        F->>A: PATCH /api/sessions/{session_id} (JSON)
         A->>S: Session lesen, validieren und atomar ersetzen
         S-->>A: aktualisierte Session
         A->>C: Shortest Path oder Bonsai-Greedy auswerten
@@ -207,7 +234,7 @@ sequenceDiagram
 
     opt Kritischen Ausfall suchen
         U->>F: automatische Prüfung starten
-        F->>A: POST /api/sessions/{session_id}/critical-failure-search
+        F->>A: POST /api/sessions/{session_id}/critical-failure-search (JSON)
         A->>S: aktive Session lesen
         A->>C: minimale Ausfallkombinationen prüfen
         C-->>A: erster kritischer Fall oder kein Treffer

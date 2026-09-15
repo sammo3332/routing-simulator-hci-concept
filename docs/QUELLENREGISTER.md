@@ -1,9 +1,9 @@
 # Quellen- und Versionsregister
 
-Stand: 14. September 2026  
+Stand: 15. September 2026
 Repository: `sammo3332/routing-simulator-hci-concept`  
 Geprüfter Branch: `main`  
-Geprüfter Stand: `73a2acdcecff5496b3e750ba1734fa65f75f080e` (9. September 2026)
+Geprüfter Stand: `11a67d94bb645e79beef62c05e9da821e6fdb4a8` (15. September 2026)
 
 ## Zweck
 
@@ -60,7 +60,7 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | ID | Datei | Rolle | Status |
 |---|---|---|---|
 | D-01 | [README.md](../README.md) | Funktionsumfang und Abgrenzung | **kanonisch für implementierten Umfang** |
-| D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur mit aktuellem System- und Sequenzdiagramm | **kanonisch für Ist-Architektur und Ablauf**, Diagrammstand 14. September 2026 |
+| D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur mit aktuellem System- und Sequenzdiagramm | **kanonisch für Ist-Architektur und Ablauf**, Diagrammstand 15. September 2026; lokaler Gesamtablauf und unvollständiges öffentliches Deployment getrennt dokumentiert |
 | D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | konsolidierte Soll-/Ist-Matrix mit Status, Abgrenzung und offenen Entscheidungen | **kanonisch für den dokumentierten Anforderungsstand**; am 14. September 2026 mit Code, Architektur und Sprint-Abnahme abgeglichen |
 | D-04 | [docs/BONSAI.md](BONSAI.md) | projektspezifische Bonsai-Greedy-Umsetzung und Grenzen | **kanonisch für Implementierungssemantik**, nicht Ersatz für W-01 |
 | D-05 | [docs/BONSAI_VALIDATION.md](BONSAI_VALIDATION.md) | unabhängige und exhaustive Validierung kleiner Graphen | **kanonischer Validierungsnachweis** |

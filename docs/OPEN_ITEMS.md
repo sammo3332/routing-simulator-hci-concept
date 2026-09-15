@@ -22,6 +22,8 @@ Benutzerstudie benötigen.
 - private PDF-Autorenmetadaten aus dem öffentlichen Register entfernt
 - Python-3.12-Abhängigkeiten vollständig mit SHA-256-Prüfsummen gesperrt und
   durch eine isolierte Neuinstallation sowie 45 Backend-Tests verifiziert
+- Ist-Architektur gegen Code, lokalen HTTP-Ablauf und öffentliches Deployment
+  geprüft; Datenformate, Vite-Rolle, React-Zustand und Deploymentgrenze korrigiert
 
 ## Vor der Betreuerabnahme zu entscheiden
 
@@ -41,6 +43,7 @@ Benutzerstudie benötigen.
 | hoch | T-02 | sechs finale Screenshots F-01 bis F-06 aufnehmen | vollständige Metadaten nach `docs/hci/SCREENSHOT_REGISTER.md` |
 | hoch | T-03 | Benutzerstudie durchführen | Einwilligung, anonymisierte Rohdaten und vollständig ausgefüllte Aufgabenbögen |
 | hoch | T-04 | Benutzerstudie auswerten | Erfolgsanteile, Medianzeiten, Fehlhandlungen, Schwierigkeit und qualitative Muster berichtet |
+| hoch | T-10 | Produktionsdeployment für die FastAPI-Endpunkte bereitstellen oder Vercel ausdrücklich als reine Frontend-Vorschau kennzeichnen | `GET /api/health` liefert im vorgesehenen Gesamtsystem `200`; Topologieimport und Sessionupdate funktionieren über dieselbe öffentliche Basis-URL |
 | mittel | T-05 | tatsächliche Topologiedateien versionieren | Quelle, Abrufdatum, SHA-256 und dauerhafte URL für jeden verwendeten Datensatz |
 | mittel | T-07 | BibTeX-Basis in den Zitierstil der Bachelorarbeit übernehmen | `docs/references.bib` eingebunden; alle im Text verwendeten Schlüssel und Seitenangaben stimmen mit dem finalen Literaturverzeichnis überein |
 | niedrig | T-08 | historische Streamlit-/NetworkX-Artefakte klar archivieren | keine Verwechslung mit aktueller Ist-Architektur |
@@ -50,12 +53,15 @@ Benutzerstudie benötigen.
 
 1. Entscheidungen E-01 bis E-05 in einem Betreuergespräch klären.
 2. Nur bestätigte fachliche Änderungen implementieren und automatisiert testen.
-3. Einen unveränderlichen Release-/Abnahme-Commit festlegen.
-4. Manuelle Browserabnahme T-01 auf genau diesem Commit durchführen.
-5. Finale Screenshots T-02 auf demselben Commit aufnehmen.
-6. Benutzerstudie T-03 durchführen und T-04 auswerten.
-7. Datensatz- und Literaturprovenienz T-05 bis T-07 abschließen.
-8. Historische Artefakte T-08 archivieren und Abschlussstand markieren.
+3. Produktionsdeployment T-10 herstellen oder den Abnahmeumfang ausdrücklich
+   auf den lokalen Betrieb begrenzen.
+4. Einen unveränderlichen Release-/Abnahme-Commit festlegen.
+5. Manuelle Browserabnahme T-01 auf genau diesem Commit und in der festgelegten
+   Zielumgebung durchführen.
+6. Finale Screenshots T-02 auf demselben Commit aufnehmen.
+7. Benutzerstudie T-03 durchführen und T-04 auswerten.
+8. Datensatz- und Literaturprovenienz T-05 bis T-07 abschließen.
+9. Historische Artefakte T-08 archivieren und Abschlussstand markieren.
 
 ## Nicht ohne neue Entscheidung beginnen
 

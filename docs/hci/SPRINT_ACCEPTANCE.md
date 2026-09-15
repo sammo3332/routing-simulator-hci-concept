@@ -68,6 +68,27 @@ Die Ausführung verwendete Python 3.12.14 auf dem Code- und
 Dokumentationsstand `c56b4e0`. Es erschienen dieselben zwei bereits oben
 eingeordneten Deprecation-Warnungen aus Testabhängigkeiten.
 
+### Verifikation der Ist-Architektur
+
+Am 15. September 2026 wurde die Architektur erneut gegen den vollständigen
+Repository-Stand `11a67d9`, einen lokalen HTTP-Smoke-Test und das öffentliche
+Deployment geprüft. Die dabei vorgenommenen Dokumentationskorrekturen ändern
+keinen Laufzeitcode.
+
+| Prüfung | Ergebnis |
+|---|---|
+| Backend-Gesamtsuite | 45 von 45 bestanden; zwei bekannte Deprecation-Warnungen |
+| Frontend-Logiktests | 15 von 15 bestanden |
+| Frontend-Linting | bestanden |
+| Vite-Produktions-Build | bestanden; 48 Module transformiert |
+| lokales `GET /api/health` | `200`, Antwort `{"status":"ok"}` |
+| lokaler TopoHub-Binärimport | bestanden; Session und vollständiger Routingzustand erzeugt |
+| öffentliches `GET /api/health` auf Vercel | `404_NOT_FOUND`; T-10 offen |
+
+Damit sind Komponenten, lokale Kommunikationswege und Zustandsverantwortung
+technisch belegt. Der offene Befund betrifft ausschließlich die noch fehlende
+Produktionsanbindung des Backends.
+
 ## 4. Fachliche Referenzprüfungen
 
 Die wichtigsten fachlichen Eigenschaften wurden zusätzlich als gezielte
@@ -95,11 +116,18 @@ Die vollständige unabhängige Bonsai-Validierung ist in
 | D: Bonsai-Fehler trotz physischer Verbindung | ja | teilweise | offen |
 | E: Germany50 navigieren | Logik ja | ja | offen |
 
-„Offen“ bedeutet hier nicht, dass die Funktion fehlt. Die Code- und
-Integrationstests sind bestanden. Für die HCI-Aussage muss jedoch noch eine
-Person die aktuelle veröffentlichte Oberfläche im Browser anhand des
+„Offen“ bedeutet hier nicht, dass die Funktion im lokalen Gesamtsystem fehlt.
+Die Code- und Integrationstests sind bestanden. Für die HCI-Aussage muss jedoch
+noch eine Person die Oberfläche in der festgelegten Zielumgebung anhand des
 vorgegebenen Ablaufs bedienen. Ein historischer Screenshot ersetzt keine
 Beobachtung der finalen Version.
+
+Die öffentliche Vercel-URL lieferte am 15. September 2026 für
+`GET /api/health` den Status `404 NOT_FOUND`; das Repository enthält keine
+Produktionsweiterleitung an FastAPI. Sie ist daher aktuell nur als
+Frontend-Vorschau und nicht als abnahmefähiges Gesamtsystem zu behandeln. Die
+manuelle Abnahme muss entweder mit lokal gestartetem Backend erfolgen oder nach
+Behebung von T-10 im vollständigen Deployment wiederholt werden.
 
 ## 6. Manuelle Abnahmecheckliste
 
@@ -140,9 +168,11 @@ abgenommenen Sprintumfang.
 
 ## 8. Abnahmeurteil
 
-Der technische Sprint ist **unter Vorbehalt der manuellen Browserprüfung und
-der drei fachlichen Betreuerentscheidungen abnahmefähig**. Es gibt derzeit
-keinen automatisierten Testfehler und keine bekannte Blockade im Kernablauf.
+Der technische Sprint ist im lokalen Zwei-Prozess-Betrieb **unter Vorbehalt der
+manuellen Browserprüfung und der drei fachlichen Betreuerentscheidungen
+abnahmefähig**. Es gibt derzeit keinen automatisierten Testfehler und keine
+bekannte Blockade im lokalen Kernablauf. Das öffentliche Gesamtsystem ist bis
+zur Behebung oder bewussten Abgrenzung von T-10 nicht abnahmefähig.
 
 Neue größere Funktionen sollten erst begonnen werden, nachdem die manuelle
 Checkliste ausgefüllt und die offenen Entscheidungen mit dem Betreuer geklärt
