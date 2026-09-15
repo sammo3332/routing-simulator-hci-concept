@@ -66,10 +66,11 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | D-05 | [docs/BONSAI_VALIDATION.md](BONSAI_VALIDATION.md) | unabhängige und exhaustive Validierung kleiner Graphen | **kanonischer Validierungsnachweis** |
 | D-06 | [docs/hci/HCI_EVALUATION.md](hci/HCI_EVALUATION.md) | formative Evaluation, Nutzungsszenarien und Studienprotokoll | **kanonisch**; empirische Studie noch offen |
 | D-07 | [docs/hci/SPRINT_ACCEPTANCE.md](hci/SPRINT_ACCEPTANCE.md) | technischer Abnahmezustand vom 9. September 2026 | **aktuell mit Einschränkung**; genannte SHAs sind Zwischenstände |
-| D-08 | [docs/handout.pdf](handout.pdf) | 7-seitiges PoC-Handout, Blob `65c1e9c275db626a16f4c11cfafdf291f9325267` | **kanonische Archivkopie, fachlich historisch/veraltet**; bytegleich mit der am 14. September 2026 geprüften externen Kopie |
+| D-08 | [docs/handout.pdf](handout.pdf) | historisches PoC-Handout zu Anforderungen, Architektur und HCI | **kanonische öffentliche Archivkopie, fachlich historisch/veraltet** |
 | D-09 | [docs/system_architecture.png](system_architecture.png) | früher Streamlit-/NetworkX-Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **historisch und durch die Mermaid-Diagramme in `ARCHITECTURE.md` ersetzt**; zuletzt am 9. Juli 2026 geändert |
 | D-10 | [docs/hci/SCREENSHOT_REGISTER.md](hci/SCREENSHOT_REGISTER.md) | Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen und Protokoll für finale Screenshots | **kanonisch für Bildprovenienz und Reproduzierbarkeit** |
 | D-11 | [docs/OPEN_ITEMS.md](OPEN_ITEMS.md) | priorisierte Restarbeiten, Betreuerentscheidungen und Abschlussreihenfolge | **kanonisch für die weitere Projektplanung** |
+| D-12 | [docs/references.bib](references.bib) | elf geprüfte BibTeX-Einträge mit stabilen Zitationsschlüsseln | **kanonische maschinenlesbare Literaturbasis**; Datensatz-Commit und Datei-Hash bleiben je verwendeter Topologie zu ergänzen |
 
 ## Bild- und Evaluationsnachweise
 
@@ -109,7 +110,7 @@ Ausfälle.
 
 | Familie | Urteil | Maßnahme |
 |---|---|---|
-| PoC-Handouts | Die am 14. September 2026 geprüfte externe Kopie ist **bytegleich** mit `docs/handout.pdf`: Git-Blob-SHA `65c1e9c275db626a16f4c11cfafdf291f9325267`, SHA-256 `403283e7c4f7625405403ce8e138b74652fc65a1c0bf36ea70227a1a137ce363`, 7 Seiten. PDF-Metadaten: erstellt/geändert am 1. Juli 2026, erzeugt mit Microsoft Word für Microsoft 365. | `docs/handout.pdf` als einzige kanonische Archivkopie behalten; gleichhashige externe Kopien sind Dubletten. Das Handout bleibt fachlich historisch, weil es GML/JSON, Streamlit-Session-State, entkoppelte Hintergrundberechnung, Delivery Rate/Stretch und die alte Sequenzarchitektur beschreibt. |
+| PoC-Handouts | `docs/handout.pdf` ist die kanonische öffentliche Archivkopie; private Kopien und deren Metadaten werden nicht im öffentlichen Register dokumentiert. Das Handout ist gegenüber dem aktuellen Code fachlich veraltet. | Öffentliche Archivkopie behalten; private Dubletten ausschließlich lokal verwalten. |
 | Bonsai-Paper | Lokale Kopie und Link in `docs/BONSAI.md` bezeichnen sehr wahrscheinlich dieselbe Primärpublikation. | Hash der lokalen Kopie gegen das archivierte Original prüfen. |
 | Paper-Erläuterung | Kein Duplikat des Papers, sondern abgeleitete Erklärung. | Getrennt führen und W-01 beim Zitieren priorisieren. |
 | Sequenzdiagramme | Zwei sichtbar unterschiedliche historische Streamlit-Fassungen; keine identischen Duplikate. Eine Fassung enthält Bonsai-/Greedy-Aufrufe explizit, die andere ist verkürzt. | Beide archivieren; keines als aktuelle Ist-Architektur verwenden. |
@@ -121,23 +122,6 @@ Ausfälle.
 Dateinamenszusätze wie `(2)`, `(3)` oder `(5)` gelten nicht als belastbare
 Versionsnummern.
 
-
-## Prüfprotokoll: PoC-Handout
-
-Am 14. September 2026 wurde eine erneut bereitgestellte externe Kopie gegen
-`docs/handout.pdf` geprüft.
-
-| Merkmal | Ergebnis |
-|---|---|
-| Git-Blob-SHA beider Dateien | `65c1e9c275db626a16f4c11cfafdf291f9325267` |
-| SHA-256 | `403283e7c4f7625405403ce8e138b74652fc65a1c0bf36ea70227a1a137ce363` |
-| Binäres Urteil | **exakte Dublette (bytegleich)** |
-| Seitenzahl | 7 |
-| PDF-Erstellung/Änderung | 1. Juli 2026, 21:41:58 +02:00 |
-| Erzeuger | Microsoft Word für Microsoft 365 |
-| Sichtprüfung | alle sieben Seiten renderbar; Anforderungen, alte Architektur/Sequenz, User Stories, Mockup und Tool-Screenshot vorhanden |
-| Kanonisierung | `docs/handout.pdf` als einzige Archivkopie |
-| Fachlicher Status | historisch/veraltet gegenüber React/FastAPI-Stand |
 
 ## Veraltete oder widersprüchliche Aussagen
 
@@ -188,8 +172,7 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 
 - Im vertraulichen Begleitregister Hashes und technische Metadaten aller lokalen
   Dateien erfassen.
-- Noch nicht erneut verfügbare Handout-Kopien bei späterem Eingang gegen den dokumentierten SHA-256 vergleichen.
-- `docs/handout.pdf` als kanonische Archivkopie verwenden und gleichhashige externe Dubletten nicht zusätzlich versionieren.
+- `docs/handout.pdf` als öffentliche Archivkopie verwenden; private Kopien ausschließlich im vertraulichen Begleitregister verwalten.
 - Streamlit-/NetworkX-Material in einen Archivbereich verschieben.
 - Für die tatsächlich verwendeten Topologie-Dateien Version beziehungsweise Commit, Abrufdatum und dauerhafte URL ergänzen.
 - Finale Screenshots F-01 bis F-06 nach dem verbindlichen Protokoll in `docs/hci/SCREENSHOT_REGISTER.md` aufnehmen und die offene Browserabnahme abschließen.
@@ -203,6 +186,6 @@ Die wissenschaftliche Kernquelle ist das DSN-2019-Bonsai-Paper. Die aktuelle
 Implementierungswahrheit liegt im Repository-Stand `73a2acd…`, insbesondere
 in `ARCHITECTURE.md`, `docs/BONSAI.md`, den Tests und dem React/FastAPI-Code.
 Streamlit-/`st.session_state`-/NetworkX-Diagramme und das Repository-Handout
-vom Juli 2026 sind historische Artefakte. Die geprüfte externe Handout-Kopie ist
-bytegleich mit `docs/handout.pdf`; das Repository-PDF ist deshalb die kanonische
-Archivkopie. Die Sequenzdiagramme sind nach sichtbarem Inhalt keine Duplikate.
+vom Juli 2026 sind historische Artefakte. `docs/handout.pdf` ist die kanonische
+öffentliche Archivkopie; private Kopien werden nur vertraulich verwaltet. Die
+Sequenzdiagramme sind nach sichtbarem Inhalt keine Duplikate.
