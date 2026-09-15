@@ -6,7 +6,7 @@ deterministische Referenzstrategie; es entwickelt keine neue Routingheuristik.
 
 ## Implementierter Vertikalschnitt
 
-- Import von TopoHub-Node-Link-JSON und SNDlib-XML
+- Import von TopoHub-Node-Link-JSON, SNDlib-XML und GraphML
 - validiertes, UI-unabhängiges Graph- und Szenariomodell
 - deterministische kürzeste Pfade zum gewählten Ziel
 - Bonsai-Modus mit globaler Kantenkonnektivität und deterministischer
@@ -75,7 +75,8 @@ npm run build
 ```
 
 Die Test-Fixtures liegen unter `tests/fixtures`. Zusätzlich wurde der
-SNDlib-XML-Import mit den Legacy-Dateien Abilene, Atlanta und Germany50
+SNDlib-XML-Import mit den Legacy-Dateien Abilene, Atlanta und Germany50 sowie
+GraphML-Import für den einfachen Knoten-/Kanten-Teil des Internet Topology Zoo
 geprüft.
 
 Die unabhängige und exhaustive Validierung kleiner Graphen ist in
@@ -90,11 +91,13 @@ Der technische und fachliche Abnahmestand ist in
 
 | Dokument | Zweck |
 |---|---|
-| [REQUIREMENTS.md](REQUIREMENTS.md) | konsolidierte Soll-/Ist-Anforderungen, offene Entscheidungen und Abgrenzung |
+| [REQUIREMENTS.md](REQUIREMENTS.md) | ausschließlich der implementierte und geprüfte Anforderungsumfang |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | aktuelle React/FastAPI-Architektur und Sequenzabläufe |
 | [docs/BONSAI.md](docs/BONSAI.md) | Bonsai-Greedy-Semantik und bewusste Grenzen |
 | [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) | unabhängige fachliche Validierung |
-| [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Evaluation und Studienprotokoll |
+| [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Evaluation und Studienrahmen |
+| [docs/hci/USER_STUDY_PROTOCOL.md](docs/hci/USER_STUDY_PROTOCOL.md) | LimeSurvey-Schema, SUS-Auswertung und Studienzeitplan |
+| [docs/thesis/THESIS_OUTLINE.md](docs/thesis/THESIS_OUTLINE.md) | HCI-zentrierte Gliederung und Schreibreihenfolge |
 | [docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) | technische und manuelle Abnahme |
 | [docs/hci/SCREENSHOT_REGISTER.md](docs/hci/SCREENSHOT_REGISTER.md) | Bildprovenienz und Protokoll für finale Screenshots |
 | [docs/QUELLENREGISTER.md](docs/QUELLENREGISTER.md) | Literatur-, Quellen- und Versionsregister |

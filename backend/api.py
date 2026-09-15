@@ -27,6 +27,7 @@ from .failover_core.serialization import _routing_snapshot_to_dict
 from .failover_core.topology_import import (
     DEFAULT_MAX_FILE_SIZE_BYTES,
     TopologyImportError,
+    import_graphml_bytes,
     import_sndlib_xml_bytes,
     import_topohub_json_bytes,
 )
@@ -351,10 +352,15 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
             topology = import_topohub_json_bytes(payload, source_name=filename)
         elif suffix == ".xml":
             topology = import_sndlib_xml_bytes(payload, source_name=filename)
+        elif suffix == ".graphml":
+            topology = import_graphml_bytes(payload, source_name=filename)
         else:
             raise HTTPException(
                 status_code=415,
-                detail="supported formats are TopoHub JSON (.json) and SNDlib XML (.xml)",
+                detail=(
+                    "supported formats are TopoHub JSON (.json), SNDlib XML "
+                    "(.xml), and GraphML (.graphml)"
+                ),
             )
         session = sessions.create(topology)
         return _session_response(session, _evaluate(session))

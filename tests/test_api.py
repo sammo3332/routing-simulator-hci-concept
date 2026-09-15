@@ -42,6 +42,15 @@ def test_import_creates_in_memory_session_and_returns_real_routing() -> None:
     assert data["result"]["affected_node_ids"] == []
 
 
+def test_graphml_import_creates_session_through_api() -> None:
+    data = import_fixture(client(), "graphml_mini.graphml")
+
+    assert data["topology"]["topology_id"] == "graphml-mini"
+    assert data["topology"]["source"] == "GraphML: graphml_mini.graphml"
+    assert data["result"]["node_count"] == 3
+    assert data["result"]["reachable_node_count"] == 3
+
+
 def test_session_update_changes_target_metric_and_failures() -> None:
     test_client = client()
     imported = import_fixture(test_client, "sndlib_mini.xml")

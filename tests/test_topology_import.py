@@ -8,6 +8,7 @@ from backend.failover_core.models import RoutingConfig
 from backend.failover_core.routing import compute_routing_result
 from backend.failover_core.topology_import import (
     TopologyImportError,
+    import_graphml_bytes,
     import_sndlib_xml_bytes,
     import_topohub_json_bytes,
     load_topology,
@@ -79,6 +80,71 @@ def test_sndlib_routing_cost_takes_precedence_over_module_cost() -> None:
     topology = import_sndlib_xml_bytes(payload)
 
     assert topology.edges[0].weight == pytest.approx(7.5)
+
+
+def test_loads_graphml_with_typed_data_labels_coordinates_and_weights() -> None:
+    topology = load_topology(FIXTURES / "graphml_mini.graphml")
+
+    assert topology.topology_id == "graphml-mini"
+    assert topology.source == "GraphML: graphml_mini.graphml"
+    assert topology.directed is False
+    assert topology.multigraph is False
+    assert tuple(node.label for node in topology.nodes) == (
+        "Aachen",
+        "Bonn",
+        "Dortmund",
+    )
+    assert topology.nodes[0].position.x == pytest.approx(6.0839)
+    assert topology.nodes[0].position.y == pytest.approx(50.7753)
+    assert topology.edges[0].weight == pytest.approx(2.0)
+
+
+def test_graphml_imported_topology_works_with_weighted_routing() -> None:
+    topology = load_topology(FIXTURES / "graphml_mini.graphml")
+    config = RoutingConfig(target_node_id="T", weight_mode="edge_weight")
+
+    result = compute_routing_result(topology, config)
+
+    assert result.current_paths["A"].node_ids == ("A", "B", "T")
+    assert result.current_paths["A"].total_weight == pytest.approx(5.0)
+
+
+def test_graphml_rejects_mixed_edge_direction() -> None:
+    payload = b"""<?xml version="1.0"?>
+    <graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+      <graph id="G" edgedefault="undirected">
+        <node id="A"/><node id="T"/>
+        <edge id="a" source="A" target="T" directed="true"/>
+      </graph>
+    </graphml>
+    """
+
+    with pytest.raises(TopologyImportError, match="mixed directed"):
+        import_graphml_bytes(payload)
+
+
+def test_graphml_rejects_invalid_edge_direction_value() -> None:
+    payload = b"""<?xml version="1.0"?>
+    <graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+      <graph id="G" edgedefault="undirected">
+        <node id="A"/><node id="T"/>
+        <edge id="a" source="A" target="T" directed="sometimes"/>
+      </graph>
+    </graphml>
+    """
+
+    with pytest.raises(TopologyImportError, match="must be a boolean"):
+        import_graphml_bytes(payload)
+
+
+def test_graphml_rejects_xml_entities() -> None:
+    payload = b"""<?xml version="1.0"?>
+    <!DOCTYPE graphml [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+    <graphml><graph id="G" edgedefault="undirected"/></graphml>
+    """
+
+    with pytest.raises(TopologyImportError, match="DTD and entity"):
+        import_graphml_bytes(payload)
 
 
 def test_topohub_parallel_edges_receive_unique_stable_ids() -> None:

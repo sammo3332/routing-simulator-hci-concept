@@ -31,7 +31,7 @@ flowchart TB
     subgraph Backend["Anwendungs- und Domänenschicht"]
         A --> S["In-Memory SessionStore"]
         A --> C["UI-unabhängiger Failover-Domänenkern"]
-        C --> I["TopoHub-JSON- und SNDlib-XML-Parser"]
+        C --> I["JSON-, SNDlib-XML- und GraphML-Parser"]
         C --> R["Shortest Path und Bonsai-Greedy"]
         C --> X["Ausfallsuche, Validierung und Serialisierung"]
     end
@@ -75,7 +75,7 @@ Deploymentpunkt.
 
 Die Präsentationsschicht befindet sich unter `src/`. Sie übernimmt:
 
-- Importauswahl für TopoHub-JSON und SNDlib-XML,
+- Importauswahl für TopoHub-JSON, SNDlib-XML und GraphML,
 - Auswahl von Zielknoten und Routingmetrik,
 - Ausfall und Wiederherstellung von Kanten,
 - Darstellung von Topologie, Baseline und aktuellem Routingzustand,
@@ -131,7 +131,7 @@ folgen bewusst akzeptierte Grenzen:
 Der UI-unabhängige Domänenkern enthält:
 
 - unveränderliche Modelle für Topologie, Routing, Fehler und Ergebnisse,
-- Parser und Validierung für TopoHub-JSON und SNDlib-XML,
+- Parser und Validierung für TopoHub-JSON, SNDlib-XML und GraphML,
 - deterministische Routingberechnung,
 - Szenarioimport und -export,
 - minimale Ausfallsuche als vom UI unabhängige Kernfunktion.
@@ -214,7 +214,7 @@ sequenceDiagram
     participant C as Domänenkern
 
     alt Topologie importieren
-        U->>F: TopoHub-JSON oder SNDlib-XML wählen
+        U->>F: JSON, SNDlib-XML oder GraphML wählen
         F->>A: POST /api/sessions/import mit Datei-Bytes
         A->>C: Datei parsen und validieren
         C-->>A: normalisierte Topologie
@@ -258,7 +258,8 @@ Zwischenergebnisse.
 Unterstützte Eingabeformate:
 
 - TopoHub Node-Link JSON (`.json`),
-- SNDlib XML (`.xml`).
+- SNDlib XML (`.xml`),
+- GraphML (`.graphml`) als einzelner einfacher Knoten-/Kanten-Graph.
 
 Der Import normalisiert Knoten, Kanten, Positionen und Gewichte in das gemeinsame
 Domänenmodell. Validiert werden unter anderem eindeutige IDs, gültige

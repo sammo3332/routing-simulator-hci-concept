@@ -33,7 +33,7 @@ function EmptyState() {
         <div style={{ fontSize: 38, marginBottom: 12 }}>🕸️</div>
         <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 6 }}>Noch keine Topologie geladen</div>
         <div style={{ color: "#7a8499", maxWidth: 470, lineHeight: 1.6 }}>
-          Lade links eine TopoHub-JSON- oder SNDlib-XML-Datei. Danach kannst du
+          Lade links eine TopoHub-JSON-, SNDlib-XML- oder GraphML-Datei. Danach kannst du
           Zielknoten wählen, Kanten ausfallen lassen und die tatsächlich berechneten
           Routingzustände vergleichen.
         </div>

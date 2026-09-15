@@ -89,6 +89,24 @@ Damit sind Komponenten, lokale Kommunikationswege und Zustandsverantwortung
 technisch belegt. Der offene Befund betrifft ausschließlich die noch fehlende
 Produktionsanbindung des Backends.
 
+### Verifikation des GraphML-Imports
+
+Nach der Betreuerentscheidung vom 15. September 2026 wurde GraphML als drittes
+Importformat ergänzt. Neben einer versionierten Test-Fixture wurde die originale
+`Abilene.graphml` aus dem Langzeitarchiv des Internet Topology Zoo geprüft
+(Git-Blob `330c97a349a80a8f3e1c825072e45ca503d0eab7`).
+
+| Prüfung | Ergebnis |
+|---|---|
+| Backend-Gesamtsuite | 51 von 51 bestanden; zwei bekannte Deprecation-Warnungen |
+| Frontend-Logiktests | 15 von 15 bestanden |
+| Frontend-Linting | bestanden |
+| Vite-Produktions-Build | bestanden; 48 Module transformiert |
+| originale `Abilene.graphml` | 11 Knoten, 14 Kanten, Labels und Koordinaten importiert; 11 Knoten im Referenzrouting erreichbar |
+
+Dieser spätere Lauf ergänzt die historischen Abnahmeläufe, ersetzt aber nicht
+deren jeweilige Commit- und Umgebungsangaben.
+
 ## 4. Fachliche Referenzprüfungen
 
 Die wichtigsten fachlichen Eigenschaften wurden zusätzlich als gezielte
@@ -157,7 +175,9 @@ Die folgenden Punkte sind auf einem sauberen lokalen Start auszuführen:
 Vor einer endgültigen Betreuerabnahme sind nur noch folgende Punkte zu
 bestätigen:
 
-1. Reichen TopoHub-JSON und SNDlib-XML oder ist GML weiterhin verpflichtend?
+1. GraphML wurde nach dem Betreuertermin vom 15. September ergänzt; die
+   tatsächliche Internet-Topology-Zoo-Datei ist noch in der Browserabnahme zu
+   prüfen.
 2. Reichen Paketpfad, Status und Wechselanzahl oder soll der vollständige
    schrittweise Bonsai-Trace im Frontend geöffnet werden können?
 3. Werden Greedy, vollständige Aboreszenzen und die zirkuläre Wechselreihenfolge

@@ -33,7 +33,9 @@ Status:
 | W-07 | Python-Dokumentation, https://docs.python.org/3/ | Backend-Laufzeit | **aktuell**; Abnahmeumgebung nennt Python 3.12.14 |
 | W-08 | Nielsen, J. (1994): **Enhancing the Explanatory Power of Usability Heuristics**. In: *Proceedings of CHI ’94*, S. 152–158. DOI: [10.1145/191666.191729](https://doi.org/10.1145/191666.191729). Aktuelle Übersicht: https://www.nngroup.com/articles/ten-usability-heuristics/ | heuristische Evaluation, insbesondere Sichtbarkeit des Systemstatus, Kontrolle, Konsistenz, Fehlervermeidung und Fehlerdiagnose | **kanonischer HCI-Beleg** |
 | W-09 | Shneiderman, B. (1996): **The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations**. In: *Proceedings of the 1996 IEEE Symposium on Visual Languages*, S. 336–343. DOI: [10.1109/VL.1996.545307](https://doi.org/10.1109/VL.1996.545307). Autoren-PDF: https://www.cs.umd.edu/~ben/papers/Shneiderman1996eyes.pdf | „Overview first, zoom and filter, then details-on-demand“ als Grundlage für Großgraph-Übersicht, Kürzel, Tooltip und Detailansicht | **kanonischer Visualisierungsbeleg** |
-| W-10 | JSON-, XML- und gegebenenfalls GML-Spezifikation | formale Importformate | **optional**; GML ist derzeit offen und nicht implementiert |
+| W-10 | GraphML Working Group: **GraphML Primer** und **GraphML Specification**, https://graphml.graphdrawing.org/ | Semantik und Validierung des implementierten GraphML-Imports | **kanonische Formatspezifikation** |
+| W-11 | Brooke, J. (1996): **SUS: A “Quick and Dirty” Usability Scale** | standardisierte Gebrauchstauglichkeitsskala und Auswertung | **kanonische Primärquelle für die geplante Studie**; exakte verwendete deutsche Fassung zusätzlich dokumentieren |
+| W-12 | Knight, S.; Nguyen, H. X.; Falkner, N.; Bowden, R.; Roughan, M. (2011): **The Internet Topology Zoo**. *IEEE Journal on Selected Areas in Communications*, 29(9), S. 1765–1775. DOI: [10.1109/JSAC.2011.111002](https://doi.org/10.1109/JSAC.2011.111002). Langzeitarchiv: https://github.com/mroughan/InternetTopologyZoo | Herkunft der GraphML-Testtopologien | **kanonische Datensatzquelle**; Parser zusätzlich gegen `Abilene.graphml`, Blob `330c97a349a80a8f3e1c825072e45ca503d0eab7`, geprüft |
 
 Eine lokale Erläuterung des Bonsai-Papers ist eine abgeleitete Verständnishilfe
 und darf W-01 nicht als zitierte Primärquelle ersetzen.
@@ -61,7 +63,7 @@ Beziehungen zu Nachfolgeversionen enthalten.
 |---|---|---|---|
 | D-01 | [README.md](../README.md) | Funktionsumfang und Abgrenzung | **kanonisch für implementierten Umfang** |
 | D-02 | [ARCHITECTURE.md](../ARCHITECTURE.md) | React/FastAPI-/Domänenkernarchitektur mit aktuellem System- und Sequenzdiagramm | **kanonisch für Ist-Architektur und Ablauf**, Diagrammstand 15. September 2026; lokaler Gesamtablauf und unvollständiges öffentliches Deployment getrennt dokumentiert |
-| D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | konsolidierte Soll-/Ist-Matrix mit Status, Abgrenzung und offenen Entscheidungen | **kanonisch für den dokumentierten Anforderungsstand**; am 14. September 2026 mit Code, Architektur und Sprint-Abnahme abgeglichen |
+| D-03 | [REQUIREMENTS.md](../REQUIREMENTS.md) | ausschließlich implementierter und geprüfter Funktionsumfang | **kanonisch für den Ist-Stand**; am 15. September 2026 einschließlich GraphML aktualisiert |
 | D-04 | [docs/BONSAI.md](BONSAI.md) | projektspezifische Bonsai-Greedy-Umsetzung und Grenzen | **kanonisch für Implementierungssemantik**, nicht Ersatz für W-01 |
 | D-05 | [docs/BONSAI_VALIDATION.md](BONSAI_VALIDATION.md) | unabhängige und exhaustive Validierung kleiner Graphen | **kanonischer Validierungsnachweis** |
 | D-06 | [docs/hci/HCI_EVALUATION.md](hci/HCI_EVALUATION.md) | formative Evaluation, Nutzungsszenarien und Studienprotokoll | **kanonisch**; empirische Studie noch offen |
@@ -70,7 +72,9 @@ Beziehungen zu Nachfolgeversionen enthalten.
 | D-09 | [docs/system_architecture.png](system_architecture.png) | früher Streamlit-/NetworkX-Architekturentwurf, Blob `64b2adc4d06c51e963ebb4f29401409dcf019a1a` | **historisch und durch die Mermaid-Diagramme in `ARCHITECTURE.md` ersetzt**; zuletzt am 9. Juli 2026 geändert |
 | D-10 | [docs/hci/SCREENSHOT_REGISTER.md](hci/SCREENSHOT_REGISTER.md) | Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen und Protokoll für finale Screenshots | **kanonisch für Bildprovenienz und Reproduzierbarkeit** |
 | D-11 | [docs/OPEN_ITEMS.md](OPEN_ITEMS.md) | priorisierte Restarbeiten, Betreuerentscheidungen und Abschlussreihenfolge | **kanonisch für die weitere Projektplanung** |
-| D-12 | [docs/references.bib](references.bib) | elf geprüfte BibTeX-Einträge mit stabilen Zitationsschlüsseln | **kanonische maschinenlesbare Literaturbasis**; Datensatz-Commit und Datei-Hash bleiben je verwendeter Topologie zu ergänzen |
+| D-12 | [docs/references.bib](references.bib) | maschinenlesbare BibTeX-Einträge mit stabilen Zitationsschlüsseln | **kanonische Literaturbasis**; Datensatz-Commit und Datei-Hash bleiben je verwendeter Topologie zu ergänzen |
+| D-13 | [docs/hci/USER_STUDY_PROTOCOL.md](hci/USER_STUDY_PROTOCOL.md) | LimeSurvey-Struktur, Aufgaben, SUS und Auswertungsplan | **aktueller Studienentwurf zur Betreuerprüfung** |
+| D-14 | [docs/thesis/THESIS_OUTLINE.md](thesis/THESIS_OUTLINE.md) | HCI-zentrierte Gliederung der Bachelorarbeit | **aktueller Schreibplan** |
 
 ## Bild- und Evaluationsnachweise
 
@@ -96,7 +100,7 @@ Ausfälle.
 | R-01 | `backend/api.py` | FastAPI-Endpunkte, Sessionkoordination und API-Semantik |
 | R-02 | `backend/failover_core/bonsai.py` | Greedy-Aboreszenzen, Konnektivität und Routingsimulation |
 | R-03 | `backend/failover_core/routing.py` | deterministisches Shortest-Path-Referenzrouting |
-| R-04 | `backend/failover_core/topology_import.py` | TopoHub-JSON- und SNDlib-XML-Import |
+| R-04 | `backend/failover_core/topology_import.py` | TopoHub-JSON-, SNDlib-XML- und GraphML-Import |
 | R-05 | `backend/failover_core/models.py` | Domänen- und Ergebnisobjekte |
 | R-06 | `backend/failover_core/search.py` | Suche nach kritischen Ausfallkombinationen |
 | R-07 | `backend/schemas/failover-scenario.schema.json` | versioniertes Szenarioformat |
@@ -130,8 +134,9 @@ Versionsnummern.
    Python-`SessionStore`.
 2. **NetworkX als aktuelles Kernmodell** ist nicht durch den heutigen
    Domänenkern belegt; die aktuelle Architektur dokumentiert eigene Modelle.
-3. **GML-Upload** ist keine implementierte Ist-Funktion. Der Code akzeptiert
-   TopoHub-JSON und SNDlib-XML; die GML-Pflicht ist laut Sprint-Abnahme offen.
+3. **GraphML-Upload** ist seit dem 15. September 2026 implementiert. Aussagen,
+   der Code akzeptiere nur JSON und SNDlib-XML, sind seitdem veraltet. Das
+   eigenständige GML-Format (`.gml`) bleibt nicht unterstützt.
 4. **Konkrete Failover-Zeitangaben aus Mockups**, etwa 12 ms, sind kein
    Messnachweis. Simulierte Konvergenzzeiten sind ausdrücklich abgegrenzt.
 5. **Round-Robin und RR-Swapping** sind nicht Teil des aktuellen Pflichtumfangs.
@@ -176,7 +181,7 @@ Projektentscheidungen, nicht allgemeine fachliche Aussagen.
 - Streamlit-/NetworkX-Material in einen Archivbereich verschieben.
 - Für die tatsächlich verwendeten Topologie-Dateien Version beziehungsweise Commit, Abrufdatum und dauerhafte URL ergänzen.
 - Finale Screenshots F-01 bis F-06 nach dem verbindlichen Protokoll in `docs/hci/SCREENSHOT_REGISTER.md` aufnehmen und die offene Browserabnahme abschließen.
-- Nach Betreuerentscheidung die offene GML-Anforderung schließen.
+- Konkrete Internet-Topology-Zoo-GraphML-Datei mit Abrufdatum und Hash erfassen.
 - Nach der Benutzerstudie Rohprotokoll, anonymisierte Auswertung und finale
   Ergebnisquelle ergänzen.
 

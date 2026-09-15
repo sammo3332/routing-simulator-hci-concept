@@ -25,6 +25,7 @@ from .serialization import (
 )
 from .topology_import import (
     TopologyImportError,
+    import_graphml_bytes,
     import_sndlib_xml_bytes,
     import_topohub_json_bytes,
     load_topology,
@@ -51,6 +52,7 @@ __all__ = [
     "export_scenario_json",
     "find_first_minimal_failure",
     "import_scenario_json",
+    "import_graphml_bytes",
     "import_sndlib_xml_bytes",
     "import_topohub_json_bytes",
     "load_topology",

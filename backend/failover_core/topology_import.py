@@ -191,6 +191,189 @@ def _child_text(element: ET.Element, name: str) -> str | None:
     return None
 
 
+def _direct_children(element: ET.Element, name: str) -> list[ET.Element]:
+    return [child for child in element if _local_name(child.tag) == name]
+
+
+def _graphml_scalar(value: str, value_type: str, field: str) -> Any:
+    if value_type in {"float", "double"}:
+        return _finite_number(value, field)
+    if value_type in {"int", "long"}:
+        try:
+            return int(value)
+        except ValueError as error:
+            raise TopologyImportError(f"{field} must be an integer") from error
+    if value_type == "boolean":
+        normalized = value.strip().lower()
+        if normalized in {"true", "1"}:
+            return True
+        if normalized in {"false", "0"}:
+            return False
+        raise TopologyImportError(f"{field} must be a boolean")
+    return value
+
+
+def import_graphml_bytes(
+    payload: bytes,
+    *,
+    source_name: str = "topology.graphml",
+) -> Topology:
+    """Import the plain node/edge subset used by Internet Topology Zoo files."""
+    upper_payload = payload.upper()
+    if b"<!DOCTYPE" in upper_payload or b"<!ENTITY" in upper_payload:
+        raise TopologyImportError("DTD and entity declarations are not supported")
+    try:
+        root = ET.fromstring(payload)
+    except ET.ParseError as error:
+        raise TopologyImportError(f"invalid GraphML: {error}") from error
+    if _local_name(root.tag) != "graphml":
+        raise TopologyImportError("GraphML root element must be 'graphml'")
+
+    # key id -> (scope, public attribute name, scalar type, optional default)
+    key_definitions: dict[str, tuple[str, str, str, str | None]] = {}
+    for index, key in enumerate(_direct_children(root, "key")):
+        key_id = _identifier(key.get("id"), f"key[{index}].id")
+        scope = key.get("for", "all")
+        name = key.get("attr.name", key_id)
+        value_type = key.get("attr.type", "string")
+        default_element = next(iter(_direct_children(key, "default")), None)
+        default = (
+            default_element.text.strip()
+            if default_element is not None and default_element.text is not None
+            else None
+        )
+        key_definitions[key_id] = (scope, name, value_type, default)
+
+    def data_attributes(element: ET.Element, scope: str, field: str) -> dict[str, Any]:
+        attributes: dict[str, Any] = {}
+        for key_id, (key_scope, name, value_type, default) in key_definitions.items():
+            if default is not None and key_scope in {scope, "all"}:
+                attributes[name] = _graphml_scalar(
+                    default, value_type, f"{field}.{name}"
+                )
+        for data_index, data in enumerate(_direct_children(element, "data")):
+            key_id = _identifier(data.get("key"), f"{field}.data[{data_index}].key")
+            definition = key_definitions.get(key_id)
+            if definition is None:
+                raise TopologyImportError(
+                    f"{field}.data[{data_index}] references unknown key '{key_id}'"
+                )
+            key_scope, name, value_type, _default = definition
+            if key_scope not in {scope, "all"}:
+                raise TopologyImportError(
+                    f"GraphML key '{key_id}' is not valid for {scope} data"
+                )
+            text = "" if data.text is None else data.text.strip()
+            attributes[name] = _graphml_scalar(text, value_type, f"{field}.{name}")
+        return attributes
+
+    graphs = _direct_children(root, "graph")
+    if len(graphs) != 1:
+        raise TopologyImportError("GraphML must contain exactly one top-level graph")
+    graph = graphs[0]
+    default_direction = graph.get("edgedefault")
+    if default_direction not in {"directed", "undirected"}:
+        raise TopologyImportError(
+            "GraphML graph.edgedefault must be 'directed' or 'undirected'"
+        )
+    directed = default_direction == "directed"
+    if _direct_children(graph, "hyperedge"):
+        raise TopologyImportError("GraphML hyperedges are not supported")
+
+    nodes: list[Node] = []
+    for index, element in enumerate(_direct_children(graph, "node")):
+        node_id = _identifier(element.get("id"), f"node[{index}].id")
+        attributes = data_attributes(element, "node", f"node[{index}]")
+        casefolded = {name.casefold(): value for name, value in attributes.items()}
+        label_value = casefolded.get("label", casefolded.get("name"))
+        x_value = casefolded.get("x", casefolded.get("longitude"))
+        y_value = casefolded.get("y", casefolded.get("latitude"))
+        position = (
+            Position(
+                _finite_number(x_value, f"node[{index}].x"),
+                _finite_number(y_value, f"node[{index}].y"),
+            )
+            if x_value is not None and y_value is not None
+            else None
+        )
+        nodes.append(
+            Node(
+                id=node_id,
+                label=str(label_value) if label_value is not None else node_id,
+                position=position,
+                attributes=attributes,
+            )
+        )
+
+    edges: list[Edge] = []
+    generated_ids: dict[tuple[str, str], int] = {}
+    for index, element in enumerate(_direct_children(graph, "edge")):
+        source = _identifier(element.get("source"), f"edge[{index}].source")
+        target = _identifier(element.get("target"), f"edge[{index}].target")
+        direction_override = element.get("directed")
+        if direction_override is not None:
+            edge_directed = _graphml_scalar(
+                direction_override, "boolean", f"edge[{index}].directed"
+            )
+            if edge_directed != directed:
+                raise TopologyImportError(
+                    "mixed directed and undirected GraphML edges are not supported"
+                )
+        raw_id = element.get("id")
+        if raw_id is None:
+            pair = (source, target)
+            ordinal = generated_ids.get(pair, 0)
+            generated_ids[pair] = ordinal + 1
+            edge_id = f"{source}--{target}--{ordinal}"
+        else:
+            edge_id = _identifier(raw_id, f"edge[{index}].id")
+        attributes = data_attributes(element, "edge", f"edge[{index}]")
+        casefolded = {name.casefold(): value for name, value in attributes.items()}
+        raw_weight = element.get("weight")
+        if raw_weight is None:
+            raw_weight = next(
+                (casefolded[name] for name in ("weight", "dist", "cost") if name in casefolded),
+                None,
+            )
+        weight = (
+            _finite_number(raw_weight, f"edge[{index}].weight")
+            if raw_weight is not None
+            else 1.0
+        )
+        edges.append(Edge(edge_id, source, target, weight, attributes))
+
+    graph_attributes = data_attributes(graph, "graph", "graph")
+    graph_name = next(
+        (
+            value
+            for name, value in graph_attributes.items()
+            if name.casefold() in {"name", "label"}
+        ),
+        None,
+    )
+    name = str(graph_name or graph.get("id") or Path(source_name).stem)
+    endpoint_pairs = {
+        (edge.source, edge.target)
+        if directed
+        else tuple(sorted((edge.source, edge.target)))
+        for edge in edges
+    }
+    topology = Topology(
+        topology_id=name,
+        name=name,
+        source=f"GraphML: {source_name}",
+        directed=directed,
+        multigraph=len(endpoint_pairs) != len(edges),
+        nodes=tuple(nodes),
+        edges=tuple(edges),
+    )
+    try:
+        validate_topology(topology)
+    except ScenarioValidationError as error:
+        raise TopologyImportError(str(error)) from error
+    return topology
+
+
 def import_sndlib_xml_bytes(
     payload: bytes,
     *,
@@ -296,7 +479,10 @@ def load_topology(
             source_name=path.name,
             directed=sndlib_directed,
         )
+    if suffix == ".graphml":
+        return import_graphml_bytes(payload, source_name=path.name)
     raise TopologyImportError(
         f"unsupported topology format '{suffix or '<none>'}'; "
-        "supported formats are TopoHub JSON (.json) and SNDlib XML (.xml)"
+        "supported formats are TopoHub JSON (.json), SNDlib XML (.xml), "
+        "and GraphML (.graphml)"
     )

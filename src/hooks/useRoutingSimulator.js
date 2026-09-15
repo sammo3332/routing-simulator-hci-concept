@@ -57,7 +57,7 @@ export function useRoutingSimulator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [eventLog, setEventLog] = useState([
-    { id: 1, time: timestamp(), type: "info", msg: "Bereit. Bitte TopoHub-JSON oder SNDlib-XML laden." },
+    { id: 1, time: timestamp(), type: "info", msg: "Bereit. Bitte TopoHub-JSON, SNDlib-XML oder GraphML laden." },
   ]);
   const logId = useRef(1);
   const eventLogEndRef = useRef(null);

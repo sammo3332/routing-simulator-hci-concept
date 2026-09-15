@@ -235,11 +235,18 @@ bei Bedarf alle Namen einblenden.
 **Erfolg:** Die Person findet und erklärt alle Funktionen, ohne die Orientierung
 im Graphen zu verlieren.
 
-## 6. Protokoll für eine kleine Benutzerstudie
+## 6. Protokoll für die Benutzerstudie
+
+Das unmittelbar ausführbare LimeSurvey-Schema mit Einwilligung,
+Vorkenntnissen, fünf Aufgaben, SUS, fünf fokussierten Rückfragen,
+Auswertungsregeln und Terminplan steht in
+[`USER_STUDY_PROTOCOL.md`](USER_STUDY_PROTOCOL.md). Diese Fassung setzt die
+Entscheidungen aus dem Betreuertermin vom 15. September 2026 um.
 
 ### 6.1 Empfohlenes Design
 
-- formative Studie mit etwa fünf bis acht Personen,
+- formative Studie mit mindestens fünf bis sechs erreichbaren Personen und
+  möglichst weiteren Teilnehmenden,
 - möglichst Mischung aus Personen mit und ohne Routing-Vorkenntnisse,
 - Einzeltermine von ungefähr 25 bis 35 Minuten,
 - Think-Aloud während der Aufgaben,
@@ -256,7 +263,8 @@ im Graphen zu verlieren.
 4. Pro Aufgabe Erfolg, Zeit, Hilfen, Fehlhandlungen und Kommentare notieren.
 5. Nach jeder Aufgabe eine Schwierigkeitseinschätzung von 1 bis 7 erfassen.
 6. Anschließend die zehn standardisierten SUS-Aussagen beantworten lassen.
-7. Abschließend drei offene Fragen stellen.
+7. Abschließend fünf fokussierte projektspezifische Fragen stellen, davon
+   höchstens eine als kurzes Freitextfeld.
 
 ```mermaid
 flowchart TB
@@ -266,7 +274,7 @@ flowchart TB
     RECORD["Erfolg, Zeit, Hilfen und Fehler protokollieren"]
     RATING["Schwierigkeit je Aufgabe bewerten"]
     SUS["System Usability Scale ausfüllen"]
-    INTERVIEW["Offene Abschlussfragen"]
+    INTERVIEW["Fokussierte Rückfragen"]
     ANALYSIS["Anonymisiert auswerten"]
 
     CONSENT --> PRIOR --> TASKS --> RECORD
@@ -276,11 +284,13 @@ flowchart TB
 Die SUS wird nach der Nutzung und vor dem offenen Abschlussgespräch erhoben,
 damit die Antworten möglichst die unmittelbare Nutzungserfahrung wiedergeben.
 
-### 6.3 Neutrale Abschlussfragen
+### 6.3 Fokussierte Abschlussfragen
 
-1. Was war beim Verstehen des Netzwerkzustands am hilfreichsten?
-2. Wo war unklar, was nach einer Aktion passiert ist?
-3. Welche Information oder Funktion hat gefehlt?
+Die vier geschlossenen Fragen prüfen Klarheit der Zustandsänderung,
+Erkennbarkeit des aktiven Verfahrens, Unterscheidbarkeit der Fehlerarten und
+visuelle Codierung. Ein einziges optionales Freitextfeld fragt nach der am
+meisten vermissten Information oder Funktion. Die genauen Formulierungen stehen
+im LimeSurvey-Protokoll.
 
 ### 6.4 Erfassungsbogen
 
@@ -338,7 +348,7 @@ Empfohlene finale Abbildungen:
 |---|---|---|
 | hoch | Greedy, vollständige Bäume und zirkuläre Wechselregel fachlich bestätigen | mit Betreuer anhand der drei Referenzfälle abnehmen |
 | hoch | Tatsächliche Benutzerstudie durchführen | vor der Ergebnisdarstellung der Arbeit |
-| mittel | GML-Anforderung gegen aktuellen JSON/XML-Import klären | nicht ohne bestätigten Bedarf implementieren |
+| erledigt | GraphML für Internet-Topology-Zoo-Dateien | Parser, API, Upload und Tests am 15. September 2026 ergänzt |
 | mittel | Schrittweisen Bonsai-Trace im Frontend zeigen | nur umsetzen, wenn Forschungsfrage oder Abnahme ihn benötigt |
 | niedrig | Anzeige aller Namen weiter entzerren | Standardübersicht und Tooltip sind bereits nutzbar |
 | außerhalb | Round-Robin, RR-Swapping und weitere Routingverfahren | nicht Teil dieses Sprints |

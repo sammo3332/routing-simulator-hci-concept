@@ -24,7 +24,7 @@ Das System stellt zwei deterministische Referenzverfahren gegenüber:
 
 | ID | Implementierte Anforderung | Umsetzung und sichtbares Verhalten |
 |---|---|---|
-| FA-1 | Topologieimport | TopoHub-Node-Link-JSON und SNDlib-XML werden über das Backend eingelesen, validiert und in ein gemeinsames Topologiemodell überführt. |
+| FA-1 | Topologieimport | TopoHub-Node-Link-JSON, SNDlib-XML und GraphML werden über das Backend eingelesen, validiert und in ein gemeinsames Topologiemodell überführt. Unterstützt wird bei GraphML ein einzelner einfacher Knoten-/Kanten-Graph; gemischte Kantenrichtungen und Hyperkanten werden abgewiesen. |
 | FA-2 | Zielknotenauswahl | Der Zielknoten beziehungsweise die Wurzel kann im React-Frontend gewählt werden. Nach einer Änderung wird der Routingzustand über die API neu berechnet. |
 | FA-3 | Ausfallsimulation | Einzelne physische Kanten können über den Graphen oder die Kantenauswahl deaktiviert werden. Mehrere gleichzeitige Kantenausfälle werden als gemeinsamer Fehlerzustand verwaltet. |
 | FA-4 | Routingverfahren | Nutzende können zwischen `deterministic_shortest_path` und `bonsai_greedy` wechseln. |
@@ -128,7 +128,7 @@ verifiziert:
 
 | Prüfung | Ergebnis |
 |---|---:|
-| Python-/Backend-/API-/Routingtests | 45 bestanden |
+| Python-/Backend-/API-/Routingtests | 51 bestanden |
 | Frontend-Logiktests | 15 bestanden |
 | JavaScript-Linting mit Oxlint | bestanden |
 | Produktions-Build mit Vite | bestanden |
