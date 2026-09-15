@@ -1,6 +1,6 @@
 # Offene Punkte und Abschlussplan
 
-Stand: 14. September 2026
+Stand: 15. September 2026
 
 Dieses Dokument trennt Arbeiten, die ohne neue fachliche Entscheidung erledigt
 werden können, von Punkten, die eine Betreuerentscheidung oder eine reale
@@ -20,6 +20,8 @@ Benutzerstudie benötigen.
 - PoC-Handout als historische, bytegleich geprüfte Archivkopie eingeordnet
 - vorhandene Screenshots als formative Entwicklungsnachweise registriert
 - private PDF-Autorenmetadaten aus dem öffentlichen Register entfernt
+- Python-3.12-Abhängigkeiten vollständig mit SHA-256-Prüfsummen gesperrt und
+  durch eine isolierte Neuinstallation sowie 45 Backend-Tests verifiziert
 
 ## Vor der Betreuerabnahme zu entscheiden
 
@@ -40,7 +42,6 @@ Benutzerstudie benötigen.
 | hoch | T-03 | Benutzerstudie durchführen | Einwilligung, anonymisierte Rohdaten und vollständig ausgefüllte Aufgabenbögen |
 | hoch | T-04 | Benutzerstudie auswerten | Erfolgsanteile, Medianzeiten, Fehlhandlungen, Schwierigkeit und qualitative Muster berichtet |
 | mittel | T-05 | tatsächliche Topologiedateien versionieren | Quelle, Abrufdatum, SHA-256 und dauerhafte URL für jeden verwendeten Datensatz |
-| mittel | T-06 | Python-Abhängigkeiten vollständig sperren | reproduzierbarer Versionsstand zusätzlich zu `requirements-core.txt` |
 | mittel | T-07 | BibTeX-Basis in den Zitierstil der Bachelorarbeit übernehmen | `docs/references.bib` eingebunden; alle im Text verwendeten Schlüssel und Seitenangaben stimmen mit dem finalen Literaturverzeichnis überein |
 | niedrig | T-08 | historische Streamlit-/NetworkX-Artefakte klar archivieren | keine Verwechslung mit aktueller Ist-Architektur |
 | abhängig | T-09 | bestätigte Punkte E-01 bis E-04 umsetzen | Code, Tests, Dokumentation und Abnahme gemeinsam aktualisiert |

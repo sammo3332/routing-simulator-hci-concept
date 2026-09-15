@@ -37,11 +37,16 @@ zum aktuellen Pflichtumfang.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements-core.txt
+python -m pip install --require-hashes -r requirements-lock.txt
 npm install
 ```
 
 Unter Windows wird die Umgebung mit `.venv\Scripts\activate` aktiviert.
+`requirements-lock.txt` enthält den geprüften, vollständig aufgelösten
+Python-3.12-Stand einschließlich SHA-256-Prüfsummen. Die direkt gepflegten
+Anforderungen und zulässigen Versionsbereiche stehen weiterhin in
+`requirements-core.txt`; nach einer bewussten Aktualisierung wird daraus die
+Lockdatei neu erzeugt und vollständig getestet.
 
 ## Entwicklung starten
 

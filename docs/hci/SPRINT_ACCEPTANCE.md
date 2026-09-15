@@ -1,6 +1,6 @@
 # Sprint-Abnahme: Bonsai-Greedy und HCI-Erweiterungen
 
-Stand: 9. September 2026
+Stand: 15. September 2026
 
 ## 1. Abnahmegegenstand
 
@@ -50,6 +50,23 @@ Die späteren Commits bis einschließlich `75223b8` änderten ausschließlich
 Dokumentation. Die oben genannten Testergebnisse bleiben der technische
 Abnahmenachweis für `40669bb`; sie werden nicht als erneute Ausführung auf
 einem späteren Dokumentationscommit ausgegeben.
+
+### Verifikation der Python-Lockdatei
+
+Am 15. September 2026 wurde `requirements-lock.txt` aus
+`requirements-core.txt` für Python 3.12 vollständig transitiv erzeugt. Die
+Datei sperrt 26 Pakete und enthält SHA-256-Prüfsummen. In einer neu angelegten
+virtuellen Umgebung wurden ausschließlich diese gesperrten Pakete installiert.
+
+| Prüfung | Ergebnis |
+|---|---|
+| Installation mit `--require-hashes` | bestanden |
+| Konsistenzprüfung aller installierten Pakete | bestanden, keine Konflikte |
+| Backend-Gesamtsuite | 45 von 45 bestanden |
+
+Die Ausführung verwendete Python 3.12.14 auf dem Code- und
+Dokumentationsstand `c56b4e0`. Es erschienen dieselben zwei bereits oben
+eingeordneten Deprecation-Warnungen aus Testabhängigkeiten.
 
 ## 4. Fachliche Referenzprüfungen
 

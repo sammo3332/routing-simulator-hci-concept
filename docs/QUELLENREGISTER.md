@@ -104,7 +104,7 @@ Ausfälle.
 | R-09 | `tests/test_bonsai.py`, `tests/test_bonsai_validation.py` | Bonsai- und Orakeltests |
 | R-10 | `tests/test_api.py`, `tests/test_failover_core.py`, `tests/test_topology_import.py` | API-, Routing- und Importnachweise |
 | R-11 | `tests/frontend/` | Frontend-Logiktests |
-| R-12 | `package.json`, `package-lock.json`, `requirements-core.txt` | Abhängigkeiten; Python-Versionen sind nicht vollständig gelockt |
+| R-12 | `package.json`, `package-lock.json`, `requirements-core.txt`, `requirements-lock.txt` | JavaScript- und Python-Abhängigkeiten; Python 3.12 ist vollständig transitiv mit SHA-256-Prüfsummen gesperrt |
 
 ## Versions- und Duplikatvergleich
 
