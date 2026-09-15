@@ -107,6 +107,24 @@ Importformat ergänzt. Neben einer versionierten Test-Fixture wurde die original
 Dieser spätere Lauf ergänzt die historischen Abnahmeläufe, ersetzt aber nicht
 deren jeweilige Commit- und Umgebungsangaben.
 
+### Verifikation des gemeinsamen Produktionsprozesses
+
+Am 15. September 2026 wurde der Vite-Build in FastAPI eingebunden und der
+vorgesehene Ein-Prozess-Betrieb lokal über HTTP geprüft.
+
+| Prüfung | Ergebnis |
+|---|---|
+| Backend-Gesamtsuite | 52 von 52 bestanden |
+| Frontend-Logiktests | 15 von 15 bestanden |
+| Frontend-Linting und Vite-Build | bestanden |
+| `GET /` über Uvicorn | `200`, `text/html` |
+| `GET /api/health` über dieselbe Origin | `200`, `{"status":"ok"}` |
+| GraphML-Import über dieselbe Origin | Session erzeugt; 3 von 3 Fixture-Knoten erreichbar |
+
+Die Containerbeschreibung und Render-Blueprint-Konfiguration sind vorhanden.
+Der öffentliche Hosting-Smoke-Test bleibt bis zur Verbindung des Render-Kontos
+offen.
+
 ## 4. Fachliche Referenzprüfungen
 
 Die wichtigsten fachlichen Eigenschaften wurden zusätzlich als gezielte

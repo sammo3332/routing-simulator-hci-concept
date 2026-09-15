@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .failover_core.bonsai import (
@@ -321,7 +322,11 @@ def _evaluate(session: SimulationSession) -> RoutingResult:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
 
-def create_app(store: SessionStore | None = None) -> FastAPI:
+def create_app(
+    store: SessionStore | None = None,
+    *,
+    frontend_directory: Path | None = None,
+) -> FastAPI:
     sessions = store or SessionStore()
     app = FastAPI(
         title="Failover Routing Visualization API",
@@ -404,6 +409,17 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
         return _search_response(search, request.max_k)
+
+    static_directory = frontend_directory
+    if static_directory is None:
+        candidate = Path(__file__).resolve().parents[1] / "dist"
+        static_directory = candidate if candidate.is_dir() else None
+    if static_directory is not None:
+        app.mount(
+            "/",
+            StaticFiles(directory=static_directory, html=True),
+            name="frontend",
+        )
 
     return app
 

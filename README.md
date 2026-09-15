@@ -65,6 +65,24 @@ npm run dev
 Das Frontend ist anschließend unter `http://127.0.0.1:5173` erreichbar. Vite
 leitet `/api` während der Entwicklung an die Python-API auf Port 8000 weiter.
 
+## Produktionsdeployment
+
+Das Repository enthält einen Multi-Stage-`Dockerfile`. Die erste Stufe erzeugt
+den Vite-Produktions-Build; die zweite startet genau einen FastAPI-Prozess, der
+API und Frontend unter derselben Basis-URL bereitstellt.
+
+```bash
+docker build -t failover-routing-visualizer .
+docker run --rm -p 8000:8000 failover-routing-visualizer
+```
+
+Danach liegen Oberfläche und Healthcheck unter
+`http://127.0.0.1:8000/` beziehungsweise
+`http://127.0.0.1:8000/api/health`. `render.yaml` beschreibt eine direkt aus
+dem Repository erzeugbare Render-Web-Service-Instanz. Die vollständige
+Bereitstellungs- und Abnahmeprozedur steht in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Verifikation
 
 ```bash
@@ -98,6 +116,7 @@ Der technische und fachliche Abnahmestand ist in
 | [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Evaluation und Studienrahmen |
 | [docs/hci/USER_STUDY_PROTOCOL.md](docs/hci/USER_STUDY_PROTOCOL.md) | LimeSurvey-Schema, SUS-Auswertung und Studienzeitplan |
 | [docs/thesis/THESIS_OUTLINE.md](docs/thesis/THESIS_OUTLINE.md) | HCI-zentrierte Gliederung und Schreibreihenfolge |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | gemeinsames Containerdeployment und öffentlicher Smoke-Test |
 | [docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) | technische und manuelle Abnahme |
 | [docs/hci/SCREENSHOT_REGISTER.md](docs/hci/SCREENSHOT_REGISTER.md) | Bildprovenienz und Protokoll für finale Screenshots |
 | [docs/QUELLENREGISTER.md](docs/QUELLENREGISTER.md) | Literatur-, Quellen- und Versionsregister |

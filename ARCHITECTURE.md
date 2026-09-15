@@ -55,19 +55,21 @@ API-Antworten sind JSON.
 
 ### Deploymentstatus
 
-Das Repository enthält derzeit keine Vercel Function, Rewrite-Regel oder andere
-Produktionskonfiguration, die `/api` an die FastAPI-Anwendung weiterleitet. Die
-öffentliche Vercel-URL stellt den statischen Vite-Build bereit. Eine Prüfung am
-15. September 2026 ergab für
-[`GET /api/health`](https://routing-simulator-hci-concept.vercel.app/api/health)
-jedoch `404 NOT_FOUND`.
+Der frühere Vercel-Stand stellte nur den statischen Vite-Build bereit; eine
+Prüfung am 15. September 2026 ergab für `/api/health` deshalb `404 NOT_FOUND`.
+Dieser Stand ist keine vollständige Testumgebung.
 
-Damit ist das vollständige System derzeit lokal mit getrennt gestartetem Vite-
-und FastAPI-Prozess funktionsfähig. Das öffentliche Deployment enthält dagegen
-noch kein erreichbares Backend; Import und Simulation können dort deshalb nicht
-als funktionsfähig abgenommen werden. Die Bereitstellung des Backends oder eine
-ausdrückliche Kennzeichnung als reine Frontend-Vorschau ist ein offener
-Deploymentpunkt.
+Das Repository enthält nun einen Multi-Stage-`Dockerfile` für das Gesamtsystem.
+In der Build-Stufe erzeugt Vite die statischen Dateien. In der Laufzeitstufe
+liefert ein einzelner FastAPI-/Uvicorn-Prozess zuerst die API-Routen und danach
+den eingebundenen `dist`-Ordner aus. Damit besitzen Browser und API dieselbe
+Origin und benötigen weder Vite-Proxy noch CORS-Konfiguration.
+
+`render.yaml` beschreibt einen einzelnen Docker-Web-Service in Frankfurt mit
+`/api/health` als Healthcheck. Die öffentliche Render-Instanz muss noch über das
+Hostingkonto mit dem Repository verbunden und danach Ende zu Ende geprüft
+werden. Wegen des prozesslokalen `SessionStore` darf der Prototyp nicht auf
+mehrere Instanzen oder Worker skaliert werden.
 
 ## Schichten und Verantwortlichkeiten
 

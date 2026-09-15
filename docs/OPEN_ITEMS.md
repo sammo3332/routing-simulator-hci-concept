@@ -24,6 +24,8 @@ Benutzerstudie benötigen.
   durch eine isolierte Neuinstallation und die Backend-Suite verifiziert
 - Ist-Architektur gegen Code, lokalen HTTP-Ablauf und öffentliches Deployment
   geprüft; Datenformate, Vite-Rolle, React-Zustand und Deploymentgrenze korrigiert
+- gemeinsames Docker-Deployment für Vite-Build und einen FastAPI-Prozess
+  vorbereitet und lokal über HTTP geprüft
 
 ## Vor der Betreuerabnahme zu entscheiden
 
@@ -41,7 +43,7 @@ Benutzerstudie benötigen.
 | hoch | T-02 | sechs finale Screenshots F-01 bis F-06 aufnehmen | vollständige Metadaten nach `docs/hci/SCREENSHOT_REGISTER.md` |
 | hoch | T-03 | Benutzerstudie durchführen | Einwilligung, anonymisierte Rohdaten und vollständig ausgefüllte Aufgabenbögen |
 | hoch | T-04 | Benutzerstudie auswerten | Erfolgsanteile, Medianzeiten, Fehlhandlungen, Schwierigkeit und qualitative Muster berichtet |
-| hoch | T-10 | Produktionsdeployment für die FastAPI-Endpunkte bereitstellen oder Vercel ausdrücklich als reine Frontend-Vorschau kennzeichnen | `GET /api/health` liefert im vorgesehenen Gesamtsystem `200`; Topologieimport und Sessionupdate funktionieren über dieselbe öffentliche Basis-URL |
+| hoch | T-10 | vorbereiteten Render-Docker-Service mit dem Hostingkonto verbinden und öffentlich abnehmen | `GET /api/health` liefert öffentlich `200`; Frontend, Topologieimport und Sessionupdate funktionieren über dieselbe Basis-URL |
 | hoch | T-11 | LimeSurvey-Fragebogen nach `docs/hci/USER_STUDY_PROTOCOL.md` anlegen und dem Betreuer zur Prüfung senden | Vorschau geprüft; fünf Aufgaben, zehn SUS-Items und fünf fokussierte Rückfragen vollständig |
 | mittel | T-05 | tatsächliche Topologiedateien versionieren | Quelle, Abrufdatum, SHA-256 und dauerhafte URL für jeden verwendeten Datensatz |
 | mittel | T-07 | BibTeX-Basis in den Zitierstil der Bachelorarbeit übernehmen | `docs/references.bib` eingebunden; alle im Text verwendeten Schlüssel und Seitenangaben stimmen mit dem finalen Literaturverzeichnis überein |

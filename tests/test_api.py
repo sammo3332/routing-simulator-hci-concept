@@ -32,6 +32,24 @@ def test_health_endpoint() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_production_app_serves_frontend_without_shadowing_api(
+    tmp_path: Path,
+) -> None:
+    index = tmp_path / "index.html"
+    index.write_text("<h1>Failover Routing Visualizer</h1>", encoding="utf-8")
+    test_client = TestClient(
+        create_app(SessionStore(), frontend_directory=tmp_path)
+    )
+
+    frontend = test_client.get("/")
+    health = test_client.get("/api/health")
+
+    assert frontend.status_code == 200
+    assert "Failover Routing Visualizer" in frontend.text
+    assert health.status_code == 200
+    assert health.json() == {"status": "ok"}
+
+
 def test_import_creates_in_memory_session_and_returns_real_routing() -> None:
     data = import_fixture(client(), "topohub_mini.json")
 

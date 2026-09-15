@@ -128,7 +128,7 @@ verifiziert:
 
 | Prüfung | Ergebnis |
 |---|---:|
-| Python-/Backend-/API-/Routingtests | 51 bestanden |
+| Python-/Backend-/API-/Routingtests | 52 bestanden |
 | Frontend-Logiktests | 15 bestanden |
 | JavaScript-Linting mit Oxlint | bestanden |
 | Produktions-Build mit Vite | bestanden |
