@@ -93,6 +93,7 @@ Der technische und fachliche Abnahmestand ist in
 | [docs/hci/SPRINT_ACCEPTANCE.md](docs/hci/SPRINT_ACCEPTANCE.md) | technische und manuelle Abnahme |
 | [docs/hci/SCREENSHOT_REGISTER.md](docs/hci/SCREENSHOT_REGISTER.md) | Bildprovenienz und Protokoll für finale Screenshots |
 | [docs/QUELLENREGISTER.md](docs/QUELLENREGISTER.md) | Literatur-, Quellen- und Versionsregister |
+| [docs/references.bib](docs/references.bib) | maschinenlesbare BibTeX-Datensätze mit stabilen Zitationsschlüsseln |
 | [docs/OPEN_ITEMS.md](docs/OPEN_ITEMS.md) | priorisierter Abschlussplan und Entscheidungspunkte |
 
 ## Graphansicht bedienen
