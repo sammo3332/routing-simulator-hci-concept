@@ -16,6 +16,7 @@ Benutzerstudie benötigen.
 - Anforderungen als Soll-/Ist-Matrix konsolidiert
 - aktuelles System- und Sequenzdiagramm erstellt
 - wissenschaftliche Kernquellen korrigiert und vervollständigt
+- kanonische maschinenlesbare BibTeX-Datei mit stabilen Zitationsschlüsseln angelegt
 - PoC-Handout als historische, bytegleich geprüfte Archivkopie eingeordnet
 - vorhandene Screenshots als formative Entwicklungsnachweise registriert
 - private PDF-Autorenmetadaten aus dem öffentlichen Register entfernt
@@ -40,7 +41,7 @@ Benutzerstudie benötigen.
 | hoch | T-04 | Benutzerstudie auswerten | Erfolgsanteile, Medianzeiten, Fehlhandlungen, Schwierigkeit und qualitative Muster berichtet |
 | mittel | T-05 | tatsächliche Topologiedateien versionieren | Quelle, Abrufdatum, SHA-256 und dauerhafte URL für jeden verwendeten Datensatz |
 | mittel | T-06 | Python-Abhängigkeiten vollständig sperren | reproduzierbarer Versionsstand zusätzlich zu `requirements-core.txt` |
-| mittel | T-07 | finale Literaturausgabe erzeugen | einheitlicher Zitierstil und Übereinstimmung zwischen Text und Literaturverzeichnis |
+| mittel | T-07 | BibTeX-Basis in den Zitierstil der Bachelorarbeit übernehmen | `docs/references.bib` eingebunden; alle im Text verwendeten Schlüssel und Seitenangaben stimmen mit dem finalen Literaturverzeichnis überein |
 | niedrig | T-08 | historische Streamlit-/NetworkX-Artefakte klar archivieren | keine Verwechslung mit aktueller Ist-Architektur |
 | abhängig | T-09 | bestätigte Punkte E-01 bis E-04 umsetzen | Code, Tests, Dokumentation und Abnahme gemeinsam aktualisiert |
 
