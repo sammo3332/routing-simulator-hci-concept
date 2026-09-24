@@ -39,9 +39,9 @@ flowchart TB
     A -->|"vollständiger konsistenter Zustand"| F
 ```
 
-Das Diagramm ersetzt die ältere Streamlit-/`st.session_state`-Darstellung in
-`docs/system_architecture.png`. Diese bleibt ausschließlich als historischer
-Entwurfsstand erhalten.
+Das Diagramm ersetzt die frühere Streamlit-/`st.session_state`-Darstellung.
+Der alte Entwurfsstand liegt ausschließlich zu Dokumentationszwecken unter
+`docs/archive/`.
 
 Das Frontend wird während der Entwicklung durch Vite bereitgestellt; für die
 Produktion erzeugt Vite statische Dateien. Vite ist damit ein Entwicklungs- und
@@ -55,21 +55,18 @@ API-Antworten sind JSON.
 
 ### Deploymentstatus
 
-Der frühere Vercel-Stand stellte nur den statischen Vite-Build bereit; eine
-Prüfung am 15. September 2026 ergab für `/api/health` deshalb `404 NOT_FOUND`.
-Dieser Stand ist keine vollständige Testumgebung.
-
-Das Repository enthält nun einen Multi-Stage-`Dockerfile` für das Gesamtsystem.
+Das Repository enthält einen Multi-Stage-`Dockerfile` für das Gesamtsystem.
 In der Build-Stufe erzeugt Vite die statischen Dateien. In der Laufzeitstufe
 liefert ein einzelner FastAPI-/Uvicorn-Prozess zuerst die API-Routen und danach
 den eingebundenen `dist`-Ordner aus. Damit besitzen Browser und API dieselbe
 Origin und benötigen weder Vite-Proxy noch CORS-Konfiguration.
 
 `render.yaml` beschreibt einen einzelnen Docker-Web-Service in Frankfurt mit
-`/api/health` als Healthcheck. Die öffentliche Render-Instanz muss noch über das
-Hostingkonto mit dem Repository verbunden und danach Ende zu Ende geprüft
-werden. Wegen des prozesslokalen `SessionStore` darf der Prototyp nicht auf
-mehrere Instanzen oder Worker skaliert werden.
+`/api/health` als Healthcheck. Die vollständige Anwendung wird unter
+[routing-simulator-hci-concept.onrender.com](https://routing-simulator-hci-concept.onrender.com/)
+bereitgestellt. Oberfläche und API verwenden dort dieselbe Basis-URL. Wegen des
+prozesslokalen `SessionStore` darf der Prototyp nicht auf mehrere Instanzen
+oder Worker skaliert werden.
 
 ## Schichten und Verantwortlichkeiten
 

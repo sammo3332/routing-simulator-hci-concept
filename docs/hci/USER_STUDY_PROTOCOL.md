@@ -1,16 +1,16 @@
 # LimeSurvey-Protokoll für die HCI-Benutzerstudie
 
-Stand: 15. September 2026  
-Status: Entwurf zur Prüfung durch den Betreuer; noch nicht veröffentlichen
+Stand: 24. September 2026
+Status: Vom Betreuer geprüft, in LimeSurvey umgesetzt und für die laufende
+Benutzerstudie veröffentlicht
 
 ## Ziel und Studiendesign
 
 Die formative Studie prüft, ob Nutzende Routingzustände, Ausfälle und die
 Unterscheidung zwischen physischer Unerreichbarkeit und Bonsai-Routingfehlern
-mit dem Tool nachvollziehen können. Geplant sind mindestens fünf bis sechs
-Personen; zusätzliche Teilnehmende verbessern die Breite der Beobachtungen.
-Wegen der kleinen Gelegenheitsstichprobe werden keine repräsentativen oder
-inferenzstatistischen Aussagen beansprucht.
+mit dem Tool nachvollziehen können. Bis zum 24. September hatten zehn Personen
+teilgenommen. Wegen der kleinen Gelegenheitsstichprobe werden keine
+repräsentativen oder inferenzstatistischen Aussagen beansprucht.
 
 ```mermaid
 flowchart TB
@@ -139,9 +139,9 @@ gestellt, weil SUS und die fokussierten Fragen diese Aspekte bereits erfassen.
 
 | Datum | Schritt |
 |---|---|
-| 15.–16. September | LimeSurvey-Entwurf und öffentlichen Toolzugang fertigstellen |
-| unmittelbar danach | Vorschau beider Links an den Betreuer senden |
-| nach der Freigabe | Studie aktivieren und Teilnehmende einladen |
+| 15.–16. September | LimeSurvey-Entwurf und öffentlichen Toolzugang fertiggestellt |
+| 16. September | Prüfung durch den Betreuer abgeschlossen |
+| anschließend | Studie aktiviert und Teilnehmende eingeladen |
 | 28.–30. September | Erhebung beenden und Datenexport einfrieren |
 | anschließend | auswerten, Abbildungen erzeugen und Ergebniskapitel schreiben |
 

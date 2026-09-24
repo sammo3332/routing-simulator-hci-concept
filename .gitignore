@@ -15,7 +15,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 pytest-of-root/
-.venv/
+.venv*/
 
 # Editor directories and files
 .vscode/*

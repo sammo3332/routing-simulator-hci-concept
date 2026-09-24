@@ -1,19 +1,19 @@
 # Formative HCI-Evaluation des Failover Routing Visualizers
 
-Stand: 15. September 2026
+Stand: 24. September 2026
 
 ## 1. Zweck und Status
 
-Dieses Dokument bewertet die bisherige Entwicklung des Prototyps aus einer
-angenommenen Betreuerperspektive. Es verbindet drei Arten von Evidenz:
+Dieses Dokument beschreibt die formative Evaluation des Prototyps. Es
+verbindet drei Arten von Evidenz:
 
 1. eine formative Expertenprüfung der Benutzungsoberfläche,
 2. einen Vergleich dokumentierter Entwicklungsstände und
-3. ein reproduzierbares Protokoll für eine noch durchzuführende Benutzerstudie.
+3. das Protokoll der laufenden Benutzerstudie.
 
-Die Expertenprüfung ist **keine empirische Benutzerstudie**. Es werden daher
-keine Teilnehmenden, Bearbeitungszeiten oder Erfolgsquoten erfunden. Solche
-Ergebnisse dürfen erst nach der tatsächlichen Durchführung eingetragen werden.
+Die Expertenprüfung und die Benutzerstudie werden methodisch getrennt
+ausgewertet. Ergebnisse der laufenden Erhebung werden erst nach dem festgelegten
+Ende der Studie und dem bereinigten Datenexport ergänzt.
 
 ### Evaluationsaufbau im Überblick
 
@@ -21,7 +21,7 @@ Ergebnisse dürfen erst nach der tatsächlichen Durchführung eingetragen werden
 flowchart TB
     UI["Formative Expertenprüfung"]
     DEV["Vergleich der Entwicklungsstände"]
-    STUDY["Geplante Benutzerstudie"]
+    STUDY["Laufende Benutzerstudie"]
     QUESTIONS["Evaluationsfragen EF-1 bis EF-6"]
     FINDINGS["Belegte Befunde und Verbesserungen"]
 
@@ -31,9 +31,9 @@ flowchart TB
     QUESTIONS --> FINDINGS
 ```
 
-Die Expertenprüfung und die dokumentierten Entwicklungsstände liefern bereits
-formative Evidenz. Empirische Aussagen entstehen erst durch die noch
-durchzuführende Benutzerstudie.
+Die Expertenprüfung und die dokumentierten Entwicklungsstände liefern
+formative Evidenz. Empirische Aussagen werden aus den tatsächlich erhobenen
+Studiendaten abgeleitet.
 
 ## 2. Evaluationsfragen
 
@@ -342,30 +342,29 @@ Empfohlene finale Abbildungen:
 5. Germany50 als Standardübersicht,
 6. Germany50 mit hervorgehobener Einzelroute.
 
-## 8. Offene Punkte und Priorität
+## 8. Aktueller Evaluationsstand
 
-| Priorität | Punkt | Entscheidung |
-|---|---|---|
-| hoch | Greedy, vollständige Bäume und zirkuläre Wechselregel fachlich bestätigen | mit Betreuer anhand der drei Referenzfälle abnehmen |
-| hoch | Tatsächliche Benutzerstudie durchführen | vor der Ergebnisdarstellung der Arbeit |
-| erledigt | GraphML für Internet-Topology-Zoo-Dateien | Parser, API, Upload und Tests am 15. September 2026 ergänzt |
-| mittel | Schrittweisen Bonsai-Trace im Frontend zeigen | nur umsetzen, wenn Forschungsfrage oder Abnahme ihn benötigt |
-| niedrig | Anzeige aller Namen weiter entzerren | Standardübersicht und Tooltip sind bereits nutzbar |
-| außerhalb | Round-Robin, RR-Swapping und weitere Routingverfahren | nicht Teil dieses Sprints |
+Der technische Funktionsumfang wurde mit dem Betreuer abgestimmt. GraphML wurde
+am 15. September 2026 einschließlich Parser, API, Upload und Tests ergänzt. Der
+vollständige schrittweise Bonsai-Trace, Round-Robin, RR-Swapping und weitere
+Routingverfahren gehören nicht zum untersuchten Umfang.
 
-## 9. Betreuerorientiertes Sprinturteil
+Die Benutzerstudie läuft seit der Freigabe des LimeSurvey-Fragebogens. Bis zum
+24. September hatten zehn Personen teilgenommen. Eine endgültige Auswertung
+erfolgt erst nach Ende der Erhebung und der Bereinigung des Datenexports.
 
-Der technische Vertikalschnitt ist für den vereinbarten Sprint vollständig:
-Import, Strategiewahl, Greedy-Aboreszenzen, zirkuläres Failover, getrennte
-Fehlerklassifikation, automatische Suche und Visualisierung sind integriert und
-automatisch getestet. Der nächste sinnvolle Schritt ist keine weitere große
-Funktion, sondern die fachliche Abnahme der getroffenen Annahmen und eine kleine,
-sauber protokollierte Benutzerstudie.
+## 9. Technischer Stand
+
+Der technische Vertikalschnitt umfasst Import, Strategiewahl,
+Greedy-Aboreszenzen, zirkuläres Failover, getrennte Fehlerklassifikation,
+automatische Suche und Visualisierung. Diese Funktionen sind integriert und
+automatisch getestet.
 
 Die Screenshots belegen nachvollziehbar, wie konkrete Darstellungsprobleme zu
 Änderungen geführt haben. Sie sind damit als formative Designhistorie geeignet.
-Empirische Aussagen über Verständlichkeit oder Gebrauchstauglichkeit dürfen
-jedoch erst nach Durchführung und Auswertung der Studie gemacht werden.
+Empirische Aussagen über Verständlichkeit oder Gebrauchstauglichkeit werden
+erst nach Abschluss und Auswertung der Studie formuliert.
 
-Die technische Prüfliste und der formale Abnahmestand sind separat in
-[`SPRINT_ACCEPTANCE.md`](SPRINT_ACCEPTANCE.md) dokumentiert.
+Die technische Absicherung wird durch die automatisierten Tests, die
+[Bonsai-Validierung](../BONSAI_VALIDATION.md) und die in
+[REQUIREMENTS.md](../../REQUIREMENTS.md) dokumentierten Prüfergebnisse belegt.
