@@ -1,6 +1,6 @@
 # Implementierter Anforderungsumfang
 
-Stand: 15. September 2026
+Stand: 24. September 2026
 
 Dieses Dokument beschreibt ausschließlich den im aktuellen Repository
 implementierten und überprüften Funktionsumfang des Failover Routing
@@ -24,15 +24,15 @@ Das System stellt zwei deterministische Referenzverfahren gegenüber:
 
 | ID | Implementierte Anforderung | Umsetzung und sichtbares Verhalten |
 |---|---|---|
-| FA-1 | Topologieimport | TopoHub-Node-Link-JSON, SNDlib-XML und GraphML werden über das Backend eingelesen, validiert und in ein gemeinsames Topologiemodell überführt. Unterstützt wird bei GraphML ein einzelner einfacher Knoten-/Kanten-Graph; gemischte Kantenrichtungen und Hyperkanten werden abgewiesen. |
-| FA-2 | Zielknotenauswahl | Der Zielknoten beziehungsweise die Wurzel kann im React-Frontend gewählt werden. Nach einer Änderung wird der Routingzustand über die API neu berechnet. |
-| FA-3 | Ausfallsimulation | Einzelne physische Kanten können über den Graphen oder die Kantenauswahl deaktiviert werden. Mehrere gleichzeitige Kantenausfälle werden als gemeinsamer Fehlerzustand verwaltet. |
-| FA-4 | Routingverfahren | Nutzende können zwischen `deterministic_shortest_path` und `bonsai_greedy` wechseln. |
-| FA-5 | Routingmetrik | Das Shortest-Path-Verfahren unterstützt `hop_count` und `edge_weight`. Die Bonsai-Simulation verwendet Hop-Anzahl. |
-| FA-6 | Kürzeste Pfade | Für jeden Knoten wird ein deterministischer Pfad zum Ziel berechnet. Gleiche Kosten werden durch eine stabile Sortierung von Knoten- und Kantenfolgen aufgelöst. |
-| FA-7 | Bonsai-Aboreszenzen | Für eine zusammenhängende ungerichtete Topologie werden die Kantenkonnektivität und entsprechend viele vollständige gerichtete Aboreszenzen zum Ziel berechnet. |
-| FA-8 | Bonsai-Failover | Trifft ein Paket im aktiven Baum auf eine ausgefallene Kante, wechselt die Simulation am aktuellen Knoten zyklisch zur nächsten Aboreszenz. |
-| FA-9 | Fehlerklassifikation | Zustellung, physische Unerreichbarkeit, Bonsai-Schleife und Bonsai-Sackgasse werden getrennt erkannt und ausgegeben. |
+| FA-01 | Topologieimport | TopoHub-Node-Link-JSON, SNDlib-XML und GraphML werden über das Backend eingelesen, validiert und in ein gemeinsames Topologiemodell überführt. Unterstützt wird bei GraphML ein einzelner einfacher Knoten-/Kanten-Graph; gemischte Kantenrichtungen und Hyperkanten werden abgewiesen. |
+| FA-02 | Zielknotenauswahl | Der Zielknoten beziehungsweise die Wurzel kann im React-Frontend gewählt werden. Nach einer Änderung wird der Routingzustand über die API neu berechnet. |
+| FA-03 | Ausfallsimulation | Einzelne physische Kanten können über den Graphen oder die Kantenauswahl deaktiviert werden. Mehrere gleichzeitige Kantenausfälle werden als gemeinsamer Fehlerzustand verwaltet. |
+| FA-04 | Routingverfahren | Nutzende können zwischen `deterministic_shortest_path` und `bonsai_greedy` wechseln. |
+| FA-05 | Routingmetrik | Das Shortest-Path-Verfahren unterstützt `hop_count` und `edge_weight`. Die Bonsai-Simulation verwendet Hop-Anzahl. |
+| FA-06 | Kürzeste Pfade | Für jeden Knoten wird ein deterministischer Pfad zum Ziel berechnet. Gleiche Kosten werden durch eine stabile Sortierung von Knoten- und Kantenfolgen aufgelöst. |
+| FA-07 | Bonsai-Aboreszenzen | Für eine zusammenhängende ungerichtete Topologie werden die Kantenkonnektivität und entsprechend viele vollständige gerichtete Aboreszenzen zum Ziel berechnet. |
+| FA-08 | Bonsai-Failover | Trifft ein Paket im aktiven Baum auf eine ausgefallene Kante, wechselt die Simulation am aktuellen Knoten zyklisch zur nächsten Aboreszenz. |
+| FA-09 | Fehlerklassifikation | Zustellung, physische Unerreichbarkeit, Bonsai-Schleife und Bonsai-Sackgasse werden getrennt erkannt und ausgegeben. |
 | FA-10 | Ergebnisdarstellung | Baseline- und aktuelle Pfade, geänderte und betroffene Knoten, ausgefallene Kanten, Baumwechsel und Fehlerklassen werden im Frontend dargestellt. |
 | FA-11 | Netzwerkreparatur | Eine ausgewählte Kante oder alle ausgefallenen Kanten können wiederhergestellt werden. Anschließend wird der Routingzustand neu berechnet. |
 | FA-12 | Kritische Ausfallsuche | Ausfallkombinationen werden ab Größe eins bis zu einer gewählten Grenze systematisch geprüft. Für Shortest Path wird physische Unerreichbarkeit gesucht; für Bonsai werden Routingfehler trotz vorhandener physischer Verbindung gesucht. |
@@ -43,21 +43,22 @@ Das System stellt zwei deterministische Referenzverfahren gegenüber:
 
 | ID | Implementiertes Qualitätsziel | Umsetzung |
 |---|---|---|
-| HCI-1 | Sichtbarkeit des Systemstatus | Kopfbereich, Kennzahlen, Graph, Routentabelle und Ereignisprotokoll zeigen den aktuellen Zustand konsistent an. |
-| HCI-2 | Visuelle Unterscheidbarkeit | Ziel, aktuelle Route, Baseline, ausgewählte Aboreszenz und ausgefallene Kanten besitzen unterscheidbare Farben, Linienarten und Beschriftungen. |
-| HCI-3 | Kontrolle und Reversibilität | Ausfälle können gezielt ausgelöst und rückgängig gemacht werden. Ziel, Strategie, Metrik, Baum und hervorgehobene Route sind direkt wählbar. |
-| HCI-4 | Verständliche Fehlerdiagnose | Physische Trennung, Schleife und Sackgasse werden fachlich getrennt benannt und in den Ergebnisdaten ausgewiesen. |
-| HCI-5 | Navigation großer Graphen | Zoom, Pan, automatisches Einpassen, einklappbare Detailbereiche und Hervorhebung einer einzelnen Route unterstützen die Untersuchung größerer Topologien. |
-| HCI-6 | Identifizierbare Knoten | Deterministische eindeutige Kürzel reduzieren Überlagerungen. Vollständige Knotennamen stehen per Tooltip und über eine optionale Namensanzeige zur Verfügung. |
-| HCI-7 | Tastaturbedienbare Graphsteuerung | Zoom-, Einpass- und Detailpanel-Steuerungen sind als beschriftete Bedienelemente ausgeführt und per Tastatur erreichbar. |
-| HCI-8 | Nachvollziehbare Interaktion | Import, Konfigurationsänderungen, Ausfälle, Reparaturen und Suchergebnisse werden im Ereignisprotokoll dokumentiert. |
+| HCI-01 | Sichtbarkeit des Systemstatus | Kopfbereich, Kennzahlen, Graph, Routentabelle und Ereignisprotokoll zeigen den aktuellen Zustand konsistent an. |
+| HCI-02 | Visuelle Unterscheidbarkeit | Ziel, aktuelle Route, Baseline, ausgewählte Aboreszenz und ausgefallene Kanten besitzen unterscheidbare Farben, Linienarten und Beschriftungen. |
+| HCI-03 | Kontrolle und Reversibilität | Ausfälle können gezielt ausgelöst und rückgängig gemacht werden. Ziel, Strategie, Metrik, Baum und hervorgehobene Route sind direkt wählbar. |
+| HCI-04 | Verständliche Fehlerdiagnose | Physische Trennung, Schleife und Sackgasse werden fachlich getrennt benannt und in den Ergebnisdaten ausgewiesen. |
+| HCI-05 | Navigation großer Graphen | Zoom, Pan, automatisches Einpassen, einklappbare Detailbereiche und Hervorhebung einer einzelnen Route unterstützen die Untersuchung größerer Topologien. |
+| HCI-06 | Identifizierbare Knoten | Deterministische eindeutige Kürzel reduzieren Überlagerungen. Vollständige Knotennamen stehen per Tooltip und über eine optionale Namensanzeige zur Verfügung. |
+| HCI-07 | Tastaturbedienbare Graphsteuerung | Zoom-, Einpass- und Detailpanel-Steuerungen sind als beschriftete Bedienelemente ausgeführt und per Tastatur erreichbar. |
+| HCI-08 | Nachvollziehbare Interaktion | Import, Konfigurationsänderungen, Ausfälle, Reparaturen und Suchergebnisse werden im Ereignisprotokoll dokumentiert. |
 
 Die HCI-Gestaltung orientiert sich insbesondere an der Sichtbarkeit des
 Systemstatus, Kontrolle, Konsistenz, Fehlervermeidung und Fehlerdiagnose
 ([Nielsen 1994](https://doi.org/10.1145/191666.191729)). Für große Graphen wird
 das Prinzip „Overview first, zoom and filter, then details-on-demand“ verwendet
-([Shneiderman 1996](https://doi.org/10.1109/VL.1996.545307)). Die vollständigen
-Literaturangaben stehen im [Quellenregister](docs/QUELLENREGISTER.md).
+([Shneiderman 1996](https://doi.org/10.1109/VL.1996.545307)). Die
+maschinenlesbaren Literaturangaben stehen in
+[`docs/references.bib`](docs/references.bib).
 
 ## Bonsai-Berechnung
 
@@ -123,8 +124,8 @@ Topologie-, Pfad- und Statusdaten ab.
 
 ## Automatisierte Nachweise
 
-Der dokumentierte Stand wurde am 15. September 2026 mit folgenden Prüfungen
-verifiziert:
+Der festgelegte Studienstand wurde zuletzt am 24. September 2026 mit folgenden
+Prüfungen verifiziert:
 
 | Prüfung | Ergebnis |
 |---|---:|
@@ -138,6 +139,6 @@ Routing-Trace, Fehlerklassifikation, kritische Ausfallsuche,
 Szenarioserialisierung, API-Verhalten, Graph-Viewport und Knotendarstellung ab.
 
 Weitere Nachweise befinden sich in der
-[Sprint-Abnahme](docs/hci/SPRINT_ACCEPTANCE.md), der
+[Bonsai-Validierung](docs/BONSAI_VALIDATION.md), der
 [HCI-Evaluation](docs/hci/HCI_EVALUATION.md) und der
 [Architekturdokumentation](ARCHITECTURE.md).

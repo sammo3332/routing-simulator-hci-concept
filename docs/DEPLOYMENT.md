@@ -1,6 +1,6 @@
 # Produktionsdeployment für die Benutzerstudie
 
-Stand: 15. September 2026
+Stand: 24. September 2026
 
 ## Zielarchitektur
 
@@ -29,14 +29,13 @@ erreichen denselben Prozess und damit denselben In-Memory-`SessionStore`.
 - `render.yaml`: beschreibt einen Docker-Web-Service in Frankfurt, Plan
   `free`, Healthcheck `/api/health` und Deployment nach jedem Commit.
 
-## Render anlegen
+## Öffentliche Instanz
 
-1. Bei Render `New` → `Blueprint` öffnen.
-2. GitHub-Repository `sammo3332/routing-simulator-hci-concept` verbinden.
-3. Blueprint-Datei `render.yaml` bestätigen.
-4. Prüfen, dass genau **eine Instanz** und kein zusätzlicher Worker verwendet
-   wird.
-5. Erstes Deployment abwarten und die öffentliche `onrender.com`-URL notieren.
+Die Anwendung ist unter
+[routing-simulator-hci-concept.onrender.com](https://routing-simulator-hci-concept.onrender.com/)
+veröffentlicht. Render baut den in `render.yaml` beschriebenen Docker-Service
+aus dem Repository. Es wird genau eine Instanz mit einem Uvicorn-Prozess
+verwendet.
 
 Der kostenlose Dienst kann nach Inaktivität verzögert starten. Vor einem
 moderierten Test sollte `/api/health` deshalb einmal aufgerufen werden. Für eine
@@ -66,6 +65,5 @@ auf der öffentlichen Basis-URL bestanden sind:
 - Sessions sind flüchtig und gehen bei Neustart oder Deployment verloren.
 - Keine personenbezogenen Daten in der Anwendung speichern.
 - Den evaluierten Commit nach Studienbeginn nicht funktional verändern.
-- Die alte Vercel-URL bleibt lediglich eine historische Frontend-Vorschau und
-  darf nicht als Testlink verwendet werden.
-
+- Für Tests und Benutzerstudie ausschließlich die oben genannte Render-URL
+  verwenden.

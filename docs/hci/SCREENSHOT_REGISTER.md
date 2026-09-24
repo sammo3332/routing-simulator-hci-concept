@@ -1,6 +1,6 @@
 # Screenshot-Register
 
-Stand: 14. September 2026
+Stand: 24. September 2026
 
 Dieses Register ordnet die vorhandenen Screenshots einem reproduzierbaren
 Repository-Stand und ihrer Rolle in der formativen HCI-Evaluation zu. Die Bilder
@@ -71,11 +71,12 @@ festgehalten werden:
 - Nach jeder Neuaufnahme werden Git-Blob-SHA, Dateigröße und vollständige
   Aufnahmeparameter in diesem Register ergänzt.
 - Ein Bild darf erst als „final“ bezeichnet werden, wenn die zugehörige
-  Browserprüfung aus `SPRINT_ACCEPTANCE.md` bestanden ist.
+  Browserprüfung auf dem dokumentierten Studienstand bestanden ist.
 
 ## Aktueller Befund
 
-Die sieben vorhandenen Bilder sind eine konsistente formative Designhistorie.
-Keines besitzt jedoch ein vollständiges Aufnahmeprotokoll mit ausgeführtem
-Code-Commit, Browser, Fenstergröße, Topologiehash und exakter Konfiguration.
-Daher bleibt die finale manuelle Browserabnahme offen.
+Die sieben vorhandenen Bilder dokumentieren die formative Designhistorie.
+Für Abbildungen in der Bachelorarbeit werden neue Aufnahmen des festgelegten
+Studienstands mit Commit, Browser, Fenstergröße, Topologie und Konfiguration
+protokolliert. Die vorhandenen Entwicklungsbilder werden nicht als empirischer
+Nachweis der Gebrauchstauglichkeit verwendet.
