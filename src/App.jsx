@@ -11,6 +11,8 @@ import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
+const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
+
 const panel = {
   background: "#131720",
   border: "1px solid #252b3b",
@@ -111,8 +113,10 @@ export default function App() {
     : "";
   const showAllNodeLabels = showAllNodeNames || graphViewport.viewport.scale >= 1.25;
   const nodeAbbreviations = buildNodeAbbreviations(graphNodes);
+  const hideRouteHighlights = highlightedSourceNodeId === ROUTE_HIGHLIGHT_NONE;
   const sourceNodeOptions = [
     { value: "", label: "Alle Routen" },
+    { value: ROUTE_HIGHLIGHT_NONE, label: "Keine Route hervorheben" },
     ...nodeOptions.filter(option => option.value !== targetNodeId),
   ];
   const focusedBaselineEdgeIds = new Set(
@@ -121,13 +125,15 @@ export default function App() {
   const focusedCurrentEdgeIds = new Set(
     simulation?.result.current_paths?.[activeSourceNodeId]?.edge_ids ?? [],
   );
-  const visibleGraphLinks = activeSourceNodeId
-    ? graphLinks.map(link => ({
-      ...link,
-      baseline: focusedBaselineEdgeIds.has(link.id),
-      current: focusedCurrentEdgeIds.has(link.id),
-    }))
-    : graphLinks;
+  const visibleGraphLinks = hideRouteHighlights
+    ? graphLinks.map(link => ({ ...link, baseline: false, current: false }))
+    : activeSourceNodeId
+      ? graphLinks.map(link => ({
+        ...link,
+        baseline: focusedBaselineEdgeIds.has(link.id),
+        current: focusedCurrentEdgeIds.has(link.id),
+      }))
+      : graphLinks;
   const visibleGraphNodes = [...graphNodes].sort((left, right) => {
     const leftPriority = left.target ? 2 : left.id === activeSourceNodeId ? 1 : 0;
     const rightPriority = right.target ? 2 : right.id === activeSourceNodeId ? 1 : 0;
@@ -245,7 +251,7 @@ export default function App() {
             />
             <SelectField
               label="Route hervorheben"
-              value={activeSourceNodeId}
+              value={hideRouteHighlights ? ROUTE_HIGHLIGHT_NONE : activeSourceNodeId}
               onChange={setHighlightedSourceNodeId}
               disabled={!simulation}
               options={sourceNodeOptions}
