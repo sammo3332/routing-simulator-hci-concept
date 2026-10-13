@@ -451,7 +451,7 @@ export default function App() {
                         x2={link.targetPosition.x}
                         y2={link.targetPosition.y}
                         stroke={link.failed ? RED : link.current ? T1 : link.baseline ? T2 : "#31394d"}
-                        strokeWidth={link.selected ? 5 : link.current ? 3.5 : 2}
+                        strokeWidth={link.selected && !hideRouteHighlights ? 5 : link.current ? 3.5 : 2}
                         strokeDasharray={link.failed ? "8 6" : undefined}
                         opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
@@ -472,7 +472,7 @@ export default function App() {
                           vectorEffect="non-scaling-stroke"
                         />
                       )}
-                      {link.selected && !link.failed && (
+                      {link.selected && !link.failed && !hideRouteHighlights && (
                         <line
                           x1={link.sourcePosition.x}
                           y1={link.sourcePosition.y}
