@@ -129,8 +129,8 @@ export default function App() {
     ? graphLinks.map(link => ({ ...link, baseline: false, current: false }))
     : activeSourceNodeId
       ? graphLinks.map(link => ({
-      ...link,
-      baseline: focusedBaselineEdgeIds.has(link.id),
+        ...link,
+        baseline: focusedBaselineEdgeIds.has(link.id),
         current: focusedCurrentEdgeIds.has(link.id),
       }))
       : graphLinks;
