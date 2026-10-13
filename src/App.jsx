@@ -80,7 +80,7 @@ export default function App() {
     nodes: graphNodes,
     resetKey: simulation?.session_id,
   });
-  const detailsPanel = useResizableDetailsPanel();
+  const detailsPanel = useResizableDetailsPanel(simulation?.session_id);
 
   const targetNodeId = simulation?.routing.target_node_id ?? "";
   const routingStrategy = simulation?.routing.strategy ?? "deterministic_shortest_path";
@@ -362,7 +362,7 @@ export default function App() {
                 <Metric label="Erreichbarkeit" value={`${reachableCount}/${nodeCount} erreichbar`} color={unreachableNodeIds.length ? RED : "#22c55e"} />
                 <Metric label="Aktive Kantenausfälle" value={failedEdges.length} color={failedEdges.length ? RED : "#22c55e"} />
                 <Metric label="Umgeleitete Routen" value={reroutedNodeIds.length} color={reroutedNodeIds.length ? T2 : "#22c55e"} />
-                <Metric label="Unerreichbare Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
+                <Metric label="Physisch getrennte Knoten" value={unreachableNodeIds.length} color={unreachableNodeIds.length ? RED : "#22c55e"} />
               </div>
             )}
             <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
