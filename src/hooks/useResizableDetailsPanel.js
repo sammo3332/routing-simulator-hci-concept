@@ -11,12 +11,16 @@ const HANDLE_HEIGHT = 38;
 const MAIN_VERTICAL_PADDING = 24;
 const KEYBOARD_STEP = 24;
 
-export function useResizableDetailsPanel() {
+export function useResizableDetailsPanel(resetKey) {
   const containerRef = useRef(null);
   const drag = useRef(null);
   const [detailsHeight, setDetailsHeight] = useState(DEFAULT_DETAILS_HEIGHT);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    setCollapsed(true);
+  }, [resetKey]);
 
   const maximumHeight = useCallback(() => {
     const containerHeight = containerRef.current?.getBoundingClientRect().height;
