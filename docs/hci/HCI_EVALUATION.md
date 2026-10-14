@@ -1,39 +1,26 @@
 # Formative HCI-Evaluation des Failover Routing Visualizers
 
-Stand: 24. September 2026
+Aktualisiert: 14. Oktober 2026
 
 ## 1. Zweck und Status
 
-Dieses Dokument beschreibt die formative Evaluation des Prototyps. Es
-verbindet drei Arten von Evidenz:
+Dieses Dokument enthält eine entwicklungsbegleitende Einschätzung der
+Oberfläche und einen Vergleich dokumentierter Entwicklungsstände.
+Die Bewertungen in Abschnitt 3 und 4 sind Einschätzungen aus der
+Entwicklung. Eine unabhängig durchgeführte Expertenprüfung mit dokumentiertem
+Prüfverfahren wird damit nicht nachgewiesen. Aussagen wie „gut“ bezeichnen
+die Einschätzung des Entwurfs, keine empirisch gemessene Gebrauchstauglichkeit.
 
-1. eine formative Expertenprüfung der Benutzungsoberfläche,
-2. einen Vergleich dokumentierter Entwicklungsstände und
-3. das Protokoll der laufenden Benutzerstudie.
+Die Benutzerstudie wird davon getrennt ausgewertet. Für sie liegen 11
+auswertbare Fragebögen aus LimeSurvey 736933 vor. Die tatsächlich erhobenen
+Daten und die Grenzen der Durchführung sind in Abschnitt 6 und im
+[Studienprotokoll](USER_STUDY_PROTOCOL.md) zusammengefasst.
 
-Die Expertenprüfung und die Benutzerstudie werden methodisch getrennt
-ausgewertet. Ergebnisse der laufenden Erhebung werden erst nach dem festgelegten
-Ende der Studie und dem bereinigten Datenexport ergänzt.
-
-### Evaluationsaufbau im Überblick
-
-```mermaid
-flowchart TB
-    UI["Formative Expertenprüfung"]
-    DEV["Vergleich der Entwicklungsstände"]
-    STUDY["Laufende Benutzerstudie"]
-    QUESTIONS["Evaluationsfragen EF-1 bis EF-6"]
-    FINDINGS["Belegte Befunde und Verbesserungen"]
-
-    UI --> QUESTIONS
-    DEV --> QUESTIONS
-    STUDY --> QUESTIONS
-    QUESTIONS --> FINDINGS
-```
-
-Die Expertenprüfung und die dokumentierten Entwicklungsstände liefern
-formative Evidenz. Empirische Aussagen werden aus den tatsächlich erhobenen
-Studiendaten abgeleitet.
+Die folgenden Evaluationsfragen und Szenarien beschreiben die Ziele der
+Untersuchung. Sie wurden nicht alle durch objektive Einzelmessungen geprüft.
+Die Screenshots dokumentieren sichtbare Entwicklungsstände. Sie belegen
+allein weder eine Verbesserung der Gebrauchstauglichkeit noch, dass eine
+bestimmte Änderung durch ein bestimmtes Nutzungsergebnis verursacht wurde.
 
 ## 2. Evaluationsfragen
 
@@ -150,7 +137,7 @@ bewusste Detailoption und eignet sich eher nach dem Hineinzoomen oder zusammen
 mit einer hervorgehobenen Einzelroute. Für die Standardnutzung sind Kürzel und
 Tooltip vorzuziehen.
 
-## 4. Heuristische Gesamtbewertung
+## 4. Entwicklungsbegleitende heuristische Einschätzung
 
 | Kriterium | Aktueller Stand | Bewertung |
 |---|---|---|
@@ -235,96 +222,39 @@ bei Bedarf alle Namen einblenden.
 **Erfolg:** Die Person findet und erklärt alle Funktionen, ohne die Orientierung
 im Graphen zu verlieren.
 
-## 6. Protokoll für die Benutzerstudie
+## 6. Tatsächliche Benutzerstudie
 
-Das unmittelbar ausführbare LimeSurvey-Schema mit Einwilligung,
-Vorkenntnissen, fünf Aufgaben, SUS, fünf fokussierten Rückfragen,
-Auswertungsregeln und Terminplan steht in
-[`USER_STUDY_PROTOCOL.md`](USER_STUDY_PROTOCOL.md). Diese Fassung setzt die
-Entscheidungen aus dem Betreuertermin vom 15. September 2026 um.
+Die Erhebung verwendete LimeSurvey 736933 mit Einwilligung, Vorkenntnissen,
+fünf Aufgaben, zehn SUS-Aussagen, vier geschlossenen Rückfragen und einem
+optionalen Freitextfeld. Ausgewertet wurden 11 Fragebögen. Die abgeschlossenen
+Antworten stammen vom 20. September bis 4. Oktober 2026.
 
-### 6.1 Empfohlenes Design
+Die Aufgabenbearbeitung wurde von den Befragten selbst als abgeschlossen,
+versucht und nicht geschafft oder übersprungen angegeben. Daraus lässt sich
+kein unabhängig geprüfter Aufgabenerfolg ohne Hilfe ableiten. Bei einigen
+Bearbeitungen war der Entwickler anwesend und beantwortete Nachfragen.
+Ein systematisches Hilfs- oder Beobachtungsprotokoll liegt nicht vor.
 
-- formative Studie mit mindestens fünf bis sechs erreichbaren Personen und
-  möglichst weiteren Teilnehmenden,
-- möglichst Mischung aus Personen mit und ohne Routing-Vorkenntnisse,
-- Einzeltermine von ungefähr 25 bis 35 Minuten,
-- Think-Aloud während der Aufgaben,
-- identische Topologien und Aufgabenreihenfolge,
-- standardisierte System Usability Scale (SUS) nach den Aufgaben,
-- Bildschirmaufnahme nur nach ausdrücklicher Einwilligung,
-- keine personenbezogenen Daten im Ergebnisbericht.
+Zeitmessung, Schwierigkeitseinschätzungen von 1 bis 7 und Think-Aloud waren
+Bestandteile früherer Planungen. Sie sind keine Datengrundlage der
+vorliegenden Auswertung. Der historische Plan bleibt im
+[Studienprotokoll](USER_STUDY_PROTOCOL.md) als solcher erhalten.
 
-### 6.2 Ablauf
-
-1. Zweck, Datenschutz und Einwilligung erklären.
-2. Vorkenntnisse knapp erfassen, ohne die Bedienung vorwegzunehmen.
-3. Szenarien A bis E nacheinander bearbeiten lassen.
-4. Pro Aufgabe Erfolg, Zeit, Hilfen, Fehlhandlungen und Kommentare notieren.
-5. Nach jeder Aufgabe eine Schwierigkeitseinschätzung von 1 bis 7 erfassen.
-6. Anschließend die zehn standardisierten SUS-Aussagen beantworten lassen.
-7. Abschließend fünf fokussierte projektspezifische Fragen stellen, davon
-   höchstens eine als kurzes Freitextfeld.
-
-```mermaid
-flowchart TB
-    CONSENT["Einführung, Datenschutz und Einwilligung"]
-    PRIOR["Vorkenntnisse erfassen"]
-    TASKS["Szenarien A bis E mit Think-Aloud"]
-    RECORD["Erfolg, Zeit, Hilfen und Fehler protokollieren"]
-    RATING["Schwierigkeit je Aufgabe bewerten"]
-    SUS["System Usability Scale ausfüllen"]
-    INTERVIEW["Fokussierte Rückfragen"]
-    ANALYSIS["Anonymisiert auswerten"]
-
-    CONSENT --> PRIOR --> TASKS --> RECORD
-    RECORD --> RATING --> SUS --> INTERVIEW --> ANALYSIS
-```
-
-Die SUS wird nach der Nutzung und vor dem offenen Abschlussgespräch erhoben,
-damit die Antworten möglichst die unmittelbare Nutzungserfahrung wiedergeben.
-
-### 6.3 Fokussierte Abschlussfragen
-
-Die vier geschlossenen Fragen prüfen Klarheit der Zustandsänderung,
-Erkennbarkeit des aktiven Verfahrens, Unterscheidbarkeit der Fehlerarten und
-visuelle Codierung. Ein einziges optionales Freitextfeld fragt nach der am
-meisten vermissten Information oder Funktion. Die genauen Formulierungen stehen
-im LimeSurvey-Protokoll.
-
-### 6.4 Erfassungsbogen
-
-| Person | Aufgabe | Erfolg ohne Hilfe | Zeit | Fehlhandlungen | Hilfen | Schwierigkeit 1–7 | Beobachtung |
-|---|---|---:|---:|---:|---:|---:|---|
-| P01 | A |  |  |  |  |  |  |
-| P01 | B |  |  |  |  |  |  |
-| P01 | C |  |  |  |  |  |  |
-| P01 | D |  |  |  |  |  |  |
-| P01 | E |  |  |  |  |  |  |
-
-### 6.5 Auswertung
-
-Für jede Aufgabe werden berichtet:
-
-- Anteil erfolgreicher Bearbeitungen ohne Hilfe,
-- Median der Bearbeitungszeit,
-- häufigste Fehlhandlungen,
-- Median der Schwierigkeitseinschätzung,
-- wiederkehrende qualitative Beobachtungen.
-
-Bei einer kleinen formativen Stichprobe sind qualitative Muster wichtiger als
-Signifikanztests. Einzelne Aussagen dürfen nicht als allgemeingültiger Nachweis
-formuliert werden.
+Die Auswertung berichtet Häufigkeiten und Kennwerte. Der SUS-Mittelwert
+beträgt 67,7 bei einem Median von 72,5 und einer Spannweite von 30 bis 90.
+Kapitel 6 der Bachelorarbeit beschreibt die Ergebnisse und Grenzen.
+Für die abgeschlossenen Fragebögen wurde keine jeweilige Deployment-Version
+erfasst; ein einheitlicher Versionsstand für alle Bearbeitungen ist damit
+nicht nachgewiesen.
 
 ## 7. Screenshot-Protokoll für die Bachelorarbeit
 
 Das separate [Screenshot-Register](SCREENSHOT_REGISTER.md) dokumentiert
-Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen, die sechs fehlenden
-Pflichtaufnahmen und das verbindliche Aufnahmeprotokoll.
+Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen, frühere Vorschläge für sechs zusätzliche Aufnahmen und ein Aufnahmeprotokoll.
+Diese Vorschläge sind keine verbindlichen Vorgaben des Betreuers.
 
 Die vorhandenen Bilder dokumentieren die Entwicklung, enthalten aber teilweise
-Browserrahmen oder eingeblendete Browser-Erweiterungen. Für die endgültige
-Arbeit sollten ausgewählte Zustände nochmals kontrolliert aufgenommen werden:
+Browserrahmen oder eingeblendete Browser-Erweiterungen. Für gegebenenfalls benötigte zusätzliche Aufnahmen gelten folgende Empfehlungen:
 
 - identische Fenstergröße und Skalierung,
 - Browser-Vollbild oder sauberer Zuschnitt auf die Anwendung,
@@ -333,7 +263,7 @@ Arbeit sollten ausgewählte Zustände nochmals kontrolliert aufgenommen werden:
 - Commit-ID und Datum in einer separaten Screenshot-Tabelle,
 - keine nachträgliche inhaltliche Veränderung des dargestellten Ergebnisses.
 
-Empfohlene finale Abbildungen:
+Frühere Vorschläge für ergänzende Abbildungen:
 
 1. Shortest-Path-Normalzustand,
 2. manueller Ausfall mit Umleitung,
@@ -349,9 +279,12 @@ am 15. September 2026 einschließlich Parser, API, Upload und Tests ergänzt. De
 vollständige schrittweise Bonsai-Trace, Round-Robin, RR-Swapping und weitere
 Routingverfahren gehören nicht zum untersuchten Umfang.
 
-Die Benutzerstudie läuft seit der Freigabe des LimeSurvey-Fragebogens. Bis zum
-24. September hatten zehn Personen teilgenommen. Eine endgültige Auswertung
-erfolgt erst nach Ende der Erhebung und der Bereinigung des Datenexports.
+Die Benutzerstudie ist in Kapitel 6 der Bachelorarbeit ausgewertet.
+Nach Abschluss der Erhebung wurden die Option `Keine Route hervorheben`,
+die Bezeichnung `Physisch getrennte Knoten` bei der Graphansicht und die
+zunächst eingeklappten Ergebnisdetails ergänzt. Die untere Kennzahl
+`Physisch getrennt` bestand bereits im technischen Referenzstand.
+Diese späteren Änderungen wurden nicht erneut durch eine Benutzerstudie bewertet.
 
 ## 9. Technischer Stand
 
@@ -360,10 +293,10 @@ Greedy-Aboreszenzen, zirkuläres Failover, getrennte Fehlerklassifikation,
 automatische Suche und Visualisierung. Diese Funktionen sind integriert und
 automatisch getestet.
 
-Die Screenshots belegen nachvollziehbar, wie konkrete Darstellungsprobleme zu
-Änderungen geführt haben. Sie sind damit als formative Designhistorie geeignet.
-Empirische Aussagen über Verständlichkeit oder Gebrauchstauglichkeit werden
-erst nach Abschluss und Auswertung der Studie formuliert.
+Die Screenshots zeigen Unterschiede zwischen Entwicklungsständen. Die dazu
+formulierten Einschätzungen bleiben von den Ergebnissen der Benutzerstudie
+getrennt. Empirische Aussagen werden auf die tatsächlich erhobenen Antworten
+und die Grenzen der Durchführung beschränkt.
 
 Die technische Absicherung wird durch die automatisierten Tests, die
 [Bonsai-Validierung](../BONSAI_VALIDATION.md) und die in

@@ -124,8 +124,10 @@ Topologie-, Pfad- und Statusdaten ab.
 
 ## Automatisierte Nachweise
 
-Der festgelegte Studienstand wurde zuletzt am 24. September 2026 mit folgenden
-Prüfungen verifiziert:
+Für den technischen Referenzstand
+`ed3b68c36485f9a14062958832bc3fd9693e3975` wurden am 24. September 2026 folgende
+Prüfergebnisse dokumentiert. Die Tabelle ist kein neuer Testlauf des aktuellen
+`main`-Standes und kein Beleg für einen einheitlichen Stand aller Studiensitzungen:
 
 | Prüfung | Ergebnis |
 |---|---:|

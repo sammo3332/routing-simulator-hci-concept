@@ -1,15 +1,48 @@
 # LimeSurvey-Protokoll für die HCI-Benutzerstudie
 
-Stand: 24. September 2026
-Status: Vom Betreuer geprüft, in LimeSurvey umgesetzt und für die laufende
-Benutzerstudie veröffentlicht
+Aktualisiert: 14. Oktober 2026
 
-## Ziel und Studiendesign
+## Tatsächliche Durchführung und Auswertung
+
+Die ausgewertete Erhebung ist LimeSurvey **736933**. Die abgeschlossenen
+Antworten stammen aus dem Zeitraum 20. September bis 4. Oktober 2026.
+Der Export enthält 53 begonnene und 13 abgeschlossene Fragebögen.
+Nach Prüfung der Einwilligung und Ausschluss eines Fragebogens, in dem alle
+fünf Aufgaben übersprungen wurden, gingen **11 Fragebögen** in die Auswertung ein.
+
+Erhoben wurden Vorkenntnisse, die selbst berichtete Bearbeitung der fünf
+Aufgaben, zehn SUS-Antworten, vier geschlossene Rückfragen und ein optionales
+Freitextfeld. Die Aufgabenangaben unterscheiden abgeschlossen, versucht und
+nicht geschafft sowie übersprungen. Sie sind keine unabhängig beobachteten
+Erfolgsmessungen. Bei einigen Bearbeitungen war der Entwickler anwesend und
+beantwortete Nachfragen; Art und Umfang dieser Hilfe wurden nicht systematisch
+protokolliert.
+
+Bearbeitungszeiten, Schwierigkeitsskalen von 1 bis 7, systematische
+Think-Aloud-Protokolle und strukturierte Beobachtungsdaten liegen für die
+Auswertung nicht vor. Auch die jeweils verwendete Deployment-Version wurde
+nicht pro Fragebogen erfasst. Der Commit
+`ed3b68c36485f9a14062958832bc3fd9693e3975` ist der technische Referenzstand
+der Arbeit; er belegt keinen für alle Antworten identischen Deployment-Stand.
+
+Der SUS-Mittelwert beträgt 67,7, der Median 72,5 und die Spannweite 30 bis 90.
+Die Ergebnisse werden deskriptiv ausgewertet. Die methodische Beschreibung
+und die vollständige Auswertung stehen in Kapitel 6 der Bachelorarbeit.
+
+## Historischer Plan vom 24. September 2026
+
+Die folgenden Abschnitte erhalten den damaligen Plan. Zusätzliche Messungen,
+Erfolgskriterien, Termine und Versionsfestlegungen darin sind **keine Nachweise
+ihrer tatsächlichen Durchführung**. Maßgeblich für die ausgewertete Erhebung
+sind die vorstehenden Angaben und der Fragebogen 736933. Insbesondere ist der
+frühere Fragebogenentwurf 712379 nicht das ausgewertete Instrument.
+
+### Ziel und Studiendesign
 
 Die formative Studie prüft, ob Nutzende Routingzustände, Ausfälle und die
 Unterscheidung zwischen physischer Unerreichbarkeit und Bonsai-Routingfehlern
-mit dem Tool nachvollziehen können. Bis zum 24. September hatten zehn Personen
-teilgenommen. Wegen der kleinen Gelegenheitsstichprobe werden keine
+mit dem Tool nachvollziehen können. Die damalige Zwischenmeldung lautete, dass bis zum 24. September zehn Personen
+teilgenommen hatten; sie wird nicht als endgültige Stichprobengröße verwendet. Wegen der kleinen Gelegenheitsstichprobe werden keine
 repräsentativen oder inferenzstatistischen Aussagen beansprucht.
 
 ```mermaid
@@ -21,9 +54,9 @@ flowchart TB
     E --> F["Anonymisierte Auswertung"]
 ```
 
-## LimeSurvey-Struktur
+### LimeSurvey-Struktur
 
-### Gruppe 0: Information und Einwilligung
+#### Gruppe 0: Information und Einwilligung
 
 Anzuzeigen sind Zweck, ungefähre Dauer, Freiwilligkeit, anonyme Verarbeitung,
 Abbruchmöglichkeit und Kontakt. Eine Bildschirmaufnahme erfolgt bei moderierten
@@ -38,7 +71,7 @@ Keine Namen, E-Mail-Adressen, Matrikelnummern oder IP-Adressen exportieren. Die
 LimeSurvey-Einstellungen für anonymisierte Antworten sind vor dem Start zu
 prüfen.
 
-### Gruppe 1: Vorkenntnisse
+#### Gruppe 1: Vorkenntnisse
 
 | Code | Frage | Antwortformat |
 |---|---|---|
@@ -48,7 +81,7 @@ prüfen.
 | PRE04 | Wie vertraut sind Sie mit gerichteten Bäumen/Aboreszenzen? | 1 gar nicht bis 5 sehr vertraut; kurze Erklärung des Begriffs anzeigen |
 | PRE05 | Haben Sie schon ein vergleichbares Netzwerk- oder Routingwerkzeug benutzt? | nein / ja, gelegentlich / ja, regelmäßig |
 
-### Gruppe 2: Aufgaben
+#### Gruppe 2: Aufgaben
 
 Vor jeder Aufgabe wird nur das Ziel beschrieben. Der Fragebogen soll keine
 Schaltfläche verraten, deren Auffindbarkeit gerade geprüft wird. Nach jeder
@@ -68,7 +101,7 @@ Schwierigkeitsskala von 1 `sehr einfach` bis 7 `sehr schwierig` erhoben. Bei
 moderierten Sitzungen protokolliert die Testleitung außerdem Zeit, Hilfen und
 Fehlhandlungen außerhalb von LimeSurvey.
 
-### Gruppe 3: System Usability Scale
+#### Gruppe 3: System Usability Scale
 
 Die zehn SUS-Aussagen werden **wortgleich und in derselben Reihenfolge** aus der
 vom Betreuer bereitgestellten, zitierten Fassung übernommen. Sie werden hier nicht
@@ -94,7 +127,7 @@ klassische alternierende Polung besitzt. Eine ausschließlich positiv formuliert
 Variante darf nicht mit dieser Formel ausgewertet werden. Primärquelle:
 John Brooke, *SUS: A “Quick and Dirty” Usability Scale* (1996).
 
-### Gruppe 4: Projektspezifische Rückfragen
+#### Gruppe 4: Projektspezifische Rückfragen
 
 Diese Fragen folgen erst nach der SUS, damit sie deren Antworten nicht
 vorstrukturieren.
@@ -110,7 +143,7 @@ vorstrukturieren.
 Breite Fragen wie „Wie gefällt Ihnen die GUI?“ werden nicht zusätzlich
 gestellt, weil SUS und die fokussierten Fragen diese Aspekte bereits erfassen.
 
-## Moderationsbogen
+### Moderationsbogen
 
 | Person | Aufgabe | Ergebnis | Zeit | Hilfen | Fehlhandlungen | Beobachtung |
 |---|---|---:|---:|---:|---:|---|
@@ -120,7 +153,7 @@ gestellt, weil SUS und die fokussierten Fragen diese Aspekte bereits erfassen.
 | P01 | 04 |  |  |  |  |  |
 | P01 | 05 |  |  |  |  |  |
 
-## Auswertungsplan
+### Auswertungsplan
 
 1. Unvollständige Datensätze und Ausschlussregeln transparent dokumentieren.
 2. Pro Aufgabe `abgeschlossen`, `nicht geschafft` und `übersprungen` berichten.
@@ -135,7 +168,7 @@ gestellt, weil SUS und die fokussierten Fragen diese Aspekte bereits erfassen.
    keine Signifikanztests oder allgemeingültigen Gruppenunterschiede behaupten.
 8. Nicht umgesetzte Wünsche als Limitation oder zukünftige Arbeit aufnehmen.
 
-## Zeitplan und Freigabe
+### Zeitplan und Freigabe
 
 | Datum | Schritt |
 |---|---|
@@ -145,5 +178,6 @@ gestellt, weil SUS und die fokussierten Fragen diese Aspekte bereits erfassen.
 | 28.–30. September | Erhebung beenden und Datenexport einfrieren |
 | anschließend | auswerten, Abbildungen erzeugen und Ergebniskapitel schreiben |
 
-Die öffentlich getestete Anwendungsversion und ihr Commit werden beim
-Studienstart eingefroren und im Ergebnisbericht angegeben.
+Geplant war, die öffentlich getestete Anwendungsversion beim Studienstart
+einzufrieren. Eine durchgehende Zuordnung der Deployment-Version zu allen
+Fragebögen liegt nicht vor.

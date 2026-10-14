@@ -1,6 +1,7 @@
 # Screenshot-Register
 
-Stand: 24. September 2026
+Registerstand: 24. September 2026
+Einordnung ergänzt: 14. Oktober 2026
 
 Dieses Register ordnet die vorhandenen Screenshots einem reproduzierbaren
 Repository-Stand und ihrer Rolle in der formativen HCI-Evaluation zu. Die Bilder
@@ -26,11 +27,15 @@ Abnahmenachweise behandelt.
 | S-06 | [06_large_graph_abbreviations.png](screenshots/06_large_graph_abbreviations.png) | `9d231032c4340a1e89f6f735b3c025e2a7a5af01` | 380.965 B | Germany50 mit eindeutigen Kürzeln und Tooltip-Konzept | formativer Nachweis der aktuellen Standardidee | **bedingt**, final reproduzierbar neu aufnehmen |
 | S-07 | [07_large_graph_all_names.png](screenshots/07_large_graph_all_names.png) | `94af9b4ccff7323c4c54595424f475403709d66e` | 465.489 B | Germany50 mit eingeblendeten vollständigen Namen | dokumentiert die optionale Detailansicht und Überlagerungsgrenze | **ergänzend**, nicht als Standardansicht |
 
-## Fehlende finale Nachweise
+## Frühere Vorschläge für ergänzende Aufnahmen
 
-Für die Bachelorarbeit sind kontrollierte Neuaufnahmen erforderlich:
+Die folgende Liste stammt aus der internen Planung. Sie ist keine verbindliche
+Vorgabe des Betreuers und keine Liste weiterhin zwingend fehlender Abbildungen.
+Ob eine zusätzliche Aufnahme benötigt wird, richtet sich nach der jeweiligen
+Aussage in der Bachelorarbeit. Vorhandene Entwicklungsbilder können den
+Entwicklungsverlauf zeigen; sie sind keine empirischen Nutzungsnachweise.
 
-| ID | Pflichtaufnahme | Reproduzierbarer Zustand | Zweck |
+| ID | Vorgeschlagene Aufnahme | Reproduzierbarer Zustand | Zweck |
 |---|---|---|---|
 | F-01 | Shortest-Path-Normalzustand | Atlanta, festgelegter Zielknoten, keine Ausfälle | Ausgangszustand und visuelle Kodierung |
 | F-02 | manueller Ausfall mit Umleitung | Atlanta, dokumentierte Kante, Shortest Path | Reversibilität und Statusänderung |
@@ -41,8 +46,8 @@ Für die Bachelorarbeit sind kontrollierte Neuaufnahmen erforderlich:
 
 ## Aufnahmeprotokoll für finale Screenshots
 
-Für jede neue Aufnahme müssen folgende Angaben zusammen mit der Bilddatei
-festgehalten werden:
+Für zusätzliche reproduzierbare Funktionsdarstellungen empfiehlt sich,
+folgende Angaben zusammen mit der Bilddatei festzuhalten:
 
 | Feld | Vorgabe |
 |---|---|
@@ -71,12 +76,13 @@ festgehalten werden:
 - Nach jeder Neuaufnahme werden Git-Blob-SHA, Dateigröße und vollständige
   Aufnahmeparameter in diesem Register ergänzt.
 - Ein Bild darf erst als „final“ bezeichnet werden, wenn die zugehörige
-  Browserprüfung auf dem dokumentierten Studienstand bestanden ist.
+  Browserprüfung auf dem dokumentierten technischen Referenzstand bestanden ist.
 
 ## Aktueller Befund
 
 Die sieben vorhandenen Bilder dokumentieren die formative Designhistorie.
-Für Abbildungen in der Bachelorarbeit werden neue Aufnahmen des festgelegten
-Studienstands mit Commit, Browser, Fenstergröße, Topologie und Konfiguration
-protokolliert. Die vorhandenen Entwicklungsbilder werden nicht als empirischer
+Das Register beansprucht keine vollständige Zuordnung zu den Abbildungen der
+fertigen Bachelorarbeit. Die Aufnahmeparameter werden für zusätzliche
+Funktionsaufnahmen dokumentiert, soweit sie tatsächlich erfasst werden;
+fehlende Parameter werden nicht nachträglich erfunden. Die vorhandenen Entwicklungsbilder werden nicht als empirischer
 Nachweis der Gebrauchstauglichkeit verwendet.
