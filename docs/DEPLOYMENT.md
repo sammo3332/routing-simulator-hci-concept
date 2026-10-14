@@ -1,6 +1,20 @@
 # Produktionsdeployment für die Benutzerstudie
 
-Stand: 24. September 2026
+Technische Beschreibung: 24. September 2026
+Einordnung der Studie ergänzt: 14. Oktober 2026
+
+## Referenzstand und tatsächliche Erhebung
+
+Die folgende Beschreibung hält die Deployment-Konfiguration und die damaligen
+Prüfempfehlungen fest. Sie ist kein Protokoll jedes einzelnen Studienzugriffs.
+Der technische Referenzstand der Bachelorarbeit ist
+`ed3b68c36485f9a14062958832bc3fd9693e3975`.
+Die jeweils ausgeführte Deployment-Version wurde nicht pro Fragebogen erfasst.
+Ein für alle Antworten identischer Versionsstand ist daher nicht nachgewiesen.
+
+Die Benutzerstudie ist abgeschlossen. Die am 13. Oktober ergänzten
+Bedienmöglichkeiten und Bezeichnungen gehören zum späteren Entwicklungsstand
+und wurden nicht erneut mit einer Benutzerstudie untersucht.
 
 ## Zielarchitektur
 
@@ -64,6 +78,7 @@ auf der öffentlichen Basis-URL bestanden sind:
 - Nur ein Uvicorn-Worker und eine Serviceinstanz.
 - Sessions sind flüchtig und gehen bei Neustart oder Deployment verloren.
 - Keine personenbezogenen Daten in der Anwendung speichern.
-- Den evaluierten Commit nach Studienbeginn nicht funktional verändern.
+- Für künftige Studien einen festen Deployment-Stand verwenden und den
+  verwendeten Commit dokumentieren.
 - Für Tests und Benutzerstudie ausschließlich die oben genannte Render-URL
   verwenden.

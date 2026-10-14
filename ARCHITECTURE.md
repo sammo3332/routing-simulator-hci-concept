@@ -195,7 +195,7 @@ vier fachliche UI-Zustände:
 
 | Zustand | Bedingung |
 | --- | --- |
-| Normalbetrieb | keine Kante ausgefallen |
+| Normalbetrieb | kein Bonsai-Routingfehler und keine physische Trennung gemeldet; keine Kante ausgefallen |
 | Failover aktiv | mindestens eine Kante ausgefallen, aber weder physische Trennung noch Bonsai-Routingfehler |
 | Physisch getrennt | mindestens ein Knoten ist im verbleibenden physischen Graphen vom Ziel getrennt |
 | Bonsai-Routingfehler | mindestens ein physisch erreichbarer Knoten endet mit `dead_end` oder `loop`; dieser Zustand besitzt in der Statusanzeige Vorrang |

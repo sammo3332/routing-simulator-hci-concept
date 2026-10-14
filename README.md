@@ -93,13 +93,18 @@ npm run lint
 npm run build
 ```
 
-Auf dem festgelegten Studienstand
-`ed3b68c36485f9a14062958832bc3fd9693e3975` bestehen 52 Backend-, API- und
-Routingtests sowie 15 Frontend-Logiktests. Zusätzlich bestehen das
-JavaScript-Linting und der Vite-Produktions-Build. Die Bonsai-Implementierung
+Für den technischen Referenzstand
+`ed3b68c36485f9a14062958832bc3fd9693e3975` wurden am 24. September 2026 insgesamt 52 bestandene Backend-, API- und
+Routingtests sowie 15 bestandene Frontend-Logiktests dokumentiert. Auch das
+JavaScript-Linting und der Vite-Produktions-Build waren erfolgreich. Die Bonsai-Implementierung
 wurde für alle verbundenen einfachen Graphen mit bis zu fünf Knoten gegen ein
 unabhängiges Kantenschnitt-Orakel geprüft. Details stehen in
 [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md).
+
+Der Referenzstand ist kein Nachweis eines für alle Studienantworten identischen
+Deployments. Die tatsächliche Erhebung und die späteren Änderungen der
+Oberfläche sind im [Studienprotokoll](docs/hci/USER_STUDY_PROTOCOL.md) und in der
+[HCI-Dokumentation](docs/hci/HCI_EVALUATION.md) getrennt beschrieben.
 
 ## Dokumentation
 
