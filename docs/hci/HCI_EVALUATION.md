@@ -4,27 +4,16 @@ Aktualisiert: 14. Oktober 2026
 
 ## 1. Zweck und Status
 
-Dieses Dokument enthält eine entwicklungsbegleitende Einschätzung der
-Oberfläche und einen Vergleich dokumentierter Entwicklungsstände.
-Die Bewertungen in Abschnitt 3 und 4 sind Einschätzungen aus der
-Entwicklung. Eine unabhängig durchgeführte Expertenprüfung mit dokumentiertem
-Prüfverfahren wird damit nicht nachgewiesen. Aussagen wie „gut“ bezeichnen
-die Einschätzung des Entwurfs, keine empirisch gemessene Gebrauchstauglichkeit.
-
-Die Benutzerstudie wird davon getrennt ausgewertet. Für sie liegen 11
-auswertbare Fragebögen aus LimeSurvey 736933 vor. Die tatsächlich erhobenen
-Daten und die Grenzen der Durchführung sind in Abschnitt 6 und im
-[Studienprotokoll](USER_STUDY_PROTOCOL.md) zusammengefasst.
-
-Die folgenden Evaluationsfragen und Szenarien beschreiben die Ziele der
-Untersuchung. Sie wurden nicht alle durch objektive Einzelmessungen geprüft.
-Die Screenshots dokumentieren sichtbare Entwicklungsstände. Sie belegen
-allein weder eine Verbesserung der Gebrauchstauglichkeit noch, dass eine
-bestimmte Änderung durch ein bestimmtes Nutzungsergebnis verursacht wurde.
+Dieses Dokument beschreibt die Entwicklung der Oberfläche und fasst den
+Stand der Benutzerstudie zusammen. Die Einschätzungen zu den Entwürfen
+stammen aus der Entwicklung; eine unabhängige Expertenprüfung wurde damit
+nicht durchgeführt. Die tatsächliche Erhebung und ihre methodischen Grenzen
+sind im [Studienprotokoll](USER_STUDY_PROTOCOL.md) beschrieben.
 
 ## 2. Evaluationsfragen
 
-Die Evaluation untersucht folgende Fragen:
+Die folgenden Fragen dienten der Planung. Nicht alle wurden durch eigene
+Messungen geprüft:
 
 | ID | Frage |
 |---|---|
@@ -35,122 +24,83 @@ Die Evaluation untersucht folgende Fragen:
 | EF-5 | Sind Ziel, aktuelle Route, Baseline, ausgefallene Kanten und Aboreszenz visuell unterscheidbar? |
 | EF-6 | Unterstützt die Oberfläche eine Erklärung des Ergebnisses gegenüber Dritten? |
 
-## 3. Formative Bewertung der Entwicklungsstufen
+## 3. Entwicklung der Oberfläche
 
-### 3.1 Ausgangszustand: Failover ohne Bonsai-Auswahl
+Die folgenden Screenshots zeigen frühe Entwicklungsstände. Sie dokumentieren
+die Darstellung und den Funktionsumfang, keine gemessene Verbesserung der
+Gebrauchstauglichkeit.
+
+### 3.1 Ausgangszustand ohne Bonsai-Auswahl
 
 ![Ausgangszustand mit zwei ausgefallenen Kanten](screenshots/01_baseline_failover.png)
 
-**Beobachtung:** Der ursprüngliche Vertikalschnitt konnte Topologien laden,
-Kanten deaktivieren, Routen neu berechnen und betroffene Knoten anzeigen. Die
-Darstellung erklärte jedoch nur das Verhalten einer einzigen
-Shortest-Path-Strategie. Ein Vergleich mit vorbereitetem lokalem Failover war
-nicht möglich.
+Die erste Fassung konnte Topologien laden, Kanten deaktivieren und kürzeste
+Pfade neu berechnen. Eine Auswahl zwischen Routingverfahren war noch nicht
+vorhanden.
 
-**HCI-Bedeutung:** Systemstatus und Reversibilität waren bereits vorhanden.
-Das mentale Modell blieb aber unvollständig, weil die verwendete Strategie nur
-über die Routingmetrik und nicht als bewusst gewähltes Verfahren sichtbar war.
-
-### 3.2 Sichtbare Auswahl des Routingverfahrens
+### 3.2 Auswahl des Routingverfahrens
 
 ![Auswahl zwischen kürzestem Pfad und Bonsai](screenshots/02_algorithm_selection.png)
 
-**Änderung:** Die Oberfläche trennt nun klar zwischen `Kürzester Pfad` und
-`Bonsai (Greedy)`. Kurze Untertitel erklären den Unterschied zwischen
-Neuberechnung nach einem Ausfall und vorbereitetem lokalem Failover.
+Die Auswahl `Kürzester Pfad` und `Bonsai (Greedy)` wurde neben Ziel und
+Routingmetrik angeordnet. Kurze Erläuterungen beschreiben die Neuberechnung
+kürzester Pfade und das vorbereitete lokale Failover.
 
-**Bewertung:** Diese Auswahl verbessert Sichtbarkeit und Vergleichbarkeit. Die
-Nutzenden müssen die technische Bezeichnung nicht aus einem Metrikfeld
-ableiten. Die Entscheidung befindet sich dort, wo Ziel und Routingmetrik
-konfiguriert werden, und folgt damit dem Ablauf Import → Ziel → Verfahren →
-Fehlerzustand.
+### 3.3 Bonsai und ausgewählte Arboreszenz
 
-### 3.3 Bonsai-Modus und ausgewählte Aboreszenz
+![Bonsai-Modus mit gerichteter Arboreszenz](screenshots/03_bonsai_arborescence.png)
 
-![Bonsai-Modus mit gerichteter Aboreszenz](screenshots/03_bonsai_arborescence.png)
+Im Bonsai-Modus zeigt die Oberfläche die Anzahl der Arboreszenzen, den
+ausgewählten Baum mit gerichteten violetten Pfeilen, die Route und die
+Anzahl der Baumwechsel. Physische Trennungen und Routingfehler werden getrennt
+ausgewiesen. Der vollständige schrittweise Routing-Trace liegt im Backend vor,
+wird aber nicht als eigene Detailansicht im Frontend angezeigt.
 
-**Änderung:** Der Bonsai-Modus zeigt die Anzahl der Aboreszenzen, den gewählten
-Baum, gerichtete violette Pfeile, den tatsächlichen Paketpfad sowie die Anzahl
-der Baumwechsel. Physische Trennungen und Routingfehler werden getrennt
-ausgewiesen.
+### 3.4 Erste Darstellung von Germany50
 
-**Bewertung:** Das System macht den internen Zustand sichtbar. Besonders
-wichtig ist die Trennung zwischen „kein physischer Weg vorhanden“ und „ein Weg
-ist vorhanden, Bonsai erreicht das Ziel aber nicht“. Diese Unterscheidung ist
-der fachliche Kern des neuen Modus.
+![Germany50 vor der Anpassung der Übersicht](screenshots/04_large_graph_initial.png)
 
-**Verbleibende Detailfrage:** Die Routingzusammenfassung zeigt Pfad, Status und
-Wechselanzahl. Der vollständige schrittweise Trace mit dem genauen Wechselknoten
-ist im Backend vorhanden, aber noch nicht als eigene Detailansicht im Frontend.
-Diese Erweiterung ist nur erforderlich, wenn sie für die Forschungsfrage oder
-Betreuerabnahme ausdrücklich benötigt wird.
+Der Graph nutzte nur einen kleinen Teil der Zeichenfläche. Lange Ortsnamen
+überlagerten sich. Auch bei eingeklappten Details blieb viel Fläche ungenutzt.
 
-### 3.4 Erste Großgraph-Darstellung
+### 3.5 Automatisches Einpassen
 
-![Germany50 vor der verbesserten Übersicht](screenshots/04_large_graph_initial.png)
+![Automatisch eingepasster Graph ohne ausreichende Beschriftung](screenshots/05_large_graph_auto_fit.png)
 
-**Problem:** Bei 50 Knoten blieb die Topologie klein in der Mitte der großen
-Zeichenfläche. Gleichzeitig überlagerten sich lange Ortsnamen. Die zusätzliche
-Fläche durch das Einklappen der Detailbereiche wurde nicht wirksam genutzt.
+Das automatische Einpassen vergrößerte den Graphen. Gleichzeitig wurden lange
+Namen ausgeblendet. Dadurch fehlte vielen Knoten in der Übersicht eine
+sichtbare Bezeichnung.
 
-**HCI-Folge:** Die Oberfläche bot zwar Kontrolle über Zoom und Panelgröße, die
-Ausgangsdarstellung erhöhte aber Suchaufwand und visuelle Unruhe.
+### 3.6 Eindeutige Knotenkürzel
 
-### 3.5 Automatisches Einpassen mit zu starker Informationsreduktion
+![Übersicht mit Knotenkürzeln](screenshots/06_large_graph_abbreviations.png)
 
-![Automatisch eingepasster Großgraph mit zunächst leeren Knoten](screenshots/05_large_graph_auto_fit.png)
+Die nächste Fassung ergänzte eindeutige Knotenkürzel und Tooltips mit dem
+vollständigen Namen. Ziel-, Fehler-, Umleitungs- und ausgewählte Startknoten
+bleiben beschriftet. Eine einzelne Route kann hervorgehoben werden.
 
-**Änderung:** Neue Topologien wurden automatisch eingepasst und lange
-Beschriftungen in der Übersicht ausgeblendet.
+### 3.7 Vollständige Knotennamen
 
-**Problem:** Die Fläche wurde besser genutzt, viele Knoten wirkten jedoch wie
-leere Kreise. Die Reduktion entfernte damit auch Information, die für die
-Orientierung notwendig ist.
+![Graph mit allen eingeblendeten Namen](screenshots/07_large_graph_all_names.png)
 
-**Lernpunkt:** Kognitive Entlastung darf nicht zu fehlender Identifizierbarkeit
-führen. Eine gute Übersicht benötigt stabile Kurzbezeichnungen und Details auf
-Anfrage.
+Über `Namen` lassen sich die vollständigen Bezeichnungen einblenden.
+In dichten Bereichen können sie sich überlagern. Die Standardansicht
+verwendet deshalb Kürzel und Tooltips.
 
-### 3.6 Aktuelle Standardübersicht mit eindeutigen Kürzeln
+## 4. HCI-Prinzipien und Umsetzung
 
-![Aktuelle Übersicht mit Knotenkürzeln](screenshots/06_large_graph_abbreviations.png)
-
-**Änderung:** Jeder Knoten besitzt ein deterministisches, eindeutiges Kürzel.
-Der vollständige Name erscheint per Tooltip. Ziel-, Fehler-, Umleitungs- und
-ausgewählte Startknoten bleiben beschriftet. Zusätzlich kann die Darstellung
-auf die Route eines Startknotens reduziert werden.
-
-**Bewertung:** Dieser Zustand eignet sich als Standard für große Graphen. Er
-unterstützt das Prinzip „Übersicht zuerst, Details auf Anfrage“: Struktur und
-Routingmuster bleiben sichtbar, während einzelne Knoten weiterhin eindeutig
-identifizierbar sind.
-
-### 3.7 Optionale Anzeige aller Namen
-
-![Großgraph mit allen eingeblendeten Namen](screenshots/07_large_graph_all_names.png)
-
-**Beobachtung:** Die Option `Namen` stellt alle vollständigen Bezeichnungen dar.
-In dichten Regionen entstehen erwartbar Überlagerungen.
-
-**Bewertung:** Diese Ansicht sollte nicht der Standard sein. Sie ist eine
-bewusste Detailoption und eignet sich eher nach dem Hineinzoomen oder zusammen
-mit einer hervorgehobenen Einzelroute. Für die Standardnutzung sind Kürzel und
-Tooltip vorzuziehen.
-
-## 4. Entwicklungsbegleitende heuristische Einschätzung
-
-| Kriterium | Aktueller Stand | Bewertung |
-|---|---|---|
-| Sichtbarkeit des Systemstatus | Statusleiste, Kennzahlen, Interpretation und Ereignisprotokoll | gut |
-| Übereinstimmung mit dem Fachmodell | Ziel, Kanten, Routen, Bäume und Fehlerarten sind fachlich benannt | gut |
-| Kontrolle und Freiheit | Ausfälle sind direkt umkehrbar; Panels, Zoom und Pan sind kontrollierbar | gut |
-| Konsistenz | Farben und Statusbegriffe werden in Graph, Legende und Tabellen wiederverwendet | gut |
-| Fehlervermeidung | Auswahlzustand und separate Ausfallaktion reduzieren versehentliche Änderungen | gut |
-| Wiedererkennen statt Erinnern | Algorithmuskarten, Legende, Kürzel und Tooltip unterstützen Orientierung | gut |
-| Flexibilität | Einpassen, Zoom, einklappbare Details und Einzelroute skalieren auf verschiedene Aufgaben | gut |
-| Minimalistisches Design | Standardübersicht ist reduziert; „alle Namen“ kann bei großen Graphen überladen | teilweise offen |
-| Verständliche Fehlerdiagnose | physische Trennung, Schleife und Sackgasse werden unterschieden | gut |
-| Hilfe und Dokumentation | README und Bonsai-Dokumentation vorhanden | gut |
+| Prinzip | Umsetzung und Grenze |
+|---|---|
+| Sichtbarkeit des Systemzustands | Statusanzeige, Kennzahlen, Graph, Routentabelle und Ereignisprotokoll geben den aktuellen Zustand wieder. |
+| Fachliche Bezeichnungen | Ziel, Kanten, Routen, Bäume und Fehlerarten werden in der Oberfläche benannt. |
+| Kontrolle und Reversibilität | Einzelne oder alle ausgefallenen Kanten können wiederhergestellt werden. |
+| Konsistenz | Graph, Legende und Ergebnistabelle verwenden gemeinsame Farben und Statusbegriffe. |
+| Auswahl und Ausfallaktion | Neben dem direkten Kantenklick stehen eine Kantenauswahl und eine separate Ausfallaktion zur Verfügung. |
+| Wiedererkennen | Verfahrensauswahl, Legende, Kürzel und Tooltips erläutern die dargestellten Elemente. |
+| Navigation | Einpassen, Zoom, Verschieben, einklappbare Details und die Hervorhebung einzelner Routen unterstützen die Untersuchung. |
+| Informationsumfang | Die Standardansicht verwendet Kürzel. Vollständige Namen können sich bei großen Graphen überlagern. |
+| Fehlerdiagnose | Physische Trennung, Schleife und Sackgasse werden getrennt ausgegeben. Der vollständige Routing-Trace fehlt in der Oberfläche. |
+| Dokumentation | README und Bonsai-Dokumentation beschreiben Bedienung, Berechnung und Grenzen. |
 
 ## 5. Nutzungsszenarien für die Evaluation
 
@@ -222,55 +172,22 @@ bei Bedarf alle Namen einblenden.
 **Erfolg:** Die Person findet und erklärt alle Funktionen, ohne die Orientierung
 im Graphen zu verlieren.
 
-## 6. Tatsächliche Benutzerstudie
+## 6. Benutzerstudie
 
-Die Erhebung verwendete LimeSurvey 736933 mit Einwilligung, Vorkenntnissen,
-fünf Aufgaben, zehn SUS-Aussagen, vier geschlossenen Rückfragen und einem
-optionalen Freitextfeld. Ausgewertet wurden 11 Fragebögen. Die abgeschlossenen
-Antworten stammen vom 20. September bis 4. Oktober 2026.
+Aus LimeSurvey 736933 wurden 11 Fragebögen ausgewertet. Die abgeschlossenen
+Antworten stammen vom 20. September bis 4. Oktober 2026. Erhoben wurden
+Vorkenntnisse, selbst berichtete Aufgabenbearbeitung, zehn SUS-Antworten,
+vier geschlossene Rückfragen und ein optionales Freitextfeld.
 
-Die Aufgabenbearbeitung wurde von den Befragten selbst als abgeschlossen,
-versucht und nicht geschafft oder übersprungen angegeben. Daraus lässt sich
-kein unabhängig geprüfter Aufgabenerfolg ohne Hilfe ableiten. Bei einigen
-Bearbeitungen war der Entwickler anwesend und beantwortete Nachfragen.
-Ein systematisches Hilfs- oder Beobachtungsprotokoll liegt nicht vor.
+Der SUS-Mittelwert beträgt 67,7, der Median 72,5 und die Spannweite 30 bis 90.
+Kapitel 6 der Bachelorarbeit enthält die Auswertung. Das
+[Studienprotokoll](USER_STUDY_PROTOCOL.md) beschreibt die Durchführung,
+nicht erhobene Messgrößen und die Grenzen der Versionszuordnung.
 
-Zeitmessung, Schwierigkeitseinschätzungen von 1 bis 7 und Think-Aloud waren
-Bestandteile früherer Planungen. Sie sind keine Datengrundlage der
-vorliegenden Auswertung. Der historische Plan bleibt im
-[Studienprotokoll](USER_STUDY_PROTOCOL.md) als solcher erhalten.
+## 7. Screenshots
 
-Die Auswertung berichtet Häufigkeiten und Kennwerte. Der SUS-Mittelwert
-beträgt 67,7 bei einem Median von 72,5 und einer Spannweite von 30 bis 90.
-Kapitel 6 der Bachelorarbeit beschreibt die Ergebnisse und Grenzen.
-Für die abgeschlossenen Fragebögen wurde keine jeweilige Deployment-Version
-erfasst; ein einheitlicher Versionsstand für alle Bearbeitungen ist damit
-nicht nachgewiesen.
-
-## 7. Screenshot-Protokoll für die Bachelorarbeit
-
-Das separate [Screenshot-Register](SCREENSHOT_REGISTER.md) dokumentiert
-Git-Blob-SHAs, Dateigrößen, Entwicklungsrollen, frühere Vorschläge für sechs zusätzliche Aufnahmen und ein Aufnahmeprotokoll.
-Diese Vorschläge sind keine verbindlichen Vorgaben des Betreuers.
-
-Die vorhandenen Bilder dokumentieren die Entwicklung, enthalten aber teilweise
-Browserrahmen oder eingeblendete Browser-Erweiterungen. Für gegebenenfalls benötigte zusätzliche Aufnahmen gelten folgende Empfehlungen:
-
-- identische Fenstergröße und Skalierung,
-- Browser-Vollbild oder sauberer Zuschnitt auf die Anwendung,
-- keine Profile, Erweiterungen oder personenbezogenen Inhalte,
-- Topologie, Ziel, Verfahren und Ausfälle in der Bildunterschrift,
-- Commit-ID und Datum in einer separaten Screenshot-Tabelle,
-- keine nachträgliche inhaltliche Veränderung des dargestellten Ergebnisses.
-
-Frühere Vorschläge für ergänzende Abbildungen:
-
-1. Shortest-Path-Normalzustand,
-2. manueller Ausfall mit Umleitung,
-3. Bonsai mit ausgewählter Aboreszenz,
-4. Bonsai-Schleife trotz physischer Verbindung,
-5. Germany50 als Standardübersicht,
-6. Germany50 mit hervorgehobener Einzelroute.
+Das [Screenshot-Register](SCREENSHOT_REGISTER.md) nennt die vorhandenen Bilder,
+ihre Herkunft und den dargestellten Entwicklungsstand.
 
 ## 8. Aktueller Evaluationsstand
 
@@ -286,18 +203,11 @@ zunächst eingeklappten Ergebnisdetails ergänzt. Die untere Kennzahl
 `Physisch getrennt` bestand bereits im technischen Referenzstand.
 Diese späteren Änderungen wurden nicht erneut durch eine Benutzerstudie bewertet.
 
-## 9. Technischer Stand
+## 9. Technische Prüfung
 
-Der technische Vertikalschnitt umfasst Import, Strategiewahl,
-Greedy-Aboreszenzen, zirkuläres Failover, getrennte Fehlerklassifikation,
-automatische Suche und Visualisierung. Diese Funktionen sind integriert und
-automatisch getestet.
-
-Die Screenshots zeigen Unterschiede zwischen Entwicklungsständen. Die dazu
-formulierten Einschätzungen bleiben von den Ergebnissen der Benutzerstudie
-getrennt. Empirische Aussagen werden auf die tatsächlich erhobenen Antworten
-und die Grenzen der Durchführung beschränkt.
-
-Die technische Absicherung wird durch die automatisierten Tests, die
-[Bonsai-Validierung](../BONSAI_VALIDATION.md) und die in
-[REQUIREMENTS.md](../../REQUIREMENTS.md) dokumentierten Prüfergebnisse belegt.
+Automatisierte Tests prüfen Import, Routing, Fehlerklassifikation und
+Ausfallsuche. Umfang und Ergebnisse stehen in der
+[Bonsai-Validierung](../BONSAI_VALIDATION.md) und in
+[REQUIREMENTS.md](../../REQUIREMENTS.md). Die
+[Architekturbeschreibung](../../ARCHITECTURE.md) erläutert die Komponenten
+und den Datenfluss.

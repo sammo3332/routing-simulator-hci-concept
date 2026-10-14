@@ -129,14 +129,3 @@ Plausibilitätsnachweis für kleine Graphen. Sie ist jedoch kein mathematischer
 Beweis für alle beliebig großen Graphen. Außerdem vergleicht sie die
 Implementierung derzeit nicht mit einer zweiten, externen Bonsai-
 Referenzimplementierung.
-
-Für die Bachelorarbeit sollte deshalb präzise formuliert werden:
-
-> Die Implementierung wurde für alle verbundenen einfachen Graphen mit bis zu
-> fünf Knoten exhaustiv gegen ein unabhängiges Kantenschnitt-Orakel getestet.
-> Zusätzlich wurden Baum- und Routinginvarianten sowie alle Ausfallmengen
-> ausgewählter Referenzgraphen automatisch validiert.
-
-Als fachliche Ergänzung sollten die drei anschaulichen Referenzfälle
-"Zustellung ohne Ausfall", "erfolgreicher Baumwechsel" und "Routingfehler bei
-physischer Erreichbarkeit" mit dem Betreuer besprochen werden.
