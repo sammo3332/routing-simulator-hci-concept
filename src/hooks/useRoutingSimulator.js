@@ -4,7 +4,7 @@ import {
   searchCriticalFailures,
   updateSimulationSession,
 } from "../services/backendService";
-import { GOLD, PAD, RED, SVG_H, SVG_W, T1, T2 } from "../styles/sharedStyles";
+import { EDGE_IDLE, GOLD, PAD, RED, SVG_H, SVG_W, T1, T2 } from "../styles/sharedStyles";
 
 function timestamp() {
   return new Date().toLocaleTimeString("de-DE", { hour12: false });
@@ -297,7 +297,7 @@ export function useRoutingSimulator() {
       baseline,
       selected: edge.id === selectedLinkId,
       treeArc: treeArcByEdgeId.get(edge.id) ?? null,
-      color: failed ? RED : current ? T1 : baseline ? T2 : "#31394d",
+      color: failed ? RED : current ? T1 : baseline ? T2 : EDGE_IDLE,
     };
   });
 

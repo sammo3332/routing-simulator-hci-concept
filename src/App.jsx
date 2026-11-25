@@ -9,7 +9,7 @@ import { useGraphViewport } from "./hooks/useGraphViewport";
 import { useGraphLayout } from "./hooks/useGraphLayout";
 import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
-import { S } from "./styles/sharedStyles";
+import { EDGE_IDLE, S } from "./styles/sharedStyles";
 import { buildInterpretation } from "./utils/interpretation";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
@@ -458,10 +458,9 @@ export default function App() {
                         y1={link.sourcePosition.y}
                         x2={link.targetPosition.x}
                         y2={link.targetPosition.y}
-                        stroke={link.failed ? RED : link.current ? T1 : link.baseline ? T2 : "#31394d"}
+                        stroke={link.failed ? RED : link.current ? T1 : link.baseline ? T2 : EDGE_IDLE}
                         strokeWidth={link.selected && !hideRouteHighlights ? 5 : link.current ? 3.5 : 2}
                         strokeDasharray={link.failed ? "8 6" : undefined}
-                        opacity={link.current || link.baseline || link.failed ? 1 : .35}
                         strokeLinecap="round"
                         pointerEvents="none"
                         vectorEffect="non-scaling-stroke"
@@ -537,6 +536,7 @@ export default function App() {
               <strong style={{ color: "#9aa5bb" }}>Legende</strong>
               <span><span style={{ color: T2 }}>━━</span> Route vor dem Ausfall</span>
               <span><span style={{ color: T1 }}>━━</span> Aktuelle Route</span>
+              <span><span style={{ color: EDGE_IDLE }}>━━</span> Kante ohne Route</span>
               <span><span style={{ color: RED }}>┄✕┄</span> Ausgefallene Kante</span>
               <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
               <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>
