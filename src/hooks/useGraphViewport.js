@@ -5,9 +5,10 @@ import {
   panViewport,
   zoomViewportAtPoint,
 } from "../utils/graphViewport";
-import { eventPointInSvg, moveNodePosition } from "../utils/graphLayout";
+import { clampPointToRect, eventPointInSvg, moveNodePosition } from "../utils/graphLayout";
 
 const BUTTON_ZOOM_FACTOR = 1.25;
+const NODE_DRAG_MARGIN = 14;
 
 export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode }) {
   const svgRef = useRef(null);
@@ -68,13 +69,26 @@ export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode })
     if (event.button !== 0 || drag.current) return;
     suppressClick.current = false;
     const svg = event.currentTarget;
-    const nodeId = event.target.closest?.("[data-graph-node-id]")?.dataset.graphNodeId;
+    const nodeElement = event.target.closest?.("[data-graph-node-id]");
+    const nodeId = nodeElement?.dataset.graphNodeId;
     const node = nodesRef.current.find(item => item.id === nodeId);
     if (!node && event.target.dataset.panSurface !== "true") return;
     const point = eventPointInSvg(svg, event.clientX, event.clientY);
     if (!point) return;
     event.preventDefault();
+    // Abstand zwischen Zeiger und Knotenmitte, damit die Begrenzung auf die
+    // sichtbare Fläche für die Knotenmitte gilt und nicht für den Griffpunkt.
+    let grabOffset = { x: 0, y: 0 };
+    if (node) {
+      const circles = nodeElement.querySelectorAll("circle");
+      const box = circles[circles.length - 1].getBoundingClientRect();
+      grabOffset = {
+        x: event.clientX - (box.left + box.width / 2),
+        y: event.clientY - (box.top + box.height / 2),
+      };
+    }
     drag.current = {
+      grabOffset,
       kind: node ? "node" : "pan",
       nodeId,
       position: node?.position,
@@ -93,7 +107,18 @@ export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode })
   const onPointerMove = useCallback(event => {
     const active = drag.current;
     if (!active || active.pointerId !== event.pointerId) return;
-    const point = eventPointInSvg(event.currentTarget, event.clientX, event.clientY);
+    // Ein Knoten bleibt innerhalb der sichtbaren Graphfläche; sonst ließe er
+    // sich hinter die Seitenleiste ziehen und wäre nicht mehr auffindbar.
+    let client = { x: event.clientX, y: event.clientY };
+    if (active.kind === "node") {
+      const center = clampPointToRect(
+        { x: client.x - active.grabOffset.x, y: client.y - active.grabOffset.y },
+        event.currentTarget.getBoundingClientRect(),
+        NODE_DRAG_MARGIN,
+      );
+      client = { x: center.x + active.grabOffset.x, y: center.y + active.grabOffset.y };
+    }
+    const point = eventPointInSvg(event.currentTarget, client.x, client.y);
     if (!point) return;
     if (!active.moved && Math.hypot(
       event.clientX - active.clientX, event.clientY - active.clientY,

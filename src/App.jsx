@@ -11,9 +11,12 @@ import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { EDGE_IDLE, S } from "./styles/sharedStyles";
 import { buildInterpretation } from "./utils/interpretation";
+import { placeNodeTooltip, shortenSegmentEnd, visibleGraphBounds } from "./utils/graphLayout";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
+// Knotenradius 16 plus Abstand: die Pfeilspitze endet sichtbar am Knotenrand.
+const TREE_ARROW_INSET = 19;
 
 const panel = {
   background: "#131720",
@@ -46,11 +49,10 @@ function EmptyState() {
   );
 }
 
-function GraphNodeTooltip({ node, widthLimit }) {
+function GraphNodeTooltip({ node, bounds }) {
   const label = node.label || node.id;
   const width = Math.min(190, Math.max(72, label.length * 6.2 + 20));
-  const x = Math.min(widthLimit - width - 6, Math.max(6, node.position.x - width / 2));
-  const y = node.position.y > 54 ? node.position.y - 45 : node.position.y + 25;
+  const { x, y } = placeNodeTooltip(node.position, { width, height: 25 }, bounds);
   return (
     <g pointerEvents="none" aria-hidden="true">
       <rect x={x} y={y} width={width} height={25} rx={5} fill="#080b12" stroke="#64748b" strokeWidth={1.5} />
@@ -413,7 +415,11 @@ export default function App() {
                     data-pan-surface="true"
                   />
                   <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
-                  {visibleGraphLinks.map(link => (
+                  {visibleGraphLinks.map(link => {
+                    const arcStart = link.treeArc?.source === link.source ? link.sourcePosition : link.targetPosition;
+                    const arcTarget = link.treeArc?.target === link.target ? link.targetPosition : link.sourcePosition;
+                    const arcEnd = link.treeArc ? shortenSegmentEnd(arcStart, arcTarget, TREE_ARROW_INSET) : null;
+                    return (
                     <g
                       key={link.id}
                       role="button"
@@ -467,10 +473,10 @@ export default function App() {
                       />
                       {link.treeArc && !link.failed && (
                         <line
-                          x1={link.treeArc.source === link.source ? link.sourcePosition.x : link.targetPosition.x}
-                          y1={link.treeArc.source === link.source ? link.sourcePosition.y : link.targetPosition.y}
-                          x2={link.treeArc.target === link.target ? link.targetPosition.x : link.sourcePosition.x}
-                          y2={link.treeArc.target === link.target ? link.targetPosition.y : link.sourcePosition.y}
+                          x1={arcStart.x}
+                          y1={arcStart.y}
+                          x2={arcEnd.x}
+                          y2={arcEnd.y}
                           stroke="#a78bfa"
                           strokeWidth={3}
                           opacity={.92}
@@ -501,7 +507,8 @@ export default function App() {
                         </g>
                       )}
                     </g>
-                  ))}
+                    );
+                  })}
                   {visibleGraphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
                     const nodeName = node.label || node.id;
@@ -526,7 +533,10 @@ export default function App() {
                     );
                   })}
                   {hoveredNode && !hoveredNodeLabelVisible && (
-                    <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />
+                    <GraphNodeTooltip
+                      node={hoveredNode}
+                      bounds={visibleGraphBounds(graphViewport.viewport, SVG_W, SVG_H)}
+                    />
                   )}
                   </g>
                 </svg>
