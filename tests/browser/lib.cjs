@@ -46,6 +46,8 @@ function createContext({ page, baseUrl, shotDir, results }) {
   const upload = async file => { await topologyInput.setInputFiles(file); await settle(); };
   const shot = async (name, locator) => {
     if (!shotDir) return;
+    // Fokusrahmen des Browsers gehört nicht zum dokumentierten Zustand.
+    await page.evaluate(() => document.activeElement?.blur?.());
     await (locator ?? page).screenshot({ path: path.join(shotDir, name) });
   };
   const graph = page.locator('svg[aria-label^="Netzwerkgraph"]');
