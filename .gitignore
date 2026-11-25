@@ -28,3 +28,6 @@ pytest-of-root/
 *.sln
 *.sw?
 .jdks/
+
+# Desktop-Build (PyInstaller)
+build/
