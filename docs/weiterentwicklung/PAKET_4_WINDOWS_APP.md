@@ -49,7 +49,7 @@ Eingebaute Prüfungen (laufen nur mit der jeweiligen Option):
 |---|---|
 | `--smoke-test` | ohne Fenster: Oberfläche und ihre Dateien werden ausgeliefert, Dateiimport, kürzester Pfad mit Ausfall, Bonsai mit Ausfall, Bindung an `127.0.0.1`, Port über die Netzwerkadresse des Rechners nicht erreichbar. Mit Paket 3 zusätzlich: Szenario speichern und laden, Schemaprüfung aktiv, Formatversion wird geprüft. |
 | `--window-test` | im echten Fenster: Oberfläche gezeichnet, Topologie über das Dateifeld importiert und dargestellt, Bonsai gewählt und eine Kante ausfallen lassen. Mit Paket 3 zusätzlich: „Szenario speichern“, Zustand verändern, Szenario wieder laden, Zustand vergleichen. |
-| `--native-save-file <Pfad>` | wie `--window-test`, aber „Szenario speichern“ läuft über den echten Speichern-Dialog, den ein Hilfsskript bedient. |
+| `--native-save-file <Pfad>` | wie `--window-test`, aber „Szenario speichern“ läuft über den echten Speichern-Dialog, den ein Hilfsskript (`desktop/windows_save_dialog_helper.ps1`) bedienen soll. Auf dem Runner ist das bisher nicht gelungen; siehe Grenzen. |
 | `--probe-internet` | zusätzlich melden, ob Programm und Seite einen öffentlichen Host (`github.com`) erreichen. Nur für die Prüfung ohne Internetzugang; im normalen Betrieb baut das Programm keine Verbindung nach außen auf. |
 
 ## Tatsächliche Prüfung
@@ -144,6 +144,17 @@ Diese Prüfungen belegen die Logik des Launchers und der Paketbeschreibung,
 - Die Prüfung ohne Internetzugang sperrt den Verkehr per Firewall. Ein Rechner
   ohne jede Netzwerkverbindung (Flugmodus, gezogenes Kabel) wurde nicht
   geprüft.
+- Das Speichern über den Windows-Dialog „Speichern unter“ ist nicht
+  automatisiert belegt. Im Lauf Nr. 6 (Integrationszweig) öffnete sich der
+  Dialog im Ordner „Downloads“; im Namensfeld stand der vorgeschlagene
+  Dateiname ohne sichtbare Endung. Das Hilfsskript konnte den Dialog nicht
+  bedienen: Seine Bedienelemente nahmen auf dem Runner über die
+  Windows-UI-Automation weder einen Wert noch den Fokus an. Der Dialog wurde
+  deshalb nicht bestätigt und keine Datei geschrieben. Dieser Prüfteil ist als
+  nicht blockierend gekennzeichnet. Belegt ist dort das Speichern und Laden im
+  Fenster über die in der Seite abgefangene Datei. Das Speichern über den
+  Dialog sollte auf einem Arbeitsplatzrechner einmal von Hand geprüft werden,
+  einschließlich der Endung `.json` der gespeicherten Datei.
 - Die Programmdatei ist nicht signiert. SmartScreen und Virenscanner können
   beim ersten Start warnen.
 - Es gibt kein Installationsprogramm, keine Verknüpfung im Startmenü, kein
