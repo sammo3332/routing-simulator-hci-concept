@@ -203,6 +203,22 @@ module.exports = {
         && tooltipBox.y >= largeArea.y && tooltipBox.y + tooltipBox.height <= largeArea.y + largeArea.height);
     await shot("tooltip_weit_verschoben.png", graphSection);
 
+    // Stark hineingezoomt am Knotenrand greifen und über den Rand ziehen.
+    await upload(FIXTURES.small);
+    for (let step = 0; step < 9; step += 1) await page.getByRole("button", { name: "Hineinzoomen" }).click();
+    const zoomArea = await graph.boundingBox();
+    const big = await context.nodeCircle("T").boundingBox();
+    await page.mouse.move(big.x + big.width * 0.9, big.y + big.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(zoomArea.x - 200, big.y + big.height / 2, { steps: 8 });
+    const rimCenter = await screenCenter("T");
+    await page.mouse.up();
+    check("N-9e", "Am Knotenrand gegriffen und stark hineingezoomt bleibt die Knotenmitte in der Graphfläche",
+      rimCenter.x >= zoomArea.x && rimCenter.x <= zoomArea.x + zoomArea.width,
+      `Knotenmitte x ${Math.round(rimCenter.x)}, Fläche ab x ${Math.round(zoomArea.x)}`);
+    await page.getByRole("button", { name: "Topologie einpassen" }).click();
+    await upload(FIXTURES.large);
+
     // --- 10: kleine Fensterbreite --------------------------------------------
     await page.setViewportSize({ width: 900, height: 700 });
     await page.waitForTimeout(300);

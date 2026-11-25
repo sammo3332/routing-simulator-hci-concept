@@ -53,7 +53,7 @@ Routingmerkmale, Zurücksetzen sowie Bewegungen bei verschiedenen Zoomstufen.
 Ein Browserstart für die Mausprüfung wurde damals durch die
 Ausführungsumgebung blockiert.
 
-## Nachgeholte Browserprüfung vom 26. November 2026
+## Nachgeholte Browserprüfung vom 25. November 2026
 
 Die Interaktionsprüfungen wurden mit `tests/browser/checks/30-knoten.cjs` in
 Chromium 158 (headless, 1440 × 900) nachgeholt. Alle zehn Punkte der folgenden

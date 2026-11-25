@@ -1,6 +1,6 @@
 # Paket 2: Knotenverschieben
 
-Stand: 26. November 2026 · Zweig `claude/paket-2-knotenverschieben`
+Stand: 25. November 2026 · Zweig `claude/paket-2-knotenverschieben`
 Baut auf: `claude/basis-fehlerbehebungen` · Abhängigkeit von anderen Paketen: keine
 
 Das Verschieben einzelner Knoten ist bereits im Ausgangsstand `ba4c99a`
@@ -24,9 +24,10 @@ Zurücksetzen und erneutem Import.
 
 Commit „keep dragged nodes and their tooltip inside the visible graph area“:
 
-- P2-1: Beim Ziehen eines Knotens wird der Zeiger auf die sichtbare
-  Graphfläche begrenzt (`clampPointToRect`, `src/hooks/useGraphViewport.js`).
-  Der Knoten bleibt am Rand stehen. Das Verschieben der Gesamtansicht ist
+- P2-1: Beim Ziehen eines Knotens wird die Knotenmitte auf die sichtbare
+  Graphfläche begrenzt (`clampPointToRect`, `src/hooks/useGraphViewport.js`),
+  unabhängig davon, wo der Knoten gegriffen wurde. Der Knoten bleibt am Rand
+  stehen. Das Verschieben der Gesamtansicht ist
   davon nicht betroffen.
 - P2-2: Der Tooltip richtet sich nach dem sichtbaren Ausschnitt statt nach dem
   festen Bereich 0 bis 800 (`placeNodeTooltip`, `visibleGraphBounds`).
@@ -64,7 +65,7 @@ korrekt):
 ## Tatsächliche Prüfung
 
 Browserprüfung `tests/browser/checks/30-knoten.cjs`, mit demselben Skript vor
-und nach den Änderungen ausgeführt: vorher 29 von 32, nachher 32 von 32.
+und nach den Änderungen ausgeführt: vorher 29 von 33, nachher 33 von 33.
 
 | ID | Prüfung | Vorher | Nachher |
 |---|---|---|---|
@@ -93,6 +94,7 @@ und nach den Änderungen ausgeführt: vorher 29 von 32, nachher 32 von 32.
 | N-9b | Drag außerhalb löst keinen Kantenausfall aus | bestanden | bestanden |
 | N-9c | Knoten bleibt in der sichtbaren Graphfläche | **nicht bestanden** | bestanden |
 | N-9d | Loslassen über einer Kante löst keinen Kantenausfall aus | bestanden | bestanden |
+| N-9e | Am Rand gegriffen bei 600 % Zoom: Knotenmitte bleibt in der Graphfläche | **nicht bestanden** | bestanden |
 | N-10a | Andere Topologie: keine Anordnung übernommen | bestanden | bestanden |
 | N-10b | Erneuter Import nach Topologiewechsel: ursprüngliche Positionen | bestanden | bestanden |
 | N-10c | Dieselbe Datei direkt erneut importiert: ursprüngliche Positionen | bestanden | bestanden |
@@ -117,5 +119,8 @@ verändert.
 - Die Anordnung geht beim Neuladen der Seite verloren. Paket 3 enthält einen
   getrennten, optionalen Commit, der sie in einem Szenario mitspeichert.
 - Der Tooltip skaliert wie bisher mit der Zoomstufe.
+- Bei sehr kurzen Kanten (unter 38 Einheiten, also bei fast überlappenden
+  Knoten) endet der Pfeil in der Kantenmitte und die Spitze bleibt verdeckt.
+  In der dichten Testtopologie betrifft das 14 von 49 Pfeilen.
 - Ein Knoten kann am Rand der Graphfläche unter der Werkzeugleiste liegen. Er
   bleibt dort greifbar, sobald die Ansicht verschoben oder eingepasst wird.
