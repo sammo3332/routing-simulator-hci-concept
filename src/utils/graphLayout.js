@@ -40,3 +40,35 @@ export function eventPointInSvg(svg, clientX, clientY) {
   const transformed = point.matrixTransform(matrix.inverse());
   return { x: transformed.x, y: transformed.y };
 }
+
+// Hält einen Zeigerpunkt innerhalb eines Rechtecks (Bildschirmkoordinaten).
+export function clampPointToRect(point, rect, margin = 0) {
+  const clamp = (value, minimum, maximum) => (
+    maximum < minimum ? (minimum + maximum) / 2 : Math.min(maximum, Math.max(minimum, value))
+  );
+  return {
+    x: clamp(point.x, rect.left + margin, rect.right - margin),
+    y: clamp(point.y, rect.top + margin, rect.bottom - margin),
+  };
+}
+
+// Sichtbarer Ausschnitt in Graphkoordinaten für die aktuelle Ansicht.
+export function visibleGraphBounds(viewport, width, height) {
+  return {
+    left: (0 - viewport.x) / viewport.scale,
+    top: (0 - viewport.y) / viewport.scale,
+    right: (width - viewport.x) / viewport.scale,
+    bottom: (height - viewport.y) / viewport.scale,
+  };
+}
+
+// Position des Namens-Tooltips: am Knoten, innerhalb des sichtbaren Ausschnitts.
+export function placeNodeTooltip(position, size, bounds, margin = 6) {
+  const minimumX = bounds.left + margin;
+  const maximumX = bounds.right - size.width - margin;
+  const centered = position.x - size.width / 2;
+  const x = maximumX < minimumX ? centered : Math.min(maximumX, Math.max(minimumX, centered));
+  const above = position.y - 45;
+  const y = above >= bounds.top + margin ? above : position.y + 25;
+  return { x, y };
+}

@@ -5,9 +5,10 @@ import {
   panViewport,
   zoomViewportAtPoint,
 } from "../utils/graphViewport";
-import { eventPointInSvg, moveNodePosition } from "../utils/graphLayout";
+import { clampPointToRect, eventPointInSvg, moveNodePosition } from "../utils/graphLayout";
 
 const BUTTON_ZOOM_FACTOR = 1.25;
+const NODE_DRAG_MARGIN = 14;
 
 export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode }) {
   const svgRef = useRef(null);
@@ -93,7 +94,16 @@ export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode })
   const onPointerMove = useCallback(event => {
     const active = drag.current;
     if (!active || active.pointerId !== event.pointerId) return;
-    const point = eventPointInSvg(event.currentTarget, event.clientX, event.clientY);
+    // Ein Knoten bleibt innerhalb der sichtbaren Graphfläche; sonst ließe er
+    // sich hinter die Seitenleiste ziehen und wäre nicht mehr auffindbar.
+    const client = active.kind === "node"
+      ? clampPointToRect(
+        { x: event.clientX, y: event.clientY },
+        event.currentTarget.getBoundingClientRect(),
+        NODE_DRAG_MARGIN,
+      )
+      : { x: event.clientX, y: event.clientY };
+    const point = eventPointInSvg(event.currentTarget, client.x, client.y);
     if (!point) return;
     if (!active.moved && Math.hypot(
       event.clientX - active.clientX, event.clientY - active.clientY,
