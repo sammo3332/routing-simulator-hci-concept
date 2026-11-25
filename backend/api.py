@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
 from uuid import uuid4
@@ -19,18 +20,27 @@ from .failover_core.models import (
     FailureState,
     RoutingConfig,
     RoutingResult,
+    Scenario,
     SearchResult,
     Topology,
 )
 from .failover_core.routing import compute_routing_result
 from .failover_core.search import find_first_minimal_failure
-from .failover_core.serialization import _routing_snapshot_to_dict
+from .failover_core.serialization import (
+    _routing_snapshot_to_dict,
+    import_scenario_json,
+    scenario_to_dict,
+)
 from .failover_core.topology_import import (
     DEFAULT_MAX_FILE_SIZE_BYTES,
     TopologyImportError,
     import_graphml_bytes,
     import_sndlib_xml_bytes,
     import_topohub_json_bytes,
+)
+from .failover_core.validation import (
+    ScenarioFormatVersionError,
+    ScenarioValidationError,
 )
 
 
@@ -55,6 +65,23 @@ class SessionStore:
             topology=topology,
             routing=RoutingConfig(target_node_id=target),
             failures=FailureState(),
+        )
+        with self._lock:
+            self._sessions[session.session_id] = session
+        return session
+
+    def add(
+        self,
+        topology: Topology,
+        routing: RoutingConfig,
+        failures: FailureState,
+    ) -> SimulationSession:
+        """Store an already validated state, for example a loaded scenario."""
+        session = SimulationSession(
+            session_id=str(uuid4()),
+            topology=topology,
+            routing=routing,
+            failures=failures,
         )
         with self._lock:
             self._sessions[session.session_id] = session
@@ -143,6 +170,97 @@ class CriticalFailureSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     max_k: int = Field(ge=1)
+
+
+class ScenarioImportError(Exception):
+    """A scenario file was rejected; ``detail`` is shown to the user."""
+
+    def __init__(
+        self,
+        code: str,
+        detail: str,
+        *,
+        errors: tuple[str, ...] = (),
+        status_code: int = 422,
+    ) -> None:
+        super().__init__(detail)
+        self.code = code
+        self.detail = detail
+        self.errors = errors
+        self.status_code = status_code
+
+
+_TOPOLOGY_HINT = (
+    " Eine Topologiedatei laden Sie über „Topologie laden“."
+)
+
+
+def _load_scenario(payload: bytes):
+    if len(payload) > DEFAULT_MAX_FILE_SIZE_BYTES:
+        raise ScenarioImportError(
+            "file_too_large",
+            "Die Szenariodatei ist größer als 10 MiB.",
+            status_code=413,
+        )
+    try:
+        text = payload.decode("utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise ScenarioImportError(
+            "invalid_json",
+            "Die Datei ist kein gültiges JSON und kann nicht als Szenario "
+            "gelesen werden." + _TOPOLOGY_HINT,
+        ) from error
+    try:
+        return import_scenario_json(text)
+    except ScenarioFormatVersionError as error:
+        if error.found is None:
+            raise ScenarioImportError(
+                "missing_format_version",
+                "Die Datei enthält keine Formatversion („format_version“) "
+                "und ist daher kein Szenario dieser Anwendung."
+                + _TOPOLOGY_HINT,
+                errors=error.errors,
+            ) from error
+        raise ScenarioImportError(
+            "unsupported_format_version",
+            f"Die Formatversion „{error.found}“ wird nicht unterstützt. "
+            f"Unterstützt wird: {', '.join(error.supported)}.",
+            errors=error.errors,
+        ) from error
+    except ScenarioValidationError as error:
+        if any(item.startswith("invalid JSON") for item in error.errors):
+            raise ScenarioImportError(
+                "invalid_json",
+                "Die Datei ist kein gültiges JSON und kann nicht als "
+                "Szenario gelesen werden." + _TOPOLOGY_HINT,
+                errors=error.errors,
+            ) from error
+        shown = "; ".join(error.errors[:3])
+        more = len(error.errors) - 3
+        raise ScenarioImportError(
+            "invalid_scenario",
+            "Das Szenario ist ungültig und wurde nicht geladen: "
+            + shown
+            + (f" (und {more} weitere)" if more > 0 else ""),
+            errors=error.errors,
+        ) from error
+
+
+def _scenario_from_session(
+    session: SimulationSession, result: RoutingResult
+) -> dict:
+    topology = session.topology
+    scenario = Scenario(
+        format_version="1.0",
+        scenario_id=str(uuid4()),
+        name=topology.name or topology.topology_id,
+        created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        topology=topology,
+        routing=session.routing,
+        failures=session.failures,
+        metadata={"exported_by": "Failover Routing Visualizer"},
+    )
+    return scenario_to_dict(scenario, result)
 
 
 def _topology_to_dict(topology: Topology) -> dict:
@@ -340,6 +458,19 @@ def create_app(
     ) -> JSONResponse:
         return JSONResponse(status_code=422, content={"detail": str(error)})
 
+    @app.exception_handler(ScenarioImportError)
+    async def scenario_import_error_handler(
+        _request: Request, error: ScenarioImportError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=error.status_code,
+            content={
+                "detail": error.detail,
+                "code": error.code,
+                "errors": list(error.errors),
+            },
+        )
+
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -369,6 +500,39 @@ def create_app(
             )
         session = sessions.create(topology)
         return _session_response(session, _evaluate(session))
+
+    @app.post("/api/sessions/import-scenario")
+    async def import_scenario(request: Request) -> dict:
+        # Nothing is stored unless the whole file is valid and the routing
+        # result has been recomputed by the domain core.
+        imported = _load_scenario(await request.body())
+        scenario = imported.scenario
+        session = sessions.add(
+            scenario.topology, scenario.routing, scenario.failures
+        )
+        response = _session_response(session, imported.routing_result)
+        response["scenario"] = {
+            "scenario_id": scenario.scenario_id,
+            "name": scenario.name,
+            "created_at": scenario.created_at,
+            "format_version": scenario.format_version,
+            "snapshot": (
+                "absent"
+                if imported.snapshot_matches is None
+                else "matches"
+                if imported.snapshot_matches
+                else "differs"
+            ),
+        }
+        return response
+
+    @app.get("/api/sessions/{session_id}/scenario")
+    def export_scenario(session_id: str) -> dict:
+        try:
+            session = sessions.get(session_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="session not found") from error
+        return _scenario_from_session(session, _evaluate(session))
 
     @app.patch("/api/sessions/{session_id}")
     def update_session(session_id: str, update: SessionUpdate) -> dict:

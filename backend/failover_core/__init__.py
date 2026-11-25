@@ -30,7 +30,13 @@ from .topology_import import (
     import_topohub_json_bytes,
     load_topology,
 )
-from .validation import ScenarioValidationError, validate_scenario, validate_topology
+from .validation import (
+    SUPPORTED_FORMAT_VERSIONS,
+    ScenarioFormatVersionError,
+    ScenarioValidationError,
+    validate_scenario,
+    validate_topology,
+)
 
 __all__ = [
     "Edge",
@@ -41,6 +47,8 @@ __all__ = [
     "RoutingConfig",
     "RoutingResult",
     "Scenario",
+    "SUPPORTED_FORMAT_VERSIONS",
+    "ScenarioFormatVersionError",
     "ScenarioImport",
     "ScenarioValidationError",
     "SearchConfig",

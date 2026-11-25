@@ -13,6 +13,36 @@ class ScenarioValidationError(ValueError):
         return "Invalid scenario: " + "; ".join(self.errors)
 
 
+SUPPORTED_FORMAT_VERSIONS: tuple[str, ...] = ("1.0",)
+
+
+@dataclass(frozen=True, slots=True)
+class ScenarioFormatVersionError(ScenarioValidationError):
+    """The scenario file has no or an unsupported ``format_version``.
+
+    ``found`` is ``None`` when the field is missing.
+    """
+
+    found: object | None = None
+    supported: tuple[str, ...] = SUPPORTED_FORMAT_VERSIONS
+
+
+def check_format_version(data: object) -> None:
+    found = data.get("format_version") if isinstance(data, dict) else None
+    if found is None:
+        raise ScenarioFormatVersionError(
+            ("format_version is missing",), found=None
+        )
+    if found not in SUPPORTED_FORMAT_VERSIONS:
+        raise ScenarioFormatVersionError(
+            (
+                f"unsupported format_version {found!r}; supported: "
+                + ", ".join(SUPPORTED_FORMAT_VERSIONS),
+            ),
+            found=found,
+        )
+
+
 def _topology_errors(topology: Topology) -> list[str]:
     errors: list[str] = []
     if not topology.topology_id.strip():

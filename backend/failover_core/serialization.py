@@ -19,7 +19,11 @@ from .models import (
     VisualizationState,
 )
 from .routing import compute_routing_result
-from .validation import ScenarioValidationError, validate_scenario
+from .validation import (
+    ScenarioValidationError,
+    check_format_version,
+    validate_scenario,
+)
 
 SCHEMA_PATH = (
     Path(__file__).resolve().parents[1]
@@ -94,7 +98,10 @@ def scenario_to_dict(
     if scenario.topology.source is not None:
         data["topology"]["source"] = scenario.topology.source
 
-    for node in sorted(scenario.topology.nodes, key=lambda item: item.id):
+    # Keep the order of the topology: the user interface lists nodes and
+    # edges in it and derives node abbreviations from it. Routing itself
+    # sorts deterministically and does not depend on this order.
+    for node in scenario.topology.nodes:
         node_data: dict[str, Any] = {"id": node.id}
         if node.label is not None:
             node_data["label"] = node.label
@@ -107,7 +114,7 @@ def scenario_to_dict(
             node_data["attributes"] = dict(node.attributes)
         data["topology"]["nodes"].append(node_data)
 
-    for edge in sorted(scenario.topology.edges, key=lambda item: item.id):
+    for edge in scenario.topology.edges:
         edge_data: dict[str, Any] = {
             "id": edge.id,
             "source": edge.source,
@@ -261,20 +268,36 @@ def export_scenario_json(
     )
 
 
+def _reject_constant(name: str) -> float:
+    # NaN and Infinity are not JSON and would poison weights and positions.
+    raise ValueError(f"non-finite number {name} is not allowed")
+
+
 def import_scenario_json(payload: str) -> ScenarioImport:
     try:
-        data = json.loads(payload)
+        data = json.loads(payload, parse_constant=_reject_constant)
     except json.JSONDecodeError as error:
         raise ScenarioValidationError((f"invalid JSON: {error.msg}",)) from error
+    except ValueError as error:
+        raise ScenarioValidationError((f"invalid JSON: {error}",)) from error
     if not isinstance(data, dict):
         raise ScenarioValidationError(("scenario root must be an object",))
 
+    # Report a missing or unsupported version before the schema check, whose
+    # messages do not tell the two cases apart.
+    check_format_version(data)
     scenario = scenario_from_dict(data)
-    result = compute_routing_result(
-        scenario.topology,
-        scenario.routing,
-        scenario.failures.failed_edge_ids,
-    )
+    # Results are always recomputed; a stored snapshot is only compared.
+    try:
+        result = compute_routing_result(
+            scenario.topology,
+            scenario.routing,
+            scenario.failures.failed_edge_ids,
+        )
+    except ValueError as error:
+        raise ScenarioValidationError(
+            (f"routing cannot be computed: {error}",)
+        ) from error
     snapshot = data.get("routing_snapshot")
     snapshot_matches = (
         None
