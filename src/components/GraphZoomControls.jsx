@@ -17,6 +17,8 @@ export default function GraphZoomControls({
   onZoomIn,
   onZoomOut,
   onFit,
+  onResetPositions,
+  hasMovedNodes,
   onToggleLabels,
 }) {
   return (
@@ -32,6 +34,9 @@ export default function GraphZoomControls({
         display: "flex",
         alignItems: "center",
         gap: 5,
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+        maxWidth: "calc(100% - 20px)",
         padding: 5,
         border: "1px solid rgba(58,67,92,.9)",
         borderRadius: 7,
@@ -54,6 +59,15 @@ export default function GraphZoomControls({
       </button>
       <button type="button" onClick={onFit} aria-label="Topologie einpassen" title="Gesamte Topologie einpassen" style={buttonStyle}>
         Einpassen
+      </button>
+      <button
+        type="button"
+        onClick={onResetPositions}
+        disabled={!hasMovedNodes}
+        title="Ursprüngliche Knotenpositionen wiederherstellen; Ausfälle und Routing-Einstellungen bleiben erhalten"
+        style={buttonStyle}
+      >
+        Knotenpositionen zurücksetzen
       </button>
       <button
         type="button"

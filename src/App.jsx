@@ -6,6 +6,7 @@ import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
 import { useGraphViewport } from "./hooks/useGraphViewport";
+import { useGraphLayout } from "./hooks/useGraphLayout";
 import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
@@ -69,16 +70,24 @@ export default function App() {
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
-    toggleLinkFailure, repairNetwork, graphNodes, graphLinks, routeRows, failedCount, affectedCount,
+    toggleLinkFailure, repairNetwork, graphNodes: originalGraphNodes,
+    graphLinks: originalGraphLinks, routeRows, failedCount, affectedCount,
     criticalSearchMaxK, setCriticalSearchMaxK, criticalSearchResult,
     findCriticalFailures, applyCriticalFailureResult,
     T1, T2, RED, GOLD, SVG_W, SVG_H,
   } = simulator;
+  const graphLayout = useGraphLayout({
+    nodes: originalGraphNodes,
+    links: originalGraphLinks,
+    resetKey: simulation?.session_id,
+  });
+  const { nodes: graphNodes, links: graphLinks } = graphLayout;
   const graphViewport = useGraphViewport({
     width: SVG_W,
     height: SVG_H,
     nodes: graphNodes,
     resetKey: simulation?.session_id,
+    onMoveNode: graphLayout.moveNode,
   });
   const detailsPanel = useResizableDetailsPanel(simulation?.session_id);
 
@@ -373,6 +382,8 @@ export default function App() {
                   onZoomIn={graphViewport.zoomIn}
                   onZoomOut={graphViewport.zoomOut}
                   onFit={graphViewport.fit}
+                  onResetPositions={graphLayout.reset}
+                  hasMovedNodes={graphLayout.hasChanges}
                   onToggleLabels={() => setShowAllNodeNames(current => !current)}
                 />
               )}
@@ -381,7 +392,7 @@ export default function App() {
                   ref={graphViewport.svgRef}
                   viewBox={`0 0 ${SVG_W} ${SVG_H}`}
                   tabIndex={0}
-                  aria-label="Netzwerkgraph. Mausrad zum Zoomen, freie Fläche zum Verschieben."
+                  aria-label="Netzwerkgraph. Knoten ziehen, um ihre Position zu ändern. Mausrad zum Zoomen, freie Fläche zum Verschieben."
                   {...graphViewport.svgHandlers}
                   style={{
                     width: "100%",
@@ -389,6 +400,7 @@ export default function App() {
                     display: "block",
                     cursor: graphViewport.isPanning ? "grabbing" : "grab",
                     touchAction: "none",
+                    userSelect: "none",
                   }}
                 >
                   <defs>
@@ -503,10 +515,11 @@ export default function App() {
                     return (
                       <g
                         key={node.id}
+                        data-graph-node-id={node.id}
                         aria-label={`Knoten ${nodeName}`}
                         onPointerEnter={() => setHoveredNodeId(node.id)}
                         onPointerLeave={() => setHoveredNodeId("")}
-                        style={{ cursor: showNodeLabel ? "default" : "help" }}
+                        style={{ cursor: graphViewport.draggedNodeId === node.id ? "grabbing" : "grab" }}
                       >
                         {node.target && <circle cx={node.position.x} cy={node.position.y} r={26} fill="none" stroke={GOLD} opacity=".22" strokeWidth="4" />}
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />

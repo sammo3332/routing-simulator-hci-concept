@@ -5,88 +5,114 @@ import {
   panViewport,
   zoomViewportAtPoint,
 } from "../utils/graphViewport";
+import { eventPointInSvg, moveNodePosition } from "../utils/graphLayout";
 
 const BUTTON_ZOOM_FACTOR = 1.25;
 
-function eventPointInViewBox(svg, clientX, clientY, width, height) {
-  const bounds = svg.getBoundingClientRect();
-  return {
-    x: (clientX - bounds.left) * (width / bounds.width),
-    y: (clientY - bounds.top) * (height / bounds.height),
-  };
-}
-
-export function useGraphViewport({ width, height, nodes, resetKey }) {
+export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode }) {
   const svgRef = useRef(null);
   const drag = useRef(null);
   const nodesRef = useRef(nodes);
   nodesRef.current = nodes;
   const [viewport, setViewport] = useState(initialGraphViewport);
   const [isPanning, setIsPanning] = useState(false);
+  const [draggedNodeId, setDraggedNodeId] = useState(null);
+  const suppressClick = useRef(false);
 
   useEffect(() => {
     setViewport(fitViewportToNodes(nodesRef.current, width, height));
     setIsPanning(false);
+    setDraggedNodeId(null);
+    const active = drag.current;
     drag.current = null;
+    if (active && svgRef.current?.hasPointerCapture(active.pointerId)) {
+      svgRef.current.releasePointerCapture(active.pointerId);
+    }
   }, [height, resetKey, width]);
 
   const zoomBy = useCallback((factor, point = { x: width / 2, y: height / 2 }) => {
+    if (drag.current) return;
     setViewport(current => zoomViewportAtPoint(current, point, factor));
   }, [height, width]);
 
   const zoomIn = useCallback(() => zoomBy(BUTTON_ZOOM_FACTOR), [zoomBy]);
   const zoomOut = useCallback(() => zoomBy(1 / BUTTON_ZOOM_FACTOR), [zoomBy]);
   const fit = useCallback(() => {
+    if (drag.current) return;
     setViewport(fitViewportToNodes(nodes, width, height));
   }, [height, nodes, width]);
 
   const onWheel = useCallback(event => {
     event.preventDefault();
-    if (!svgRef.current) return;
-    const point = eventPointInViewBox(
+    if (!svgRef.current || drag.current) return;
+    const point = eventPointInSvg(
       svgRef.current,
       event.clientX,
       event.clientY,
-      width,
-      height,
     );
+    if (!point) return;
     const limitedDelta = Math.max(-100, Math.min(100, event.deltaY));
     zoomBy(Math.exp(-limitedDelta * 0.002), point);
-  }, [height, width, zoomBy]);
+  }, [zoomBy]);
 
   const onPointerDown = useCallback(event => {
-    if (event.button !== 0 || event.target.dataset.panSurface !== "true") return;
+    if (event.button !== 0 || drag.current) return;
+    suppressClick.current = false;
     const svg = event.currentTarget;
-    const bounds = svg.getBoundingClientRect();
+    const nodeId = event.target.closest?.("[data-graph-node-id]")?.dataset.graphNodeId;
+    const node = nodesRef.current.find(item => item.id === nodeId);
+    if (!node && event.target.dataset.panSurface !== "true") return;
+    const point = eventPointInSvg(svg, event.clientX, event.clientY);
+    if (!point) return;
+    event.preventDefault();
     drag.current = {
+      kind: node ? "node" : "pan",
+      nodeId,
+      position: node?.position,
+      point,
       pointerId: event.pointerId,
       clientX: event.clientX,
       clientY: event.clientY,
       viewport,
-      unitsPerPixelX: width / bounds.width,
-      unitsPerPixelY: height / bounds.height,
+      moved: false,
     };
     svg.setPointerCapture(event.pointerId);
-    setIsPanning(true);
-  }, [height, viewport, width]);
+    if (node) setDraggedNodeId(nodeId);
+    else setIsPanning(true);
+  }, [viewport]);
 
   const onPointerMove = useCallback(event => {
     const active = drag.current;
     if (!active || active.pointerId !== event.pointerId) return;
+    const point = eventPointInSvg(event.currentTarget, event.clientX, event.clientY);
+    if (!point) return;
+    if (!active.moved && Math.hypot(
+      event.clientX - active.clientX, event.clientY - active.clientY,
+    ) < 3) return;
+    active.moved = true;
+    if (active.kind === "node") {
+      onMoveNode?.(active.nodeId, moveNodePosition(
+        active.position, active.point, point, active.viewport.scale,
+      ));
+      return;
+    }
     setViewport(panViewport(
       active.viewport,
-      (event.clientX - active.clientX) * active.unitsPerPixelX,
-      (event.clientY - active.clientY) * active.unitsPerPixelY,
+      point.x - active.point.x,
+      point.y - active.point.y,
     ));
-  }, []);
+  }, [onMoveNode]);
 
   const finishPan = useCallback(event => {
-    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    const active = drag.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    suppressClick.current = active.moved;
+    drag.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    drag.current = null;
     setIsPanning(false);
+    setDraggedNodeId(null);
   }, []);
 
   const onKeyDown = useCallback(event => {
@@ -107,6 +133,7 @@ export function useGraphViewport({ width, height, nodes, resetKey }) {
     svgRef,
     viewport,
     isPanning,
+    draggedNodeId,
     zoomIn,
     zoomOut,
     fit,
@@ -116,6 +143,14 @@ export function useGraphViewport({ width, height, nodes, resetKey }) {
       onPointerMove,
       onPointerUp: finishPan,
       onPointerCancel: finishPan,
+      onLostPointerCapture: finishPan,
+      onClickCapture: event => {
+        if (suppressClick.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          suppressClick.current = false;
+        }
+      },
       onKeyDown,
     },
   };
