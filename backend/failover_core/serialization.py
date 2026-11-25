@@ -137,6 +137,13 @@ def scenario_to_dict(
             "show_current_routes": scenario.visualization.show_current_routes,
             "show_labels": scenario.visualization.show_labels,
         }
+        if scenario.visualization.node_display_positions:
+            data["visualization"]["node_display_positions"] = {
+                node_id: {"x": position.x, "y": position.y}
+                for node_id, position in sorted(
+                    scenario.visualization.node_display_positions.items()
+                )
+            }
     if scenario.metadata:
         data["metadata"] = dict(scenario.metadata)
     if routing_result is not None:
@@ -235,6 +242,14 @@ def scenario_from_dict(data: Mapping[str, Any]) -> Scenario:
                         "show_current_routes", True
                     ),
                     show_labels=visualization_data.get("show_labels", True),
+                    node_display_positions={
+                        node_id: Position(
+                            x=float(position["x"]), y=float(position["y"])
+                        )
+                        for node_id, position in visualization_data.get(
+                            "node_display_positions", {}
+                        ).items()
+                    },
                 )
                 if visualization_data is not None
                 else None

@@ -142,7 +142,9 @@ export function useRoutingSimulator() {
 
   // Stellt einen gespeicherten fachlichen Zustand wieder her. Schlägt das
   // Laden fehl, bleibt der bisherige Zustand vollständig erhalten.
-  const loadScenarioFile = async file => {
+  // `onLoaded` erhält die Antwort unmittelbar vor der Übernahme, damit die
+  // Ansicht (z. B. Knotenpositionen) im selben Schritt gesetzt werden kann.
+  const loadScenarioFile = async (file, onLoaded) => {
     const importTime = timestamp();
     const requestId = ++latestRequest.current;
     setLoading(true);
@@ -152,6 +154,7 @@ export function useRoutingSimulator() {
     try {
       const next = await importScenario(file);
       if (requestId !== latestRequest.current) return null;
+      onLoaded?.(next);
       setSimulation(next);
       setSelectedLinkId(next.topology.edges[0]?.id ?? "");
       setSelectedTreeId("T1");
@@ -188,12 +191,12 @@ export function useRoutingSimulator() {
     }
   };
 
-  const saveScenario = async () => {
+  const saveScenario = async (visualization = null) => {
     if (!simulation) return;
     setLoading(true);
     setScenarioError("");
     try {
-      const scenario = await exportScenario(simulation.session_id);
+      const scenario = await exportScenario(simulation.session_id, visualization);
       const fileName = scenarioFileName(simulation.topology.name || simulation.topology.topology_id);
       downloadJson(fileName, scenario);
       addLog("success", `Szenario gespeichert: ${fileName} (${describeScenario(simulation)}).`);

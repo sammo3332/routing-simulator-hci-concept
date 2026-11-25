@@ -39,9 +39,16 @@ export async function searchCriticalFailures(sessionId, maxK) {
   return parseResponse(response);
 }
 
-export async function exportScenario(sessionId) {
+// `visualization` ist reiner Ansichtszustand (Namensanzeige, manuelle
+// Knotenpositionen) und wird getrennt von der Topologie gespeichert.
+export async function exportScenario(sessionId, visualization = null) {
   const response = await fetch(
     `/api/sessions/${encodeURIComponent(sessionId)}/scenario`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visualization }),
+    },
   );
   return parseResponse(response);
 }

@@ -24,7 +24,8 @@ export default function ScenarioControls({
     <>
       <div style={{ color: "#7a8499", fontSize: 9.5, lineHeight: 1.45, marginBottom: 9 }}>
         Ein Szenario enthält Topologie, Zielknoten, Routingverfahren, Routingmetrik und ausgefallene Kanten.
-        Die Ergebnisse werden beim Laden neu berechnet.
+        Die Ergebnisse werden beim Laden neu berechnet. Namensanzeige und verschobene Knoten werden als
+        Ansicht mitgespeichert.
       </div>
       <input
         ref={inputRef}

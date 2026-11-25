@@ -177,6 +177,48 @@ auf eine zweite Anfrage in 0,07 Sekunden.
 
 `tests/frontend/scenarioFile.test.js` (3 Tests): Dateiname und Beschreibung.
 
+## Optional: Ansichtszustand mitspeichern (eigener Commit)
+
+Der Commit „store view state with a scenario“ ist vom übrigen Paket getrennt
+und kann weggelassen werden. Ohne ihn speichert ein Szenario nur den
+fachlichen Zustand.
+
+**Problem.** Eine von Hand aufgeräumte Anordnung und die Namensanzeige gehen
+beim Weitergeben verloren, obwohl sie für das Erklären eines Zustands nützlich
+sein können.
+
+**Umsetzung.**
+
+- Gespeichert werden die Option „Namen“ (`visualization.show_labels`) und die
+  Positionen der von Hand verschobenen Knoten
+  (`visualization.node_display_positions`, Knoten-ID → `x`/`y`).
+- Die Positionen sind Anzeigekoordinaten der Zeichenfläche 800 × 410. Sie
+  stehen getrennt von `topology.nodes[].position`. Die importierten
+  geografischen Koordinaten werden nie überschrieben.
+- Das Schema erhält dafür das optionale Feld `node_display_positions`. Die
+  Formatversion bleibt „1.0“. Dateien ohne verschobene Knoten enthalten das
+  Feld nicht.
+- `POST /api/sessions/{session_id}/scenario` nimmt den Ansichtszustand
+  entgegen; `GET` bleibt ohne Ansichtszustand nutzbar. Positionen für
+  unbekannte Knoten werden beim Speichern und beim Laden abgewiesen.
+- Nach dem Laden ist „Knotenpositionen zurücksetzen“ aktiv und stellt die
+  berechnete Anordnung wieder her.
+
+| Vor dem Speichern | Nach Neuladen der Seite und „Szenario laden“ |
+|---|---|
+| ![Vorher](screenshots/paket-3/ansicht_vor_dem_speichern.png) | ![Nachher](screenshots/paket-3/ansicht_nach_dem_laden.png) |
+
+**Prüfung.** `tests/browser/checks/45-szenario-ansicht.cjs`: 9 von 9
+bestanden (Position und Namensanzeige wiederhergestellt, Koordinaten der
+Topologie unverändert, fachlicher Zustand identisch, Zurücksetzen, Datei ohne
+Ansichtszustand). `tests/test_scenario_view_state.py`: 6 Tests.
+
+**Grenzen.** Eine Anwendung auf dem Stand vor diesem Commit weist Dateien mit
+`node_display_positions` als ungültig ab, weil ihr Schema das Feld nicht
+kennt. Zoomstufe, Ausschnitt, „Route hervorheben“ und die gewählte Aboreszenz
+werden nicht gespeichert. Beim Laden wird „Route hervorheben“ auf „Alle
+Routen“ gesetzt.
+
 ## Grenzen
 
 - Geprüft wurde auf einem Rechner mit neu gestartetem Backend, nicht auf zwei

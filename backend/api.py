@@ -23,9 +23,11 @@ from .failover_core.models import (
     FailureState,
     RoutingConfig,
     RoutingResult,
+    Position,
     Scenario,
     SearchResult,
     Topology,
+    VisualizationState,
 )
 from .failover_core.routing import compute_routing_result
 from .failover_core.search import find_first_minimal_failure
@@ -158,6 +160,30 @@ class SessionUpdate(BaseModel):
     failed_edge_ids: list[str] | None = None
 
 
+class DisplayPosition(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    x: float
+    y: float
+
+
+class ScenarioViewState(BaseModel):
+    """Display state of the user interface; not part of the topology."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    show_labels: bool = False
+    node_display_positions: dict[str, DisplayPosition] = Field(
+        default_factory=dict
+    )
+
+
+class ScenarioExportRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    visualization: ScenarioViewState | None = None
+
+
 class CriticalFailureSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -262,10 +288,42 @@ def _load_scenario(payload: bytes):
         ) from error
 
 
+def _visualization_to_dict(state: VisualizationState | None) -> dict | None:
+    if state is None:
+        return None
+    return {
+        "show_labels": state.show_labels,
+        "node_display_positions": {
+            node_id: {"x": position.x, "y": position.y}
+            for node_id, position in sorted(
+                state.node_display_positions.items()
+            )
+        },
+    }
+
+
 def _scenario_from_session(
-    session: SimulationSession, result: RoutingResult
+    session: SimulationSession,
+    result: RoutingResult,
+    view_state: ScenarioViewState | None = None,
 ) -> dict:
     topology = session.topology
+    visualization = None
+    if view_state is not None:
+        node_ids = {node.id for node in topology.nodes}
+        unknown = sorted(set(view_state.node_display_positions) - node_ids)
+        if unknown:
+            raise HTTPException(
+                status_code=422,
+                detail=f"unknown node IDs in display positions: {', '.join(unknown)}",
+            )
+        visualization = VisualizationState(
+            show_labels=view_state.show_labels,
+            node_display_positions={
+                node_id: Position(x=position.x, y=position.y)
+                for node_id, position in view_state.node_display_positions.items()
+            },
+        )
     scenario = Scenario(
         format_version="1.0",
         scenario_id=str(uuid4()),
@@ -274,6 +332,7 @@ def _scenario_from_session(
         topology=topology,
         routing=session.routing,
         failures=session.failures,
+        visualization=visualization,
         metadata={"exported_by": "Failover Routing Visualizer"},
     )
     return scenario_to_dict(scenario, result)
@@ -550,6 +609,7 @@ def create_app(
             "name": scenario.name,
             "created_at": scenario.created_at,
             "format_version": scenario.format_version,
+            "visualization": _visualization_to_dict(scenario.visualization),
             "snapshot": (
                 "absent"
                 if imported.snapshot_matches is None
@@ -577,6 +637,18 @@ def create_app(
         except KeyError as error:
             raise HTTPException(status_code=404, detail="session not found") from error
         return _scenario_from_session(session, _evaluate(session))
+
+    @app.post("/api/sessions/{session_id}/scenario")
+    def export_scenario_with_view_state(
+        session_id: str, request: ScenarioExportRequest
+    ) -> dict:
+        try:
+            session = sessions.get(session_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="session not found") from error
+        return _scenario_from_session(
+            session, _evaluate(session), request.visualization
+        )
 
     @app.patch("/api/sessions/{session_id}")
     def update_session(session_id: str, update: SessionUpdate) -> dict:

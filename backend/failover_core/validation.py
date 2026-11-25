@@ -111,6 +111,16 @@ def validate_scenario(scenario: Scenario) -> None:
             "failed_edge_ids contain unknown IDs: " + ", ".join(unknown_failures)
         )
 
+    if scenario.visualization is not None:
+        unknown_positions = sorted(
+            set(scenario.visualization.node_display_positions) - node_id_set
+        )
+        if unknown_positions:
+            errors.append(
+                "visualization.node_display_positions contain unknown node IDs: "
+                + ", ".join(unknown_positions)
+            )
+
     if scenario.search_configuration is not None:
         max_k = scenario.search_configuration.max_k
         if max_k < 1:

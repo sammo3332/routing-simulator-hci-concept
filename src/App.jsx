@@ -246,8 +246,16 @@ export default function App() {
               disabled={loading}
               loadedScenario={loadedScenario}
               error={scenarioError}
-              onSave={saveScenario}
-              onLoad={loadScenarioFile}
+              onSave={() => saveScenario({
+                show_labels: showAllNodeNames,
+                node_display_positions: graphLayout.positions,
+              })}
+              onLoad={file => loadScenarioFile(file, next => {
+                const view = next.scenario?.visualization;
+                setShowAllNodeNames(Boolean(view?.show_labels));
+                setHighlightedSourceNodeId("");
+                graphLayout.restore(next.session_id, view?.node_display_positions);
+              })}
             />
           </SidebarSection>
 
