@@ -144,8 +144,23 @@ module.exports = {
     await upload(bonsaiFile.target);
     const topologyAlert = (await page.locator("aside").getByText("Topologie laden", { exact: true }).locator("..").locator('[role="alert"]').innerText().catch(() => "")).replace(/\s+/g, " ");
     const afterWrongUpload = await visibleState();
-    check("S-19", "Szenariodatei über „Topologie laden“: Fehlermeldung dort, Zustand unverändert",
-      topologyAlert.length > 0 && JSON.stringify(afterWrongUpload) === JSON.stringify(valid), topologyAlert);
+    check("S-19", "Szenariodatei über „Topologie laden“: Hinweis auf „Szenario laden“, Zustand unverändert",
+      /Szenario laden/.test(topologyAlert) && JSON.stringify(afterWrongUpload) === JSON.stringify(valid), topologyAlert);
+
+    // Während ein Szenario lädt, lassen sich Ziel und Metrik nicht ändern;
+    // eine verspätete Antwort kann das geladene Szenario so nicht ersetzen.
+    await page.route("**/api/sessions/import-scenario", async route => {
+      await new Promise(resolve => setTimeout(resolve, 900));
+      await route.continue();
+    });
+    await scenarioInput.setInputFiles(shortestFile.target);
+    await page.waitForTimeout(250);
+    const lockedWhileLoading = await page.locator("aside select").nth(0).isDisabled()
+      && await page.locator("aside select").nth(1).isDisabled()
+      && await saveButton.isDisabled();
+    await settle();
+    await page.unroute("**/api/sessions/import-scenario");
+    check("S-19b", "Während des Ladens sind Zielknoten, Routingmetrik und „Szenario speichern“ gesperrt", lockedWhileLoading);
 
     // Manipulierte gespeicherte Ergebnisse werden nicht übernommen.
     const tampered = JSON.parse(JSON.stringify(bonsaiData));

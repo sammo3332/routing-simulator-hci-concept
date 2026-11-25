@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,6 +11,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from .failover_core.bonsai import (
@@ -70,19 +73,8 @@ class SessionStore:
             self._sessions[session.session_id] = session
         return session
 
-    def add(
-        self,
-        topology: Topology,
-        routing: RoutingConfig,
-        failures: FailureState,
-    ) -> SimulationSession:
+    def add(self, session: SimulationSession) -> SimulationSession:
         """Store an already validated state, for example a loaded scenario."""
-        session = SimulationSession(
-            session_id=str(uuid4()),
-            topology=topology,
-            routing=routing,
-            failures=failures,
-        )
         with self._lock:
             self._sessions[session.session_id] = session
         return session
@@ -190,9 +182,19 @@ class ScenarioImportError(Exception):
         self.status_code = status_code
 
 
-_TOPOLOGY_HINT = (
-    " Eine Topologiedatei laden Sie über „Topologie laden“."
+_TOPOLOGY_HINT = " Topologiedateien werden über „Topologie laden“ geöffnet."
+_SCENARIO_HINT = (
+    "Diese Datei ist ein Szenario. Szenarien werden über „Szenario laden“ "
+    "geöffnet."
 )
+
+
+def _looks_like_scenario(payload: bytes) -> bool:
+    try:
+        data = json.loads(payload.decode("utf-8-sig"))
+    except (ValueError, RecursionError):
+        return False
+    return isinstance(data, dict) and "format_version" in data and "topology" in data
 
 
 def _load_scenario(payload: bytes):
@@ -221,11 +223,19 @@ def _load_scenario(payload: bytes):
                 + _TOPOLOGY_HINT,
                 errors=error.errors,
             ) from error
+        if not isinstance(error.found, str):
+            raise ScenarioImportError(
+                "unsupported_format_version",
+                "Die Formatversion muss als Text angegeben sein, zum "
+                f"Beispiel \"{error.supported[0]}\".",
+                errors=error.errors,
+            ) from error
+        shown = error.found if len(error.found) <= 40 else error.found[:40] + "…"
         raise ScenarioImportError(
             "unsupported_format_version",
-            f"Die Formatversion „{error.found}“ wird nicht unterstützt. "
+            f"Die Formatversion „{shown}“ wird nicht unterstützt. "
             f"Unterstützt wird: {', '.join(error.supported)}.",
-            errors=error.errors,
+            errors=(f"unsupported format_version {shown!r}",),
         ) from error
     except ScenarioValidationError as error:
         if any(item.startswith("invalid JSON") for item in error.errors):
@@ -235,14 +245,20 @@ def _load_scenario(payload: bytes):
                 "Szenario gelesen werden." + _TOPOLOGY_HINT,
                 errors=error.errors,
             ) from error
-        shown = "; ".join(error.errors[:3])
+        shown = "; ".join(item[:200] for item in error.errors[:3])
         more = len(error.errors) - 3
         raise ScenarioImportError(
             "invalid_scenario",
             "Das Szenario ist ungültig und wurde nicht geladen: "
             + shown
             + (f" (und {more} weitere)" if more > 0 else ""),
-            errors=error.errors,
+            errors=tuple(item[:500] for item in error.errors[:20]),
+        ) from error
+    except (OverflowError, RecursionError) as error:
+        raise ScenarioImportError(
+            "invalid_scenario",
+            "Das Szenario ist ungültig und wurde nicht geladen: Zahlenwerte "
+            "oder Verschachtelung liegen außerhalb des verarbeitbaren Bereichs.",
         ) from error
 
 
@@ -485,7 +501,12 @@ def create_app(
             raise HTTPException(status_code=413, detail="topology file is too large")
         suffix = Path(filename).suffix.lower()
         if suffix == ".json":
-            topology = import_topohub_json_bytes(payload, source_name=filename)
+            try:
+                topology = import_topohub_json_bytes(payload, source_name=filename)
+            except TopologyImportError:
+                if _looks_like_scenario(payload):
+                    raise HTTPException(status_code=422, detail=_SCENARIO_HINT) from None
+                raise
         elif suffix == ".xml":
             topology = import_sndlib_xml_bytes(payload, source_name=filename)
         elif suffix == ".graphml":
@@ -505,10 +526,23 @@ def create_app(
     async def import_scenario(request: Request) -> dict:
         # Nothing is stored unless the whole file is valid and the routing
         # result has been recomputed by the domain core.
-        imported = _load_scenario(await request.body())
+        declared = request.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > DEFAULT_MAX_FILE_SIZE_BYTES:
+            raise ScenarioImportError(
+                "file_too_large",
+                "Die Szenariodatei ist größer als 10 MiB.",
+                status_code=413,
+            )
+        payload = await request.body()
+        # Validation and recomputation can take long for large topologies;
+        # they must not block other requests such as the health check.
+        imported = await run_in_threadpool(_load_scenario, payload)
         scenario = imported.scenario
-        session = sessions.add(
-            scenario.topology, scenario.routing, scenario.failures
+        session = SimulationSession(
+            session_id=str(uuid4()),
+            topology=scenario.topology,
+            routing=scenario.routing,
+            failures=scenario.failures,
         )
         response = _session_response(session, imported.routing_result)
         response["scenario"] = {
@@ -524,6 +558,16 @@ def create_app(
                 else "differs"
             ),
         }
+        # Store the session only if the answer can actually be delivered.
+        try:
+            json.dumps(response, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        except ValueError as error:
+            raise ScenarioImportError(
+                "invalid_scenario",
+                "Das Szenario ist ungültig und wurde nicht geladen: Es enthält "
+                "nicht darstellbare Zeichen oder Zahlenwerte.",
+            ) from error
+        sessions.add(session)
         return response
 
     @app.get("/api/sessions/{session_id}/scenario")

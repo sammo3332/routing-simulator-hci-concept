@@ -193,7 +193,9 @@ def test_scenario_without_snapshot_is_accepted_and_computed() -> None:
     [
         (lambda s: s.pop("format_version"), "missing_format_version", "keine Formatversion"),
         (lambda s: s.update(format_version="2.0"), "unsupported_format_version", "„2.0“"),
-        (lambda s: s.update(format_version=1), "unsupported_format_version", "nicht unterstützt"),
+        (lambda s: s.update(format_version=1), "unsupported_format_version", "als Text"),
+        (lambda s: s.update(format_version=1.0), "unsupported_format_version", "als Text"),
+        (lambda s: s.update(format_version="9" * 5000), "unsupported_format_version", "…"),
         (lambda s: s["failures"].update(failed_edge_ids=["gibt-es-nicht"]), "invalid_scenario", "ungültig"),
         (lambda s: s["routing"].update(target_node_id="gibt-es-nicht"), "invalid_scenario", "ungültig"),
         (lambda s: s["routing"].update(strategy="round_robin"), "invalid_scenario", "ungültig"),
@@ -312,3 +314,79 @@ def test_roundtrip_keeps_node_and_edge_order_of_the_topology() -> None:
     assert [n["id"] for n in original["topology"]["nodes"]] == ["T", "A", "B", "X"]
     assert restored["topology"]["nodes"] == original["topology"]["nodes"]
     assert restored["topology"]["edges"] == original["topology"]["edges"]
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        '"weight": 1e400',
+        '"weight": ' + "9" * 400,
+        '"weight": -1e400',
+    ],
+)
+def test_numbers_outside_the_finite_range_are_rejected(replacement: str) -> None:
+    first = new_client()
+    scenario = export(first, shortest_path_session(first)["session_id"])
+    text = json.dumps(scenario).replace('"weight": 421.5', replacement, 1)
+    assert replacement in text
+
+    response = load(new_client(), text)
+
+    assert response.status_code == 422
+    assert response.json()["code"] in {"invalid_json", "invalid_scenario"}
+
+
+def test_deeply_nested_json_is_rejected_without_server_error() -> None:
+    response = load(new_client(), b"[" * 100_000)
+
+    assert response.status_code == 422
+
+
+def test_undeliverable_characters_are_rejected_and_nothing_is_stored() -> None:
+    store = SessionStore()
+    client = TestClient(create_app(store))
+    scenario = export(client, shortest_path_session(client)["session_id"])
+    text = json.dumps(scenario).replace('"label": "Berlin"', '"label": "\\ud800"', 1)
+    assert "\\ud800" in text
+    before = len(store._sessions)
+
+    response = load(client, text)
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "invalid_scenario"
+    assert len(store._sessions) == before
+
+
+def test_long_error_details_are_shortened() -> None:
+    first = new_client()
+    scenario = export(first, shortest_path_session(first)["session_id"])
+    scenario["format_version"] = "x" * 40_000
+
+    body = load(new_client(), scenario).json()
+
+    assert len(body["detail"]) < 200
+    assert len(json.dumps(body)) < 2_000
+
+
+def test_scenario_file_sent_as_topology_gets_a_pointer_to_scenario_loading() -> None:
+    client = new_client()
+    scenario = export(client, shortest_path_session(client)["session_id"])
+
+    response = client.post(
+        "/api/sessions/import?filename=szenario.json",
+        content=json.dumps(scenario).encode("utf-8"),
+        headers={"Content-Type": "application/octet-stream"},
+    )
+
+    assert response.status_code == 422
+    assert "Szenario laden" in response.json()["detail"]
+
+
+def test_declared_oversize_is_rejected_before_reading() -> None:
+    response = new_client().post(
+        "/api/sessions/import-scenario",
+        content=b"{}",
+        headers={"Content-Length": str(11 * 1024 * 1024)},
+    )
+
+    assert response.status_code in {400, 413}

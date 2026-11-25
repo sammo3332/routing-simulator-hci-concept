@@ -252,7 +252,7 @@ export default function App() {
           </SidebarSection>
 
           <SidebarSection title="Routing-Einstellungen" accent="#a78bfa">
-            <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} />
+            <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} disabled={loading} />
             <AlgorithmSelector
               value={routingStrategy}
               onChange={setRoutingStrategy}
@@ -262,7 +262,7 @@ export default function App() {
               label="Routingmetrik"
               value={weightMode}
               onChange={setWeightMode}
-              disabled={routingStrategy === "bonsai_greedy"}
+              disabled={loading || routingStrategy === "bonsai_greedy"}
               options={[
                 { value: "hop_count", label: "Hop-Anzahl" },
                 { value: "edge_weight", label: "Kantengewicht" },

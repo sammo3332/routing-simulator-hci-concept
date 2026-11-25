@@ -81,13 +81,19 @@ export function useRoutingSimulator() {
     ]);
   };
 
+  // Nur die zuletzt gestartete Anfrage darf den Zustand setzen. Eine verspätete
+  // Antwort darf zum Beispiel ein inzwischen geladenes Szenario nicht ersetzen.
+  const latestRequest = useRef(0);
+
   const run = async (description, operation) => {
+    const requestId = ++latestRequest.current;
     setLoading(true);
     setError("");
     setScenarioError("");
     addLog("info", description);
     try {
       const next = await operation();
+      if (requestId !== latestRequest.current) return null;
       setSimulation(next);
       if (!selectedLinkId || !next.topology.edges.some(edge => edge.id === selectedLinkId)) {
         setSelectedLinkId(next.topology.edges[0]?.id ?? "");
@@ -95,11 +101,12 @@ export function useRoutingSimulator() {
       return next;
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      if (requestId !== latestRequest.current) return null;
       setError(message);
       addLog("alert", `FEHLER: ${message}`);
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   };
 
@@ -137,12 +144,14 @@ export function useRoutingSimulator() {
   // Laden fehl, bleibt der bisherige Zustand vollständig erhalten.
   const loadScenarioFile = async file => {
     const importTime = timestamp();
+    const requestId = ++latestRequest.current;
     setLoading(true);
     setError("");
     setScenarioError("");
     addLog("info", `Lade Szenario „${file.name}“…`);
     try {
       const next = await importScenario(file);
+      if (requestId !== latestRequest.current) return null;
       setSimulation(next);
       setSelectedLinkId(next.topology.edges[0]?.id ?? "");
       setSelectedTreeId("T1");
@@ -170,11 +179,12 @@ export function useRoutingSimulator() {
       return next;
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      if (requestId !== latestRequest.current) return null;
       setScenarioError(message);
       addLog("alert", `FEHLER: Szenario nicht geladen. ${message}`);
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   };
 

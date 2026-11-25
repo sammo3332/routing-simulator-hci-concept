@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -240,7 +241,7 @@ def scenario_from_dict(data: Mapping[str, Any]) -> Scenario:
             ),
             metadata=data.get("metadata", {}),
         )
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
         raise ScenarioValidationError((f"cannot construct scenario: {error}",)) from error
 
     validate_scenario(scenario)
@@ -273,15 +274,31 @@ def _reject_constant(name: str) -> float:
     raise ValueError(f"non-finite number {name} is not allowed")
 
 
+def _reject_non_finite(data: Any) -> None:
+    # A literal such as 1e400 is valid JSON but parses to infinity.
+    stack = [data]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, float) and not math.isfinite(item):
+            raise ScenarioValidationError(("numbers must be finite",))
+        if isinstance(item, dict):
+            stack.extend(item.values())
+        elif isinstance(item, list):
+            stack.extend(item)
+
+
 def import_scenario_json(payload: str) -> ScenarioImport:
     try:
         data = json.loads(payload, parse_constant=_reject_constant)
     except json.JSONDecodeError as error:
         raise ScenarioValidationError((f"invalid JSON: {error.msg}",)) from error
+    except RecursionError as error:
+        raise ScenarioValidationError(("invalid JSON: nesting is too deep",)) from error
     except ValueError as error:
         raise ScenarioValidationError((f"invalid JSON: {error}",)) from error
     if not isinstance(data, dict):
         raise ScenarioValidationError(("scenario root must be an object",))
+    _reject_non_finite(data)
 
     # Report a missing or unsupported version before the schema check, whose
     # messages do not tell the two cases apart.

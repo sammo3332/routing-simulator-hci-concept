@@ -33,7 +33,7 @@ def check_format_version(data: object) -> None:
         raise ScenarioFormatVersionError(
             ("format_version is missing",), found=None
         )
-    if found not in SUPPORTED_FORMAT_VERSIONS:
+    if not isinstance(found, str) or found not in SUPPORTED_FORMAT_VERSIONS:
         raise ScenarioFormatVersionError(
             (
                 f"unsupported format_version {found!r}; supported: "
