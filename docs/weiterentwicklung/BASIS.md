@@ -1,6 +1,6 @@
 # Ausgangsstand und gemeinsame Basis der Weiterentwicklung
 
-Stand: 26. November 2026 · Zweig `claude/basis-fehlerbehebungen`
+Stand: 25. November 2026 · Zweig `claude/basis-fehlerbehebungen`
 
 Dieses Dokument beschreibt, worauf alle Änderungspakete aufbauen. Es gehört
 nicht zum Stand der Bachelorarbeit. Die Evaluationsergebnisse der Arbeit
