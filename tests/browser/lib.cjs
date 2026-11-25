@@ -76,11 +76,15 @@ function createContext({ page, baseUrl, shotDir, results }) {
       marker: marker ? { x: Number(marker.getAttribute("cx")), y: Number(marker.getAttribute("cy")) } : null,
     };
   });
-  // Farbe und Deckkraft der sichtbaren Grundlinie einer Kante.
+  // Farbe und Deckkraft der Grundlinie einer Kante. Die Gruppe enthält der
+  // Reihe nach: Klickfläche, ggf. violette Unterlage der früheren Route,
+  // Grundlinie, ggf. Aboreszenzpfeil und Auswahlmarkierung.
   const edgeStroke = (source, target) => edge(source, target).evaluate(group => {
-    const line = [...group.querySelectorAll("line")].find(item => getComputedStyle(item).stroke !== "rgba(0, 0, 0, 0)"
-      && item.getAttribute("stroke") !== "transparent" && !item.getAttribute("marker-end"));
-    const style = getComputedStyle(line);
+    const lines = [...group.querySelectorAll("line")]
+      .filter(item => item.getAttribute("stroke") !== "transparent" && !item.getAttribute("marker-end"))
+      .filter(item => getComputedStyle(item).stroke !== "rgb(56, 189, 248)");
+    const underlay = lines.length > 1 && getComputedStyle(lines[0]).stroke === "rgb(192, 132, 252)";
+    const style = getComputedStyle(underlay ? lines[1] : lines[0]);
     return { stroke: style.stroke, opacity: Number(style.opacity), dash: style.strokeDasharray };
   });
   const clickEdge = async (source, target) => {
