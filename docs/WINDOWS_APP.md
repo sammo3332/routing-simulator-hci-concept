@@ -62,8 +62,12 @@ Andere Programme auf demselben Rechner und Webseiten im Browser desselben
 Rechners können die lokale Adresse aufrufen, solange das Programm läuft. Eine
 Anmeldung gibt es nicht.
 
-„Szenario speichern“ (Paket 3) öffnet im Programmfenster einen
-Speichern-Dialog.
+„Szenario speichern“ (Paket 3) öffnet im Programmfenster den Windows-Dialog
+„Speichern unter“. Vorgeschlagen werden der Ordner „Downloads“ und der
+Dateiname des Szenarios. Das Öffnen des Dialogs wurde auf dem Windows-Runner
+beobachtet. Dass die Datei nach dem Bestätigen mit der Endung `.json` am
+gewählten Ort liegt, wurde nicht automatisiert geprüft; bitte beim ersten
+Einsatz einmal von Hand prüfen.
 
 ## Aufrufoptionen
 
