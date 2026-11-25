@@ -662,6 +662,7 @@ def drive_window_test(
     native_save_file: Path | None = None,
     sleep: Callable[[float], None] = time.sleep,
     step_timeout: float = 45.0,
+    native_save_timeout: float = 75.0,
 ) -> tuple[dict[str, bool], dict[str, Any]]:
     """Bedient die Oberfläche über ``evaluate`` und prüft ihren Zustand.
 
@@ -754,10 +755,10 @@ def drive_window_test(
             # Der Speichern-Dialog des Fensters wird von außen bedient.
             details["click_save"] = click("Szenario speichern")
             text = None
-            deadline = time.monotonic() + 150
+            deadline = time.monotonic() + native_save_timeout
             while time.monotonic() < deadline:
                 try:
-                    candidate = native_save_file.read_text(encoding="utf-8")
+                    candidate = native_save_file.read_text(encoding="utf-8-sig")
                     json.loads(candidate)
                     text = candidate
                     break
@@ -765,6 +766,12 @@ def drive_window_test(
                     sleep(0.5)
             details["scenario_file_name"] = str(native_save_file)
             details["scenario_saved_via"] = "Speichern-Dialog"
+            if text is None:
+                # Der Dialog ist dann vermutlich noch offen. Weitere Skripte
+                # in der Seite würden so lange blockieren; hier endet der Test.
+                checks["scenario_saved_through_ui"] = False
+                details["native_save"] = "Datei über den Speichern-Dialog nicht entstanden"
+                return checks, details
         checks["scenario_saved_through_ui"] = scenario_text_is_expected(text)
 
         details["click_repair"] = click("Alle Kanten wiederherstellen")

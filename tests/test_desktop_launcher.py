@@ -442,6 +442,20 @@ def test_window_test_reads_the_file_written_through_the_save_dialog(tmp_path: Pa
     assert launcher.WINDOW_CAPTURE_SCRIPT not in page.scripts
 
 
+def test_window_test_stops_when_the_save_dialog_produced_no_file(tmp_path: Path) -> None:
+    page = FakePage(scenario_controls=True)
+
+    checks, details = drive(
+        page, native_save_file=tmp_path / "fehlt.json", native_save_timeout=0.05
+    )
+
+    assert checks["scenario_saved_through_ui"] is False
+    assert "scenario_loaded_through_ui" not in checks
+    assert "nicht entstanden" in details["native_save"]
+    # Nothing further is executed in the page while the dialog may be open.
+    assert page.scripts[-1] == launcher.window_click_script("Szenario speichern")
+
+
 def test_window_test_probes_the_internet_only_on_request() -> None:
     page = FakePage(scenario_controls=False)
 
