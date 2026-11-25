@@ -1,4 +1,4 @@
-# Baut FailoverRoutingVisualizer.exe. Aufruf im Repository-Ordner:
+﻿# Baut FailoverRoutingVisualizer.exe. Aufruf im Repository-Ordner:
 #   powershell -ExecutionPolicy Bypass -File desktop\build_windows.ps1
 # Voraussetzungen: Python 3.12 und Node.js 22 im PATH.
 $ErrorActionPreference = "Stop"
@@ -20,6 +20,10 @@ Invoke-Step "Pakete installieren" {
         & $Python -m pip install -r requirements-desktop.txt -c build\constraints-desktop.txt
     }
 }
+Invoke-Step "Installierte Paketversionen festhalten" {
+    New-Item -ItemType Directory -Force -Path build\desktop | Out-Null
+    & $Python -m pip freeze | Set-Content -Path build\desktop\paketversionen.txt -Encoding UTF8
+}
 Invoke-Step "Programm packen" {
     & $Python -m PyInstaller --noconfirm --clean `
         --distpath build\desktop --workpath build\pyinstaller `
@@ -28,8 +32,16 @@ Invoke-Step "Programm packen" {
 $Exe = Join-Path (Get-Location) "build\desktop\FailoverRoutingVisualizer.exe"
 Invoke-Step "Selbsttest des gepackten Programms" {
     $Result = Join-Path (Get-Location) "build\desktop\selbsttest.json"
+    Remove-Item $Result -ErrorAction SilentlyContinue
     $Process = Start-Process -FilePath $Exe -ArgumentList "--smoke-test", "--result-file", "`"$Result`"" -Wait -PassThru
-    Get-Content $Result
+    if (Test-Path $Result) {
+        Get-Content $Result -Encoding UTF8
+    } else {
+        Write-Host "Der Selbsttest hat kein Ergebnis geschrieben."
+    }
     $global:LASTEXITCODE = $Process.ExitCode
 }
+$Hash = (Get-FileHash -Algorithm SHA256 $Exe).Hash
+"$Hash  FailoverRoutingVisualizer.exe" | Set-Content -Path build\desktop\FailoverRoutingVisualizer.exe.sha256 -Encoding ASCII
 Write-Host "Fertig: $Exe"
+Write-Host "SHA-256: $Hash"
