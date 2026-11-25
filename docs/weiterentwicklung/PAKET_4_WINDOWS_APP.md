@@ -58,18 +58,18 @@ Eingebaute Prüfungen (laufen nur mit der jeweiligen Option):
 
 | Angabe | Wert |
 |---|---|
-| Lauf | [Windows-App Nr. 3](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45721380087), 25. November 2026, Ergebnis: erfolgreich |
-| Geprüfter Commit | `4377d5bd3319f521288515e30a1c532759678687` (dieser Zweig ohne die nachfolgenden reinen Dokumentations-Commits) |
+| Lauf | [Windows-App Nr. 5](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45723755291), 25. November 2026, Ergebnis: erfolgreich |
+| Geprüfter Commit | `095a2426c9efbe586b64684239d8d815e2789c65` (dieser Zweig ohne die nachfolgenden reinen Dokumentations-Commits) |
 | Betriebssystem | Microsoft Windows Server 2025 Datacenter, Version 10.0.26100 |
-| WebView2 | 157.0.4341.60 |
-| SHA-256 der Programmdatei | `DC2FA239E3CE0E4202EE2FDE148D30FD7AF32A4623B8CA72652AFA670C89C661` |
+| WebView2 | 157.0.4341.46 |
+| SHA-256 der Programmdatei | `45C5A7241B83DA06C6AD5B4F57A34579B46120813E8D619AABB7464B3E471E26` |
 | Skripte | `desktop/build_windows.ps1`, `desktop/test_windows_window.ps1`, `desktop/test_windows_offline.ps1`, `tests/test_desktop_launcher.py` |
 
 | Prüfung | Ergebnis |
 |---|---|
 | Build mit PyInstaller | erfolgreich |
 | Selbsttest der gepackten Datei (`--smoke-test`): 9 Einzelprüfungen | bestanden |
-| `tests/test_desktop_launcher.py` unter Windows | 23 bestanden |
+| `tests/test_desktop_launcher.py` unter Windows | 24 bestanden |
 | Fenstertest Teil 1, im WebView2-Fenster: Oberfläche gezeichnet, Dateiimport (4 Knoten dargestellt), Routing (Bonsai, 1 Ausfall, „Failover aktiv“, Erreichbarkeit 4/4) | bestanden |
 | Fenstertest Teil 2: Start per Programmdatei, Fenster mit Titel „Failover Routing Visualizer“, API antwortet, lauscht nur auf `127.0.0.1`, nach Schließen des Fensters kein Prozess, Port frei, API aus | bestanden |
 | Fenstertest Teil 3: Ausweichweg `--browser` mit Fenster zum Beenden; nach dessen Schließen kein Prozess, Port frei | bestanden |
@@ -97,16 +97,18 @@ Artefakt `windows-pruefnachweise`. Aus der Entwicklungsumgebung ließen sich
 die Artefakte nicht herunterladen; die Angaben oben stammen aus dem Protokoll
 des Laufs. Das Bildschirmfoto wurde deshalb nicht gesichtet.
 
-Zwei frühere Läufe gehören zur Entstehung: Lauf Nr. 1 scheiterte an einem
-ungeeigneten Nachweis (Diagnoseschnittstelle von WebView2 nicht erreichbar),
-Lauf Nr. 2 bestand mit dem ersten eingebauten Fenstertest.
+Frühere Läufe dieses Zweigs gehören zur Entstehung: Lauf Nr. 1 scheiterte an
+einem ungeeigneten Nachweis (Diagnoseschnittstelle von WebView2 nicht
+erreichbar), Lauf Nr. 2 bestand mit dem ersten eingebauten Fenstertest,
+Lauf Nr. 3 bestand mit denselben Prüfungen wie Lauf Nr. 5 am Stand `4377d5b`.
+Die Läufe Nr. 4 und Nr. 6 gehören zum Integrationszweig.
 
 ### Auf Linux (kein Windows-Nachweis)
 
 Diese Prüfungen belegen die Logik des Launchers und der Paketbeschreibung,
 **nicht** das Verhalten unter Windows:
 
-- `tests/test_desktop_launcher.py` (23 Tests): Server startet auf
+- `tests/test_desktop_launcher.py` (24 Tests): Server startet auf
   `127.0.0.1`, liefert Oberfläche und API, endet vollständig und gibt den Port
   frei; zwei Instanzen erhalten verschiedene Ports; Selbsttest; Start trotz
   eingestelltem, nicht antwortendem Proxy; Protokoll wird angehängt;
