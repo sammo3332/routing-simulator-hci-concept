@@ -10,6 +10,7 @@ import { useGraphLayout } from "./hooks/useGraphLayout";
 import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
+import { buildInterpretation } from "./utils/interpretation";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
@@ -158,23 +159,18 @@ export default function App() {
       : failedEdges.map(edge => edge.id).join(", ")
     : "keine";
   const interpretation = simulation
-    ? `${routingStrategy === "bonsai_greedy" ? `Bonsai mit ${bonsai?.edge_connectivity ?? 0} Aboreszenzen; ` : ""}`
-      + `${failedEdges.length} aktive${failedEdges.length === 1 ? "r" : ""} Kantenausfall${failedEdges.length === 1 ? "" : "e"} (${failedEdgeSummary}); `
-      + `${reroutedNodeIds.length} umgeleitete Route${reroutedNodeIds.length === 1 ? "" : "n"}`
-      + `${reroutedNodeIds.length
-        ? reroutedNodeIds.length <= 5
-          ? ` (${reroutedNodeIds.join(", ")})`
-          : " (siehe Routingzusammenfassung)"
-        : ""}; `
-      + `${unreachableNodeIds.length} physisch unerreichbare Knoten`
-      + `${unreachableNodeIds.length
-        ? unreachableNodeIds.length <= 5
-          ? ` (${unreachableNodeIds.join(", ")})`
-          : " (siehe Routingzusammenfassung)"
-        : ""}. `
-      + `; ${routingFailureNodeIds.length} Routingfehler trotz physischer Verbindung`
-      + `${routingFailureNodeIds.length ? ` (${routingFailureNodeIds.join(", ")})` : ""}. `
-      + `Zielknoten: ${targetNodeId}. Erfolgreich zugestellt: ${reachableCount}/${nodeCount}.`
+    ? buildInterpretation({
+      strategy: routingStrategy,
+      edgeConnectivity: bonsai?.edge_connectivity ?? 0,
+      failedEdgeCount: failedEdges.length,
+      failedEdgeSummary,
+      reroutedNodeIds,
+      unreachableNodeIds,
+      routingFailureNodeIds,
+      targetNodeId,
+      reachableCount,
+      nodeCount,
+    })
     : "";
   const latestStatusText = latestEvent
     ? latestEvent.msg.startsWith("Routing neu berechnet:")
