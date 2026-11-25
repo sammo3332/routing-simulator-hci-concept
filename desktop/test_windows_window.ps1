@@ -23,10 +23,22 @@ function Wait-Until([scriptblock]$Condition, [int]$Seconds) {
     return $false
 }
 
-# Erlaubt, die geladene Seite über die Diagnoseschnittstelle von WebView2 abzufragen.
-$DebugPort = 9333
-$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$DebugPort"
+# Teil 1: Das Programm prüft seine Oberfläche im eigenen Fenster selbst
+# (Seite geladen, Oberfläche gezeichnet, Topologie importiert und dargestellt)
+# und schließt sich danach.
+$UiResultFile = Join-Path $OutputDirectory "fenstertest-oberflaeche.json"
+Remove-Item $UiResultFile -ErrorAction SilentlyContinue
+$UiProcess = Start-Process -FilePath $Exe -ArgumentList "--window-test", "--result-file", "`"$UiResultFile`"" -PassThru
+$UiExited = $UiProcess.WaitForExit(240000)
+if (-not $UiExited) { Get-Process -Name $Name -ErrorAction SilentlyContinue | Stop-Process -Force }
+$UiResult = if (Test-Path $UiResultFile) { Get-Content $UiResultFile -Raw | ConvertFrom-Json } else { $null }
+$Checks["oberflaeche_im_fenster_geprueft"] = $UiExited -and ($null -ne $UiResult) -and [bool]$UiResult.passed
+$Details["oberflaeche"] = $UiResult
+$Checks["nach_fenstertest_kein_prozess"] = Wait-Until {
+    @(Get-Process -Name $Name -ErrorAction SilentlyContinue).Count -eq 0
+} 30
 
+# Teil 2: normaler Start, Beenden über das Fenster.
 $Started = Start-Process -FilePath $Exe -ArgumentList "--url-file", "`"$UrlFile`"" -PassThru
 try {
     $Checks["startet_und_meldet_adresse"] = Wait-Until { Test-Path $UrlFile } 90
@@ -54,15 +66,6 @@ try {
 
     $Details["webview2_prozesse"] = @(Get-Process -Name "msedgewebview2" -ErrorAction SilentlyContinue).Count
     $Checks["webview2_laeuft"] = ($Details["webview2_prozesse"] -gt 0)
-
-    $Pages = $null
-    $Checks["oberflaeche_im_fenster_geladen"] = Wait-Until {
-        try {
-            $script:Pages = Invoke-RestMethod -Uri "http://127.0.0.1:$DebugPort/json" -TimeoutSec 5
-            @($script:Pages | Where-Object { $_.url -eq $Url -and $_.title -eq "Failover Routing Visualizer" }).Count -gt 0
-        } catch { $false }
-    } 60
-    $Details["geladene_seiten"] = @($Pages | ForEach-Object { "$($_.title) | $($_.url)" })
 
     Start-Sleep -Seconds 3
     try {
@@ -98,6 +101,6 @@ $Result = [ordered]@{
     checks = $Checks
     details = $Details
 }
-$Result | ConvertTo-Json -Depth 5 | Set-Content -Path $ResultFile -Encoding UTF8
+$Result | ConvertTo-Json -Depth 8 | Set-Content -Path $ResultFile -Encoding UTF8
 Get-Content $ResultFile
 if (-not $Passed) { exit 1 }

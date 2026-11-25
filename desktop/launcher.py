@@ -221,6 +221,109 @@ def run_window(url: str) -> bool:
     return True
 
 
+# Liest den sichtbaren Zustand der Oberfläche im Anwendungsfenster aus.
+WINDOW_STATE_SCRIPT = """
+(function () {
+  return JSON.stringify({
+    title: document.title,
+    sidebar: Boolean(document.querySelector("aside")),
+    header: (document.querySelector("header") || {}).innerText || "",
+    nodes: document.querySelectorAll("[data-graph-node-id]").length,
+    normal: document.body.innerText.indexOf("Normalbetrieb") !== -1,
+    userAgent: navigator.userAgent
+  });
+})()
+"""
+
+# Wählt eine Topologiedatei so aus, wie es der Dateidialog der Oberfläche tut.
+WINDOW_IMPORT_SCRIPT = """
+(function () {
+  var input = document.querySelector('input[type="file"][accept*=".graphml"]');
+  if (!input) { return "kein Dateifeld"; }
+  var data = new DataTransfer();
+  data.items.add(new File([%s], "fenstertest.json", { type: "application/json" }));
+  input.files = data.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  return "ok";
+})()
+"""
+
+
+def window_import_script() -> str:
+    return WINDOW_IMPORT_SCRIPT % json.dumps(json.dumps(SMOKE_TOPOLOGY))
+
+
+def run_window_test(url: str, timeout: float = 90.0) -> dict:
+    """Öffnet das echte Anwendungsfenster und prüft die Oberfläche darin.
+
+    Geprüft wird im Fenster selbst: Seite geladen, Oberfläche gezeichnet,
+    Topologie über das Dateifeld importiert und als Graph dargestellt. Danach
+    schließt sich das Fenster.
+    """
+    checks: dict[str, bool] = {}
+    details: dict[str, object] = {}
+    if sys.platform == "win32" and not webview2_runtime_available():
+        details["error"] = "WebView2-Laufzeit nicht gefunden"
+        return {"passed": False, "checks": checks, "details": details}
+    import webview
+
+    def read_state(window) -> dict:
+        return json.loads(window.evaluate_js(WINDOW_STATE_SCRIPT))
+
+    def wait_for(window, condition, seconds: float) -> dict:
+        deadline = time.monotonic() + seconds
+        state: dict = {}
+        while time.monotonic() < deadline:
+            try:
+                state = read_state(window)
+            except Exception as error:  # noqa: BLE001 - Seite lädt noch
+                details["last_script_error"] = repr(error)
+            else:
+                if condition(state):
+                    break
+            time.sleep(0.5)
+        return state
+
+    def drive(window) -> None:
+        try:
+            checks["window_loaded"] = bool(window.events.loaded.wait(timeout))
+            state = wait_for(window, lambda item: item.get("sidebar"), 45)
+            details["user_agent"] = state.get("userAgent", "")
+            checks["ui_rendered"] = (
+                state.get("title") == APP_NAME
+                and bool(state.get("sidebar"))
+                and APP_NAME in state.get("header", "")
+            )
+            if sys.platform == "win32":
+                checks["webview2_engine"] = "Edg/" in str(details["user_agent"])
+            details["import_script"] = window.evaluate_js(window_import_script())
+            state = wait_for(window, lambda item: item.get("nodes") == 4, 45)
+            details["nodes_drawn"] = state.get("nodes")
+            checks["topology_imported_and_drawn"] = (
+                state.get("nodes") == 4 and bool(state.get("normal"))
+            )
+        except Exception as error:  # noqa: BLE001
+            logger.exception("Fenstertest abgebrochen.")
+            details["error"] = repr(error)
+        finally:
+            window.destroy()
+
+    try:
+        webview.settings["ALLOW_DOWNLOADS"] = True
+        window = webview.create_window(
+            APP_NAME, url, width=1440, height=900, min_size=(1024, 700)
+        )
+        webview.start(
+            drive, (window,), gui="edgechromium" if sys.platform == "win32" else None
+        )
+    except Exception as error:  # noqa: BLE001
+        logger.exception("Das Anwendungsfenster konnte nicht geöffnet werden.")
+        details["error"] = repr(error)
+    expected = {"window_loaded", "ui_rendered", "topology_imported_and_drawn"}
+    passed = expected <= set(checks) and all(checks.values())
+    return {"passed": passed, "checks": checks, "details": details}
+
+
 def run_in_browser(url: str) -> None:
     """Ersatzweg: Standardbrowser plus kleines Fenster zum Beenden."""
     import webbrowser
@@ -395,6 +498,8 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Standardbrowser statt eines eigenen Fensters verwenden")
     parser.add_argument("--smoke-test", action="store_true",
                         help="ohne Fenster starten, Kernfunktionen prüfen und beenden")
+    parser.add_argument("--window-test", action="store_true",
+                        help="Fenster öffnen, Oberfläche darin prüfen und beenden")
     parser.add_argument("--result-file", type=Path,
                         help="Ergebnis des Selbsttests als JSON in diese Datei schreiben")
     parser.add_argument("--url-file", type=Path,
@@ -420,9 +525,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if arguments.url_file:
             arguments.url_file.write_text(server.url, encoding="utf-8")
-        if arguments.smoke_test:
+        if arguments.smoke_test or arguments.window_test:
             try:
-                result = smoke_test(server)
+                result = (
+                    run_window_test(server.url)
+                    if arguments.window_test
+                    else smoke_test(server)
+                )
             except Exception as error:  # noqa: BLE001
                 logger.exception("Selbsttest abgebrochen.")
                 result = {"passed": False, "error": repr(error)}

@@ -62,5 +62,6 @@ jobs:
           path: |
             build/desktop/selbsttest.json
             build/desktop/fenstertest.json
+            build/desktop/fenstertest-oberflaeche.json
             build/desktop/fenstertest.png
           if-no-files-found: warn
