@@ -7,6 +7,9 @@
 # Teil 3: Ausweichweg über den Browser mit kleinem Fenster zum Beenden.
 # Teil 4: „Szenario speichern“ über den echten Speichern-Dialog
 #         (nur wenn die Oberfläche Szenarien anbietet; nicht blockierend).
+#
+# Achtung: Das Skript beendet laufende Instanzen des Programms und öffnet in
+# Teil 3 eine Seite im Standardbrowser.
 param(
     [string]$Exe = (Join-Path (Split-Path -Parent $PSScriptRoot) "build\desktop\FailoverRoutingVisualizer.exe"),
     [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) "build\desktop")
@@ -143,9 +146,14 @@ try {
         @(Get-NetTCPConnection -State Listen -LocalPort $BrowserPort -ErrorAction SilentlyContinue).Count -eq 0
     } 20
     Stop-App
-    Get-Process -Name $BrowserNames -ErrorAction SilentlyContinue |
-        Where-Object { $BrowsersBefore -notcontains $_.Id } |
-        Stop-Process -Force -ErrorAction SilentlyContinue
+    # Den dabei geöffneten Browser nur auf dem Build-Rechner der CI schließen.
+    # Auf einem Arbeitsplatzrechner könnten sonst Fenster der eigenen
+    # Browsersitzung beendet werden; dort bleibt die Seite einfach offen.
+    if ($env:GITHUB_ACTIONS -eq "true") {
+        Get-Process -Name $BrowserNames -ErrorAction SilentlyContinue |
+            Where-Object { $BrowsersBefore -notcontains $_.Id } |
+            Stop-Process -Force -ErrorAction SilentlyContinue
+    }
 
     # ---------------------------------------------------------------- Teil 4
     if ($HasScenario) {
@@ -155,11 +163,13 @@ try {
         $HelperScript = Join-Path $PSScriptRoot "windows_save_dialog_helper.ps1"
         $Helper = Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -PassThru -ArgumentList @(
             "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$HelperScript`"",
-            "-ProcessName", $Name, "-TargetPath", "`"$SavePath`"", "-LogFile", "`"$HelperLog`"")
+            "-ProcessName", $Name, "-TargetPath", "`"$SavePath`"", "-LogFile", "`"$HelperLog`"",
+            "-TimeoutSeconds", "100")
         $Native = Invoke-SelfTest @("--window-test", "--native-save-file", "`"$SavePath`"") `
-            (Join-Path $OutputDirectory "fenstertest-speichern-dialog.json") 330000
+            (Join-Path $OutputDirectory "fenstertest-speichern-dialog.json") 150000
         if (-not $Helper.HasExited) { $Helper | Stop-Process -Force -ErrorAction SilentlyContinue }
         $Additional["szenario_ueber_speichern_dialog"] = (Test-Passed $Native) -and (Test-Path $SavePath)
+        $Details["speichern_dialog_datei_vorhanden"] = (Test-Path $SavePath)
         $Details["speichern_dialog"] = $Native.Result
         $Details["speichern_dialog_protokoll"] = if (Test-Path $HelperLog) { @(Get-Content $HelperLog -Encoding UTF8) } else { @() }
         Stop-App
