@@ -1,6 +1,6 @@
 # Paket 3: Szenarien über die Oberfläche speichern und laden
 
-Stand: 26. November 2026 · Zweig `claude/paket-3-szenarien`
+Stand: 25. November 2026 · Zweig `claude/paket-3-szenarien`
 Baut auf: `claude/basis-fehlerbehebungen` · Abhängigkeit von anderen Paketen: keine
 
 ## Problem
@@ -18,7 +18,7 @@ Arbeitsspeicher des Backends und gehen bei jedem Neustart verloren.
 
 ### Dateiformat
 
-Verwendet wird unverändert das vorhandene Schema
+Verwendet wird das vorhandene Schema
 `backend/schemas/failover-scenario.schema.json` mit `format_version` „1.0“.
 Eine gespeicherte Datei enthält:
 
@@ -51,21 +51,30 @@ Fehlermeldungen für die Oberfläche:
 
 | Fall | Code | Meldung |
 |---|---|---|
-| keine Formatversion (z. B. Topologiedatei) | `missing_format_version` | „Die Datei enthält keine Formatversion („format_version“) und ist daher kein Szenario dieser Anwendung. Eine Topologiedatei laden Sie über „Topologie laden“.“ |
+| keine Formatversion (z. B. Topologiedatei) | `missing_format_version` | „Die Datei enthält keine Formatversion („format_version“) und ist daher kein Szenario dieser Anwendung. Topologiedateien werden über „Topologie laden“ geöffnet.“ |
 | andere Formatversion | `unsupported_format_version` | „Die Formatversion „2.0“ wird nicht unterstützt. Unterstützt wird: 1.0.“ |
+| Formatversion ist kein Text (z. B. die Zahl 1.0) | `unsupported_format_version` | „Die Formatversion muss als Text angegeben sein, zum Beispiel "1.0".“ |
 | kein JSON | `invalid_json` | „Die Datei ist kein gültiges JSON und kann nicht als Szenario gelesen werden. …“ |
 | inhaltlich ungültig | `invalid_scenario` | „Das Szenario ist ungültig und wurde nicht geladen: …“ mit bis zu drei Einzelgründen |
 | größer als 10 MiB | `file_too_large` | „Die Szenariodatei ist größer als 10 MiB.“ |
 
 Die Einzelgründe bei `invalid_scenario` stammen aus der vorhandenen Validierung
-und sind englisch.
+und sind englisch. Lange Angaben werden gekürzt.
+
+Wird umgekehrt eine Szenariodatei unter „Topologie laden“ gewählt, lautet die
+Meldung: „Diese Datei ist ein Szenario. Szenarien werden über „Szenario laden“
+geöffnet.“
+
+Prüfung und Neuberechnung laufen außerhalb der Ereignisschleife des Servers.
+Andere Anfragen werden während eines längeren Ladevorgangs weiter beantwortet.
 
 ### Änderungen am Domänenkern
 
 - `check_format_version` und `ScenarioFormatVersionError` unterscheiden
   fehlende und nicht unterstützte Versionen.
-- `import_scenario_json` weist `NaN` und `Infinity` ab und meldet einen nicht
-  berechenbaren Zustand (z. B. Bonsai auf einer nicht zusammenhängenden
+- `import_scenario_json` weist nicht endliche Zahlen ab (`NaN`, `Infinity`
+  und Werte wie `1e400`), ebenso übertief verschachtelte Dateien, und meldet
+  einen nicht berechenbaren Zustand (z. B. Bonsai auf einer nicht zusammenhängenden
   Topologie) als ungültiges Szenario.
 - `scenario_to_dict` behält die Reihenfolge der Knoten und Kanten bei, statt
   nach ID zu sortieren. Grund: Die Oberfläche listet Knoten und Kanten in
@@ -94,6 +103,10 @@ Unterscheidung zum Laden einer Topologie:
 - Fehlermeldungen erscheinen in dem Bereich, in dem die Datei gewählt wurde.
 - Das Ereignisprotokoll nennt Datei, Ziel, Verfahren, Metrik und Zahl der
   Ausfälle.
+- Während eine Anfrage läuft, sind „Zielknoten“ und „Routingmetrik“ gesperrt,
+  wie zuvor schon die Schaltflächen. Zusätzlich darf nur die zuletzt
+  gestartete Anfrage den Zustand setzen. Eine verspätete Antwort kann ein
+  inzwischen geladenes Szenario dadurch nicht ersetzen.
 
 ![Seitenleiste ohne geladenen Zustand](screenshots/paket-3/seitenleiste_leer.png)
 
@@ -114,7 +127,7 @@ Datei mit manipulierten gespeicherten Ergebnissen:
 
 ### Vollständiger Ablauf mit Neustart
 
-Am 26. November 2026 im Browser (Chromium 158, headless) durchgeführt:
+Am 25. November 2026 im Browser (Chromium 158, headless) durchgeführt:
 konfigurieren, Ausfälle setzen, „Szenario speichern“, **Backend-Prozess
 beenden und neu starten**, neue Browsersitzung, „Szenario laden“, sichtbaren
 fachlichen Zustand vergleichen (Ziel, Metrik, Verfahren, aktive Ausfälle,
@@ -127,16 +140,17 @@ Kennzahlen im Kopfbereich, vollständige Routingzusammenfassung).
 
 ### Browserprüfung
 
-`tests/browser/checks/40-szenario.cjs`: 22 von 22 bestanden. Geprüft werden
+`tests/browser/checks/40-szenario.cjs`: 23 von 23 bestanden. Geprüft werden
 unter anderem Speichern und Laden für beide Verfahren nach einem Neuladen der
 Seite (S-6 bis S-11), Weiterbearbeiten (S-12), erneutes Laden derselben Datei
 (S-13), fünf Fehlerfälle mit unverändertem Zustand (S-14 bis S-18), eine
-Szenariodatei über „Topologie laden“ (S-19), manipulierte Ergebnisse (S-20)
+Szenariodatei über „Topologie laden“ (S-19), die Sperre während des Ladens
+(S-19b), manipulierte Ergebnisse (S-20)
 und die getrennte Anzeige beider Ladewege (S-9, S-10, S-21).
 
 ### Automatische Tests
 
-`tests/test_scenario_api.py` (27 Tests) arbeitet mit jeweils frischen
+`tests/test_scenario_api.py` (37 Tests) arbeitet mit jeweils frischen
 Anwendungsinstanzen, also wie nach einem Neustart:
 
 - Export ist schemagültig und vollständig; Koordinaten bleiben unverändert.
@@ -147,6 +161,19 @@ Anwendungsinstanzen, also wie nach einem Neustart:
 - Fehlende und nicht unterstützte Version, ungültige Inhalte, Nicht-JSON,
   Topologiedatei, zu große Datei.
 - Ein fehlgeschlagener Import lässt den Sitzungsspeicher unverändert.
+- Zahlen außerhalb des endlichen Bereichs, übertiefe Verschachtelung und nicht
+  darstellbare Zeichen führen zu einer Ablehnung statt zu einem Serverfehler.
+
+### Unabhängige Prüfung
+
+Ein getrennter Prüflauf hat den integrierten Stand mit 105 absichtlich
+fehlerhaften oder ungewöhnlichen Dateien und Anfragen untersucht. Gefunden und
+behoben wurden: Serverfehler bei drei Eingabearten, eine als gültig
+angenommene unendliche Zahl, das Blockieren des Servers während eines langen
+Ladevorgangs und eine verspätete Antwort, die ein geladenes Szenario ersetzen
+konnte. Nach den Korrekturen meldet dasselbe Prüfskript keinen Serverfehler
+mehr; während eines 3,4 Sekunden dauernden Ladevorgangs antwortete der Server
+auf eine zweite Anfrage in 0,07 Sekunden.
 
 `tests/frontend/scenarioFile.test.js` (3 Tests): Dateiname und Beschreibung.
 
@@ -164,5 +191,19 @@ Anwendungsinstanzen, also wie nach einem Neustart:
   geänderte Knoten, nicht die Bonsai-Einzelschritte.
 - Das Speichern nutzt den Download des Browsers. Wohin die Datei gelegt wird,
   bestimmt der Browser.
+- Beim Laden und erneuten Speichern werden `scenario_id`, `name`,
+  `created_at` und `metadata` neu vergeben; `search_configuration` und die
+  Felder `show_baseline_routes`/`show_current_routes` einer fremden Datei
+  gehen verloren.
+- Die Rechenzeit wächst mit der Größe der Topologie deutlich. Eine gültige
+  Datei mit 2500 Knoten brauchte im Prüflauf rund 40 Sekunden. Die Grenze von
+  10 MiB begrenzt die Dateigröße, nicht die Rechenzeit. Das gilt ebenso für
+  den bestehenden Topologieimport.
+- Sehr große Kantengewichte (um 1e308) können beim Summieren überlaufen. Ein
+  solches Szenario wird abgewiesen.
+- Sitzungen werden wie bisher nie aus dem Arbeitsspeicher entfernt; jedes
+  Laden legt eine weitere an.
+- `ARCHITECTURE.md` und `REQUIREMENTS.md` beschreiben den Stand der
+  Bachelorarbeit und wurden nicht um die neuen Schnittstellen ergänzt.
 - Die Datei ist nicht signiert. Sie kann von Hand verändert werden; geprüft
   wird ihre Gültigkeit, nicht ihre Herkunft.
