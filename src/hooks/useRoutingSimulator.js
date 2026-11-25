@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { describeScenario, downloadJson, scenarioFileName } from "../utils/scenarioFile";
 import {
+  exportScenario,
+  importScenario,
   importTopology,
   searchCriticalFailures,
   updateSimulationSession,
@@ -56,6 +59,11 @@ export function useRoutingSimulator() {
   const [criticalSearchResult, setCriticalSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Name der zuletzt erfolgreich geladenen Topologiedatei; leer, wenn der
+  // Zustand aus einem Szenario stammt.
+  const [topologyFileName, setTopologyFileName] = useState(null);
+  const [loadedScenario, setLoadedScenario] = useState(null);
+  const [scenarioError, setScenarioError] = useState("");
   const [eventLog, setEventLog] = useState([
     { id: 1, time: timestamp(), type: "info", msg: "Bereit. Bitte TopoHub-JSON, SNDlib-XML oder GraphML laden." },
   ]);
@@ -76,6 +84,7 @@ export function useRoutingSimulator() {
   const run = async (description, operation) => {
     setLoading(true);
     setError("");
+    setScenarioError("");
     addLog("info", description);
     try {
       const next = await operation();
@@ -96,12 +105,16 @@ export function useRoutingSimulator() {
 
   const handleTopologyFile = async file => {
     const importTime = timestamp();
-    setCriticalSearchResult(null);
     const next = await run(
       `Importiere „${file.name}“…`,
       () => importTopology(file),
     );
     if (next) {
+      // Erst nach erfolgreichem Import: ein fehlgeschlagener Import lässt den
+      // bisherigen Zustand samt Suchergebnis unverändert.
+      setCriticalSearchResult(null);
+      setTopologyFileName(file.name);
+      setLoadedScenario(null);
       setCriticalSearchMaxK(String(Math.min(2, next.topology.edges.length)));
       setEventLog([
         {
@@ -117,6 +130,69 @@ export function useRoutingSimulator() {
           msg: `Topologie geladen: ${next.topology.nodes.length} Knoten, ${next.topology.edges.length} Kanten.`,
         },
       ]);
+    }
+  };
+
+  // Stellt einen gespeicherten fachlichen Zustand wieder her. Schlägt das
+  // Laden fehl, bleibt der bisherige Zustand vollständig erhalten.
+  const loadScenarioFile = async file => {
+    const importTime = timestamp();
+    setLoading(true);
+    setError("");
+    setScenarioError("");
+    addLog("info", `Lade Szenario „${file.name}“…`);
+    try {
+      const next = await importScenario(file);
+      setSimulation(next);
+      setSelectedLinkId(next.topology.edges[0]?.id ?? "");
+      setSelectedTreeId("T1");
+      setCriticalSearchResult(null);
+      setCriticalSearchMaxK(String(Math.min(2, next.topology.edges.length)));
+      setTopologyFileName(null);
+      setLoadedScenario({ fileName: file.name, snapshot: next.scenario?.snapshot ?? "absent" });
+      const entries = [
+        { type: "info", time: importTime, msg: `Lade Szenario „${file.name}“…` },
+        { type: "success", time: timestamp(), msg: `Szenario geladen: ${describeScenario(next)}.` },
+        {
+          type: "success",
+          time: timestamp(),
+          msg: `Routing neu berechnet: ${next.result.reachable_node_count}/${next.result.node_count} Knoten erreichen das Ziel.`,
+        },
+      ];
+      if (next.scenario?.snapshot === "differs") {
+        entries.push({
+          type: "alert",
+          time: timestamp(),
+          msg: "Gespeicherte Ergebnisse weichen von der Neuberechnung ab; angezeigt wird die Neuberechnung.",
+        });
+      }
+      setEventLog(entries.map(entry => ({ ...entry, id: ++logId.current })));
+      return next;
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      setScenarioError(message);
+      addLog("alert", `FEHLER: Szenario nicht geladen. ${message}`);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveScenario = async () => {
+    if (!simulation) return;
+    setLoading(true);
+    setScenarioError("");
+    try {
+      const scenario = await exportScenario(simulation.session_id);
+      const fileName = scenarioFileName(simulation.topology.name || simulation.topology.topology_id);
+      downloadJson(fileName, scenario);
+      addLog("success", `Szenario gespeichert: ${fileName} (${describeScenario(simulation)}).`);
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      setScenarioError(message);
+      addLog("alert", `FEHLER: Szenario nicht gespeichert. ${message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -328,6 +404,11 @@ export function useRoutingSimulator() {
     eventLog,
     eventLogEndRef,
     handleTopologyFile,
+    topologyFileName,
+    loadedScenario,
+    scenarioError,
+    loadScenarioFile,
+    saveScenario,
     setTargetNode,
     setRoutingStrategy,
     setWeightMode,

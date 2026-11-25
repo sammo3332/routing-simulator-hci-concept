@@ -38,3 +38,19 @@ export async function searchCriticalFailures(sessionId, maxK) {
   );
   return parseResponse(response);
 }
+
+export async function exportScenario(sessionId) {
+  const response = await fetch(
+    `/api/sessions/${encodeURIComponent(sessionId)}/scenario`,
+  );
+  return parseResponse(response);
+}
+
+export async function importScenario(file) {
+  const response = await fetch("/api/sessions/import-scenario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: file,
+  });
+  return parseResponse(response);
+}

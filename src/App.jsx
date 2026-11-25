@@ -2,6 +2,7 @@ import { useState } from "react";
 import AlgorithmSelector from "./components/AlgorithmSelector";
 import DetailsPanelHandle from "./components/DetailsPanelHandle";
 import FileUploader from "./components/FileUploader";
+import ScenarioControls from "./components/ScenarioControls";
 import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
@@ -39,7 +40,8 @@ function EmptyState() {
         <div style={{ color: "#7a8499", maxWidth: 470, lineHeight: 1.6 }}>
           Lade links eine TopoHub-JSON-, SNDlib-XML- oder GraphML-Datei. Danach kannst du
           Zielknoten wählen, Kanten ausfallen lassen und die tatsächlich berechneten
-          Routingzustände vergleichen.
+          Routingzustände vergleichen. Ein gespeichertes Szenario öffnest du über
+          „Szenario laden“.
         </div>
       </div>
     </div>
@@ -67,7 +69,8 @@ export default function App() {
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
-    handleTopologyFile, setTargetNode, setRoutingStrategy, setWeightMode,
+    handleTopologyFile, topologyFileName, loadedScenario, scenarioError,
+    loadScenarioFile, saveScenario, setTargetNode, setRoutingStrategy, setWeightMode,
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
@@ -229,12 +232,23 @@ export default function App() {
           </div>
 
           <SidebarSection title="Topologie laden" accent="#3b82f6">
-            <FileUploader onFile={handleTopologyFile} disabled={loading} />
+            <FileUploader onFile={handleTopologyFile} fileName={topologyFileName} disabled={loading} />
             {error && (
               <div role="alert" style={{ padding: "8px 9px", border: "1px solid rgba(255,64,64,.35)", background: "rgba(255,64,64,.08)", borderRadius: 6, color: "#ff8080", fontSize: 10, lineHeight: 1.45 }}>
                 {error}
               </div>
             )}
+          </SidebarSection>
+
+          <SidebarSection title="Szenario" accent="#64708a">
+            <ScenarioControls
+              canSave={Boolean(simulation)}
+              disabled={loading}
+              loadedScenario={loadedScenario}
+              error={scenarioError}
+              onSave={saveScenario}
+              onLoad={loadScenarioFile}
+            />
           </SidebarSection>
 
           <SidebarSection title="Routing-Einstellungen" accent="#a78bfa">
