@@ -1,6 +1,6 @@
 # Paket 1: Kantenlesbarkeit
 
-Stand: 26. November 2026 · Zweig `claude/paket-1-kantenlesbarkeit`
+Stand: 25. November 2026 · Zweig `claude/paket-1-kantenlesbarkeit`
 Baut auf: `claude/basis-fehlerbehebungen` · Abhängigkeit von anderen Paketen: keine
 
 ## Problem
