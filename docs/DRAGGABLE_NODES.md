@@ -49,11 +49,24 @@ Manuell verschobene Positionen sind keine geografischen Ortsangaben.
 Die zusätzlichen Logiktests prüfen unter anderem ein- und ausgehende
 Kantenendpunkte, Ausfallmittelpunkte, unveränderte Topologiedaten und
 Routingmerkmale, Zurücksetzen sowie Bewegungen bei verschiedenen Zoomstufen.
-Ein Browserstart für die Mausprüfung wurde durch die Ausführungsumgebung
-blockiert. Die folgenden Interaktionsprüfungen sind daher noch offen und
-werden nicht als bestanden ausgewiesen.
+Ein Browserstart für die Mausprüfung wurde damals durch die
+Ausführungsumgebung blockiert.
 
-## Noch lokal im Browser prüfen
+## Nachgeholte Browserprüfung vom 25. November 2026
+
+Die Interaktionsprüfungen wurden mit `tests/browser/interaction-checks.cjs`
+in Chromium 158 (headless, 1440 × 900) nachgeholt. Die Punkte 1 bis 10 der
+folgenden Liste sind dort bestanden, mit zwei Einschränkungen:
+
+- Punkt 4: Der Wechsel der angezeigten Aboreszenz wurde nicht gesondert geprüft.
+- Punkt 8: Dieselbe Datei direkt erneut zu importieren, löste im Stand
+  `ba4c99a` keinen Import aus. Das ist behoben.
+
+Einzelergebnisse, Umgebung und Grenzen stehen im
+[Änderungsprotokoll](weiterentwicklung/AENDERUNGSPROTOKOLL.md). Geprüft wurde
+ein automatisierter Ablauf in einem Browser, keine Nutzung durch Personen.
+
+## Prüfschritte
 
 1. Eine Topologie importieren und einen Knoten ziehen. Nur dieser Knoten soll
    sich bewegen; alle verbundenen Linien und die Beschriftung sollen folgen.

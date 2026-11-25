@@ -115,6 +115,8 @@ Oberfläche sind im [Studienprotokoll](docs/hci/USER_STUDY_PROTOCOL.md) und in d
 | [docs/BONSAI.md](docs/BONSAI.md) | projektspezifische Bonsai-Semantik und Grenzen |
 | [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) | fachliche und automatisierte Validierung |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | gemeinsames Docker- und Render-Deployment |
+| [docs/DRAGGABLE_NODES.md](docs/DRAGGABLE_NODES.md) | Knoten manuell verschieben (nach der Bachelorarbeit) |
+| [docs/weiterentwicklung/AENDERUNGSPROTOKOLL.md](docs/weiterentwicklung/AENDERUNGSPROTOKOLL.md) | Änderungen nach der Bachelorarbeit mit Vorher-/Nachher-Vergleich |
 | [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Entwicklung und Evaluationsdesign |
 | [docs/hci/USER_STUDY_PROTOCOL.md](docs/hci/USER_STUDY_PROTOCOL.md) | Aufgaben, SUS und Auswertungsplan der Benutzerstudie |
 
