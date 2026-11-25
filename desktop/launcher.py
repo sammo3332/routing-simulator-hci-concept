@@ -1,9 +1,10 @@
 """Start des Failover Routing Visualizers als Desktop-Programm.
 
-Ein einzelner Prozess startet die vorhandene FastAPI-Anwendung samt gebauter
-Oberfläche auf ``127.0.0.1`` und zeigt sie in einem eigenen Fenster an. Wird
-das Fenster geschlossen, endet der Server und damit der Prozess. Es gibt keine
-zweite Routingimplementierung und keine zweite Oberfläche.
+Das Programm startet die vorhandene FastAPI-Anwendung samt gebauter Oberfläche
+auf ``127.0.0.1`` und zeigt sie in einem eigenen Fenster an. Der Server läuft
+als Thread im Programm selbst. Wird das Fenster geschlossen, endet der Server
+und damit das Programm. Es gibt keine zweite Routingimplementierung und keine
+zweite Oberfläche.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import logging.handlers
 import os
 import socket
 import sys
@@ -19,6 +21,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any, Callable
 
 import uvicorn
 
@@ -34,8 +37,15 @@ WEBVIEW2_CLIENT_KEYS = (
     "{0D50BFEC-CD6A-4F9A-964C-C7416E3ACB10}",  # Dev
     "{65C35B14-6C1D-4122-AC46-7148CC9D6497}",  # Canary
 )
+# Wird ausschließlich mit der Option --probe-internet angesprochen. Im
+# normalen Betrieb baut das Programm keine Verbindung nach außen auf.
+INTERNET_PROBE_HOST = "github.com"
 
 logger = logging.getLogger("desktop")
+
+# Anfragen an den eigenen Server dürfen nie über einen eingestellten Proxy
+# laufen; sonst scheitert der Start auf Rechnern mit Proxy-Konfiguration.
+_LOCAL_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def bundle_root() -> Path:
@@ -72,14 +82,20 @@ def configure_logging() -> Path | None:
         directory = log_directory()
         directory.mkdir(parents=True, exist_ok=True)
         log_file = directory / "app.log"
-        handlers.append(logging.FileHandler(log_file, mode="w", encoding="utf-8"))
+        # Anhängen statt überschreiben: eine zweite Instanz löscht das
+        # Protokoll der ersten nicht.
+        handlers.append(
+            logging.handlers.RotatingFileHandler(
+                log_file, maxBytes=1_000_000, backupCount=1, encoding="utf-8"
+            )
+        )
     except OSError:
         log_file = None
     if sys.stderr is not None:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        format="%(asctime)s %(levelname)s [%(process)d] %(name)s: %(message)s",
         handlers=handlers or [logging.NullHandler()],
         force=True,
     )
@@ -150,7 +166,7 @@ class LocalServer:
 
     def _healthy(self) -> bool:
         try:
-            with urllib.request.urlopen(f"{self.url}api/health", timeout=2) as response:
+            with _LOCAL_OPENER.open(f"{self.url}api/health", timeout=2) as response:
                 return response.status == 200
         except (OSError, urllib.error.URLError):
             return False
@@ -198,148 +214,51 @@ def webview2_runtime_available() -> bool:
     return False
 
 
+def _create_window(url: str):
+    import webview
+
+    # Für „Szenario speichern“: Downloads mit Speichern-Dialog zulassen.
+    webview.settings["ALLOW_DOWNLOADS"] = True
+    return webview.create_window(
+        APP_NAME, url, width=1440, height=900, min_size=(1024, 700)
+    )
+
+
+def _start_gui(function: Callable[..., None] | None = None, arguments: tuple = ()) -> None:
+    import webview
+
+    webview.start(
+        function, arguments, gui="edgechromium" if sys.platform == "win32" else None
+    )
+
+
 def run_window(url: str) -> bool:
     """Zeigt die Oberfläche in einem eigenen Fenster. ``False``: nicht möglich."""
     if sys.platform == "win32" and not webview2_runtime_available():
         logger.warning("WebView2-Laufzeit nicht gefunden; verwende den Browser.")
         return False
     try:
-        import webview
+        import webview  # noqa: F401
     except Exception:  # noqa: BLE001 - jede Importstörung führt zum Browser
         logger.exception("pywebview ist nicht verfügbar; verwende den Browser.")
         return False
+    started = threading.Event()
     try:
-        # Für „Szenario speichern“: Downloads mit Speichern-Dialog zulassen.
-        webview.settings["ALLOW_DOWNLOADS"] = True
-        webview.create_window(
-            APP_NAME, url, width=1440, height=900, min_size=(1024, 700)
-        )
-        webview.start(gui="edgechromium" if sys.platform == "win32" else None)
+        _create_window(url)
+        _start_gui(started.set)
     except Exception:  # noqa: BLE001
-        logger.exception("Das Anwendungsfenster konnte nicht geöffnet werden.")
-        return False
+        logger.exception("Das Anwendungsfenster wurde mit einem Fehler beendet.")
+        # War das Fenster bereits offen, wird nicht zusätzlich der Browser
+        # geöffnet, nachdem es geschlossen wurde.
+        return started.is_set()
     return True
 
 
-# Liest den sichtbaren Zustand der Oberfläche im Anwendungsfenster aus.
-WINDOW_STATE_SCRIPT = """
-(function () {
-  return JSON.stringify({
-    title: document.title,
-    sidebar: Boolean(document.querySelector("aside")),
-    header: (document.querySelector("header") || {}).innerText || "",
-    nodes: document.querySelectorAll("[data-graph-node-id]").length,
-    normal: document.body.innerText.indexOf("Normalbetrieb") !== -1,
-    userAgent: navigator.userAgent
-  });
-})()
-"""
-
-# Wählt eine Topologiedatei so aus, wie es der Dateidialog der Oberfläche tut.
-WINDOW_IMPORT_SCRIPT = """
-(function () {
-  var input = document.querySelector('input[type="file"][accept*=".graphml"]');
-  if (!input) { return "kein Dateifeld"; }
-  var data = new DataTransfer();
-  data.items.add(new File([%s], "fenstertest.json", { type: "application/json" }));
-  input.files = data.files;
-  input.dispatchEvent(new Event("change", { bubbles: true }));
-  return "ok";
-})()
-"""
-
-
-def window_import_script() -> str:
-    return WINDOW_IMPORT_SCRIPT % json.dumps(json.dumps(SMOKE_TOPOLOGY))
-
-
-def run_window_test(url: str, timeout: float = 90.0) -> dict:
-    """Öffnet das echte Anwendungsfenster und prüft die Oberfläche darin.
-
-    Geprüft wird im Fenster selbst: Seite geladen, Oberfläche gezeichnet,
-    Topologie über das Dateifeld importiert und als Graph dargestellt. Danach
-    schließt sich das Fenster.
-    """
-    checks: dict[str, bool] = {}
-    details: dict[str, object] = {}
-    if sys.platform == "win32" and not webview2_runtime_available():
-        details["error"] = "WebView2-Laufzeit nicht gefunden"
-        return {"passed": False, "checks": checks, "details": details}
-    import webview
-
-    def read_state(window) -> dict:
-        return json.loads(window.evaluate_js(WINDOW_STATE_SCRIPT))
-
-    def wait_for(window, condition, seconds: float) -> dict:
-        deadline = time.monotonic() + seconds
-        state: dict = {}
-        while time.monotonic() < deadline:
-            try:
-                state = read_state(window)
-            except Exception as error:  # noqa: BLE001 - Seite lädt noch
-                details["last_script_error"] = repr(error)
-            else:
-                if condition(state):
-                    break
-            time.sleep(0.5)
-        return state
-
-    def drive(window) -> None:
-        try:
-            checks["window_loaded"] = bool(window.events.loaded.wait(timeout))
-            state = wait_for(window, lambda item: item.get("sidebar"), 45)
-            details["user_agent"] = state.get("userAgent", "")
-            checks["ui_rendered"] = (
-                state.get("title") == APP_NAME
-                and bool(state.get("sidebar"))
-                and APP_NAME in state.get("header", "")
-            )
-            if sys.platform == "win32":
-                checks["webview2_engine"] = "Edg/" in str(details["user_agent"])
-            details["import_script"] = window.evaluate_js(window_import_script())
-            state = wait_for(window, lambda item: item.get("nodes") == 4, 45)
-            details["nodes_drawn"] = state.get("nodes")
-            checks["topology_imported_and_drawn"] = (
-                state.get("nodes") == 4 and bool(state.get("normal"))
-            )
-        except Exception as error:  # noqa: BLE001
-            logger.exception("Fenstertest abgebrochen.")
-            details["error"] = repr(error)
-        finally:
-            window.destroy()
-
-    try:
-        webview.settings["ALLOW_DOWNLOADS"] = True
-        window = webview.create_window(
-            APP_NAME, url, width=1440, height=900, min_size=(1024, 700)
-        )
-        webview.start(
-            drive, (window,), gui="edgechromium" if sys.platform == "win32" else None
-        )
-    except Exception as error:  # noqa: BLE001
-        logger.exception("Das Anwendungsfenster konnte nicht geöffnet werden.")
-        details["error"] = repr(error)
-    expected = {"window_loaded", "ui_rendered", "topology_imported_and_drawn"}
-    passed = expected <= set(checks) and all(checks.values())
-    return {"passed": passed, "checks": checks, "details": details}
-
-
-def run_in_browser(url: str) -> None:
-    """Ersatzweg: Standardbrowser plus kleines Fenster zum Beenden."""
+def _quit_window(url: str) -> None:
+    """Kleines Fenster zum Beenden, solange die Oberfläche im Browser läuft."""
+    import tkinter
     import webbrowser
-
-    webbrowser.open(url)
-    try:
-        import tkinter
-        from tkinter import ttk
-    except Exception:  # noqa: BLE001
-        logger.warning("Kein Fenster verfügbar; beenden mit Strg+C.")
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            return
-        return
+    from tkinter import ttk
 
     root = tkinter.Tk()
     root.title(APP_NAME)
@@ -361,6 +280,63 @@ def run_in_browser(url: str) -> None:
         row=1, column=1, pady=(14, 0), sticky="e"
     )
     root.mainloop()
+
+
+def _quit_without_tk(url: str) -> None:
+    """Ausweg ohne tkinter: nie unsichtbar und unbeendbar weiterlaufen."""
+    if sys.platform == "win32":
+        import ctypes
+
+        # Blockiert, bis „OK“ gewählt wird; danach endet das Programm.
+        ctypes.windll.user32.MessageBoxW(
+            None,
+            f"{APP_NAME} läuft im Browser unter\n{url}\n\n"
+            "„OK“ beendet das Programm.",
+            APP_NAME,
+            0x40,
+        )
+        return
+    logger.warning("Kein Fenster verfügbar; beenden mit Strg+C.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        return
+
+
+def run_in_browser(url: str) -> None:
+    """Ersatzweg: Standardbrowser plus kleines Fenster zum Beenden."""
+    import webbrowser
+
+    webbrowser.open(url)
+    try:
+        _quit_window(url)
+    except Exception:  # noqa: BLE001 - tkinter fehlt oder startet nicht
+        logger.exception("Das Fenster zum Beenden konnte nicht geöffnet werden.")
+        _quit_without_tk(url)
+
+
+# --------------------------------------------------------------------------
+# Selbsttests. Sie laufen nur mit --smoke-test beziehungsweise --window-test.
+# --------------------------------------------------------------------------
+
+SMOKE_TOPOLOGY = {
+    "directed": False,
+    "multigraph": False,
+    "graph": {"name": "smoke-test"},
+    "nodes": [
+        {"id": "A", "pos": [0, 0]},
+        {"id": "B", "pos": [1, 0]},
+        {"id": "C", "pos": [1, 1]},
+        {"id": "D", "pos": [0, 1]},
+    ],
+    "edges": [
+        {"id": "ab", "source": "A", "target": "B"},
+        {"id": "bc", "source": "B", "target": "C"},
+        {"id": "cd", "source": "C", "target": "D"},
+        {"id": "da", "source": "D", "target": "A"},
+    ],
+}
 
 
 def externally_reachable(port: int) -> bool | None:
@@ -392,35 +368,34 @@ def externally_reachable(port: int) -> bool | None:
     return False
 
 
-SMOKE_TOPOLOGY = {
-    "directed": False,
-    "multigraph": False,
-    "graph": {"name": "smoke-test"},
-    "nodes": [
-        {"id": "A", "pos": [0, 0]},
-        {"id": "B", "pos": [1, 0]},
-        {"id": "C", "pos": [1, 1]},
-        {"id": "D", "pos": [0, 1]},
-    ],
-    "edges": [
-        {"id": "ab", "source": "A", "target": "B"},
-        {"id": "bc", "source": "B", "target": "C"},
-        {"id": "cd", "source": "C", "target": "D"},
-        {"id": "da", "source": "D", "target": "A"},
-    ],
-}
+def internet_reachable(timeout: float = 5.0) -> bool:
+    """Nur für --probe-internet: Lässt sich ein öffentlicher Host erreichen?"""
+    try:
+        with socket.create_connection((INTERNET_PROBE_HOST, 443), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
-def _request(url: str, *, method: str = "GET", body: bytes | None = None,
-             content_type: str = "application/json") -> tuple[int, bytes]:
+def _request(
+    url: str,
+    *,
+    method: str = "GET",
+    body: bytes | None = None,
+    content_type: str = "application/json",
+) -> tuple[int, bytes]:
+    """Anfrage an den eigenen Server; Fehlerantworten werden zurückgegeben."""
     request = urllib.request.Request(url, data=body, method=method)
     if body is not None:
         request.add_header("Content-Type", content_type)
-    with urllib.request.urlopen(request, timeout=20) as response:
-        return response.status, response.read()
+    try:
+        with _LOCAL_OPENER.open(request, timeout=30) as response:
+            return response.status, response.read()
+    except urllib.error.HTTPError as error:
+        return error.code, error.read()
 
 
-def smoke_test(server: LocalServer) -> dict:
+def smoke_test(server: LocalServer, *, probe_internet: bool = False) -> dict:
     """Prüft das gepackte Programm ohne Fenster: Oberfläche, API, Routing."""
     base = server.url
     checks: dict[str, bool] = {}
@@ -429,7 +404,7 @@ def smoke_test(server: LocalServer) -> dict:
 
     status, index = _request(base)
     html = index.decode("utf-8")
-    checks["index"] = status == 200 and "Failover Routing Visualizer" in html
+    checks["index"] = status == 200 and APP_NAME in html
     assets = [
         part.split('"')[0]
         for part in html.split('"/')[1:]
@@ -438,8 +413,13 @@ def smoke_test(server: LocalServer) -> dict:
     checks["assets_local"] = bool(assets) and all(
         _request(f"{base}{asset}")[0] == 200 for asset in assets
     )
-    checks["no_external_resources"] = "http://" not in html and "https://" not in html
+    # Statische Prüfung der Startseite. Ob die Oberfläche zur Laufzeit etwas
+    # aus dem Netz lädt, zeigt erst eine Prüfung ohne Internetzugang.
+    checks["index_without_external_references"] = (
+        "http://" not in html and "https://" not in html
+    )
 
+    # Dateiimport
     status, body = _request(
         f"{base}api/sessions/import?filename=smoke.json",
         method="POST",
@@ -449,6 +429,21 @@ def smoke_test(server: LocalServer) -> dict:
     session = json.loads(body)
     checks["import"] = status == 200 and session["result"]["reachable_node_count"] == 4
 
+    # Routing: kürzester Pfad mit Ausfall, danach Bonsai mit Ausfall
+    status, body = _request(
+        f"{base}api/sessions/{session['session_id']}",
+        method="PATCH",
+        body=json.dumps({"failed_edge_ids": ["ab"]}).encode("utf-8"),
+    )
+    shortest = json.loads(body)
+    checks["shortest_path"] = (
+        status == 200
+        and shortest["result"]["reachable_node_count"] == 4
+        and shortest["result"]["current_paths"]["B"]["node_ids"] == ["B", "C", "D", "A"]
+        and shortest["result"]["current_paths"]["C"]["node_ids"] == ["C", "D", "A"]
+        and shortest["result"]["changed_node_ids"] == ["B", "C"]
+        and shortest["result"]["affected_node_ids"] == []
+    )
     status, body = _request(
         f"{base}api/sessions/{session['session_id']}",
         method="PATCH",
@@ -464,17 +459,36 @@ def smoke_test(server: LocalServer) -> dict:
     )
 
     # Szenarien speichern und laden, sofern diese Schnittstelle enthalten ist.
-    try:
-        status, body = _request(f"{base}api/sessions/{session['session_id']}/scenario")
-    except urllib.error.HTTPError as error:
-        status, body = error.code, b""
-    if status == 200:
+    status, exported = _request(f"{base}api/sessions/{session['session_id']}/scenario")
+    scenario_api_present = status == 200
+    if scenario_api_present:
         status, restored = _request(
-            f"{base}api/sessions/import-scenario", method="POST", body=body
+            f"{base}api/sessions/import-scenario", method="POST", body=exported
         )
         checks["scenario_roundtrip"] = (
             status == 200
             and json.loads(restored)["result"] == bonsai["result"]
+            and json.loads(restored)["failures"] == bonsai["failures"]
+            and json.loads(restored)["routing"] == bonsai["routing"]
+        )
+        # Ein unbekanntes Feld erkennt nur die Schemaprüfung. Fehlte das
+        # Paket jsonschema im gepackten Programm, würde die Datei angenommen.
+        unknown_field = {**json.loads(exported), "unbekanntes_feld": True}
+        status, _ = _request(
+            f"{base}api/sessions/import-scenario",
+            method="POST",
+            body=json.dumps(unknown_field).encode("utf-8"),
+        )
+        checks["scenario_schema_enforced"] = status == 422
+        newer = {**json.loads(exported), "format_version": "2.0"}
+        status, rejected = _request(
+            f"{base}api/sessions/import-scenario",
+            method="POST",
+            body=json.dumps(newer).encode("utf-8"),
+        )
+        checks["scenario_version_checked"] = (
+            status == 422
+            and json.loads(rejected).get("code") == "unsupported_format_version"
         )
 
     checks["bound_to_loopback"] = server.bind_address == HOST
@@ -487,6 +501,352 @@ def smoke_test(server: LocalServer) -> dict:
         "checks": checks,
         "url": base,
         "network_addresses_tested": reachable is not None,
+        "scenario_api_present": scenario_api_present,
+        "internet": {
+            "probed": probe_internet,
+            "python_reachable": internet_reachable() if probe_internet else None,
+        },
+    }
+
+
+# Liest den sichtbaren Zustand der Oberfläche im Anwendungsfenster aus.
+WINDOW_STATE_SCRIPT = """
+(function () {
+  function text(element) {
+    return element ? (element.innerText || element.textContent || "") : "";
+  }
+  function button(label) {
+    var all = document.querySelectorAll("button");
+    for (var i = 0; i < all.length; i += 1) {
+      if (text(all[i]).indexOf(label) !== -1) { return all[i]; }
+    }
+    return null;
+  }
+  var body = text(document.body);
+  var selects = document.querySelectorAll("aside select");
+  var bonsai = button("Bonsai (Greedy)");
+  var failures = body.match(/Aktive Ausf\\u00e4lle \\((\\d+)\\)/);
+  var statusBar = document.querySelector("main > section > div:nth-child(2)");
+  var captured = window.__frvCaptured || null;
+  return JSON.stringify({
+    title: document.title,
+    sidebar: Boolean(document.querySelector("aside")),
+    header: text(document.querySelector("header")),
+    nodes: document.querySelectorAll("[data-graph-node-id]").length,
+    status: statusBar && statusBar.firstElementChild
+      ? text(statusBar.firstElementChild).replace(/\\s+/g, " ").trim() : "",
+    summary: text(document.querySelector('[role="separator"]')).replace(/\\s+/g, " ").trim(),
+    target: selects.length ? selects[0].value : "",
+    bonsai: Boolean(bonsai && bonsai.getAttribute("aria-pressed") === "true"),
+    failures: failures ? Number(failures[1]) : null,
+    loading: body.indexOf("Berechnung l\\u00e4uft") !== -1,
+    hasScenario: Boolean(button("Szenario speichern")),
+    loadedScenario: body.indexOf("Geladenes Szenario:") !== -1,
+    capturedName: captured ? captured.name : null,
+    capturedText: captured ? captured.text : null,
+    internet: window.__frvInternet === undefined ? null : window.__frvInternet,
+    userAgent: navigator.userAgent
+  });
+})()
+"""
+
+# Betätigt eine Schaltfläche anhand eines Teils ihrer Beschriftung.
+WINDOW_CLICK_SCRIPT = """
+(function () {
+  var label = %s;
+  var all = document.querySelectorAll("button");
+  for (var i = 0; i < all.length; i += 1) {
+    if ((all[i].innerText || "").indexOf(label) !== -1) {
+      if (all[i].disabled) { return "gesperrt"; }
+      all[i].click();
+      return "ok";
+    }
+  }
+  return "fehlt";
+})()
+"""
+
+# Wählt eine Datei so aus, wie es der Dateidialog der Oberfläche tut.
+WINDOW_FILE_SCRIPT = """
+(function () {
+  var input = document.querySelector(%s);
+  if (!input) { return "kein Dateifeld"; }
+  var data = new DataTransfer();
+  data.items.add(new File([%s], %s, { type: "application/json" }));
+  input.files = data.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  return "ok";
+})()
+"""
+
+# Fängt den Download von „Szenario speichern“ ab und hält den Inhalt fest.
+# Der Speichern-Dialog des Fensters wird damit umgangen; ihn prüft der
+# getrennte Lauf mit --native-save-file.
+WINDOW_CAPTURE_SCRIPT = """
+(function () {
+  if (window.__frvCaptureInstalled) { return "ok"; }
+  window.__frvCaptureInstalled = true;
+  window.__frvCaptured = null;
+  var original = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function () {
+    if (this.download && String(this.href).indexOf("blob:") === 0) {
+      var name = this.download;
+      fetch(this.href)
+        .then(function (response) { return response.text(); })
+        .then(function (content) { window.__frvCaptured = { name: name, text: content }; });
+      return undefined;
+    }
+    return original.apply(this, arguments);
+  };
+  return "ok";
+})()
+"""
+
+# Nur mit --probe-internet: Kann die Seite einen öffentlichen Host erreichen?
+WINDOW_INTERNET_SCRIPT = """
+(function () {
+  window.__frvInternet = undefined;
+  var controller = new AbortController();
+  setTimeout(function () { controller.abort(); }, 8000);
+  fetch("https://%s/", { mode: "no-cors", cache: "no-store", signal: controller.signal })
+    .then(function () { window.__frvInternet = true; })
+    .catch(function () { window.__frvInternet = false; });
+  return "gestartet";
+})()
+"""
+
+TOPOLOGY_INPUT_SELECTOR = 'input[type="file"][accept*=".graphml"]'
+SCENARIO_INPUT_SELECTOR = 'input[type="file"][accept*="application/json"]'
+DOMAIN_STATE_KEYS = ("target", "bonsai", "failures", "status", "summary")
+
+
+def window_click_script(label: str) -> str:
+    return WINDOW_CLICK_SCRIPT % json.dumps(label)
+
+
+def window_file_script(selector: str, content: str, file_name: str) -> str:
+    return WINDOW_FILE_SCRIPT % (
+        json.dumps(selector), json.dumps(content), json.dumps(file_name)
+    )
+
+
+def window_import_script() -> str:
+    return window_file_script(
+        TOPOLOGY_INPUT_SELECTOR, json.dumps(SMOKE_TOPOLOGY), "fenstertest.json"
+    )
+
+
+def window_internet_script() -> str:
+    return WINDOW_INTERNET_SCRIPT % INTERNET_PROBE_HOST
+
+
+def scenario_text_is_expected(text: str | None) -> bool:
+    """Entspricht die gespeicherte Datei dem im Fenster eingestellten Zustand?"""
+    try:
+        data = json.loads(text or "")
+        return (
+            data["format_version"] == "1.0"
+            and len(data["topology"]["nodes"]) == 4
+            and data["routing"]["strategy"] == "bonsai_greedy"
+            and data["routing"]["target_node_id"] == "A"
+            and data["failures"]["failed_edge_ids"] == ["ab"]
+        )
+    except (ValueError, KeyError, TypeError):
+        return False
+
+
+def drive_window_test(
+    evaluate: Callable[[str], Any],
+    *,
+    probe_internet: bool = False,
+    native_save_file: Path | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+    step_timeout: float = 45.0,
+) -> tuple[dict[str, bool], dict[str, Any]]:
+    """Bedient die Oberfläche über ``evaluate`` und prüft ihren Zustand.
+
+    Ablauf: Oberfläche gezeichnet, Topologie über das Dateifeld importiert,
+    Bonsai gewählt und eine Kante ausfallen lassen, Szenario gespeichert,
+    Zustand verändert und das Szenario wieder geladen. ``evaluate`` führt
+    JavaScript in der Seite aus und liefert dessen Ergebnis.
+    """
+    checks: dict[str, bool] = {}
+    details: dict[str, Any] = {}
+
+    def read_state() -> dict:
+        return json.loads(evaluate(WINDOW_STATE_SCRIPT))
+
+    def wait_for(condition: Callable[[dict], Any], seconds: float = step_timeout) -> dict:
+        deadline = time.monotonic() + seconds
+        state: dict = {}
+        while True:
+            try:
+                state = read_state()
+            except Exception as error:  # noqa: BLE001 - Seite lädt noch
+                details["last_script_error"] = repr(error)
+            else:
+                if condition(state):
+                    return state
+            if time.monotonic() >= deadline:
+                return state
+            sleep(0.4)
+
+    def click(label: str, seconds: float = 20.0) -> str:
+        deadline = time.monotonic() + seconds
+        while True:
+            outcome = evaluate(window_click_script(label))
+            if outcome == "ok" or time.monotonic() >= deadline:
+                return str(outcome)
+            sleep(0.4)
+
+    def domain_state(state: dict) -> dict:
+        return {key: state.get(key) for key in DOMAIN_STATE_KEYS}
+
+    def idle(state: dict) -> bool:
+        return not state.get("loading")
+
+    # Oberfläche
+    state = wait_for(lambda item: item.get("sidebar"))
+    details["user_agent"] = state.get("userAgent", "")
+    checks["ui_rendered"] = (
+        state.get("title") == APP_NAME
+        and bool(state.get("sidebar"))
+        and APP_NAME in state.get("header", "")
+    )
+
+    # Dateiimport
+    details["import_script"] = evaluate(window_import_script())
+    state = wait_for(
+        lambda item: item.get("nodes") == 4
+        and item.get("status") == "Normalbetrieb"
+        and idle(item)
+    )
+    details["nodes_drawn"] = state.get("nodes")
+    checks["file_import_through_ui"] = (
+        state.get("nodes") == 4 and state.get("status") == "Normalbetrieb"
+    )
+
+    # Routing: Bonsai wählen, eine Kante ausfallen lassen
+    details["click_bonsai"] = click("Bonsai (Greedy)")
+    state = wait_for(lambda item: item.get("bonsai") and idle(item))
+    details["click_failure"] = click("ausfallen lassen")
+    state = wait_for(lambda item: item.get("failures") == 1 and idle(item))
+    saved_state = domain_state(state)
+    details["routing_state"] = saved_state
+    checks["routing_through_ui"] = (
+        bool(state.get("bonsai"))
+        and state.get("failures") == 1
+        and state.get("status") == "Failover aktiv"
+        and "Erreichbarkeit 4/4" in state.get("summary", "")
+    )
+
+    # Szenario speichern und laden (nur wenn die Bedienelemente vorhanden sind)
+    details["scenario_controls_present"] = bool(state.get("hasScenario"))
+    if state.get("hasScenario"):
+        if native_save_file is None:
+            evaluate(WINDOW_CAPTURE_SCRIPT)
+            details["click_save"] = click("Szenario speichern")
+            state = wait_for(lambda item: item.get("capturedText"))
+            text = state.get("capturedText")
+            details["scenario_file_name"] = state.get("capturedName")
+            details["scenario_saved_via"] = "abgefangener Download"
+        else:
+            # Der Speichern-Dialog des Fensters wird von außen bedient.
+            details["click_save"] = click("Szenario speichern")
+            text = None
+            deadline = time.monotonic() + 150
+            while time.monotonic() < deadline:
+                try:
+                    candidate = native_save_file.read_text(encoding="utf-8")
+                    json.loads(candidate)
+                    text = candidate
+                    break
+                except (OSError, ValueError):
+                    sleep(0.5)
+            details["scenario_file_name"] = str(native_save_file)
+            details["scenario_saved_via"] = "Speichern-Dialog"
+        checks["scenario_saved_through_ui"] = scenario_text_is_expected(text)
+
+        details["click_repair"] = click("Alle Kanten wiederherstellen")
+        state = wait_for(lambda item: item.get("failures") == 0 and idle(item))
+        details["failures_before_load"] = state.get("failures")
+        if text:
+            details["load_script"] = evaluate(
+                window_file_script(SCENARIO_INPUT_SELECTOR, text, "fenstertest-szenario.json")
+            )
+        state = wait_for(
+            lambda item: item.get("loadedScenario")
+            and item.get("failures") == 1
+            and idle(item)
+        )
+        details["state_after_load"] = domain_state(state)
+        checks["scenario_loaded_through_ui"] = (
+            bool(text)
+            and details["failures_before_load"] == 0
+            and bool(state.get("loadedScenario"))
+            and domain_state(state) == saved_state
+        )
+
+    if probe_internet:
+        evaluate(window_internet_script())
+        state = wait_for(lambda item: item.get("internet") is not None, 15)
+        details["page_internet_reachable"] = state.get("internet")
+    return checks, details
+
+
+def run_window_test(
+    url: str,
+    *,
+    probe_internet: bool = False,
+    native_save_file: Path | None = None,
+    timeout: float = 90.0,
+) -> dict:
+    """Öffnet das echte Anwendungsfenster und prüft die Oberfläche darin."""
+    checks: dict[str, bool] = {}
+    details: dict[str, Any] = {}
+    if sys.platform == "win32" and not webview2_runtime_available():
+        details["error"] = "WebView2-Laufzeit nicht gefunden"
+        return {"passed": False, "checks": checks, "details": details}
+
+    def drive(window) -> None:
+        try:
+            checks["window_loaded"] = bool(window.events.loaded.wait(timeout))
+            driven_checks, driven_details = drive_window_test(
+                window.evaluate_js,
+                probe_internet=probe_internet,
+                native_save_file=native_save_file,
+            )
+            checks.update(driven_checks)
+            details.update(driven_details)
+            if sys.platform == "win32":
+                checks["webview2_engine"] = "Edg/" in str(details.get("user_agent"))
+        except Exception as error:  # noqa: BLE001
+            logger.exception("Fenstertest abgebrochen.")
+            details["error"] = repr(error)
+        finally:
+            window.destroy()
+
+    try:
+        window = _create_window(url)
+        _start_gui(drive, (window,))
+    except Exception as error:  # noqa: BLE001
+        logger.exception("Das Anwendungsfenster konnte nicht geöffnet werden.")
+        details["error"] = repr(error)
+    expected = {
+        "window_loaded", "ui_rendered", "file_import_through_ui", "routing_through_ui",
+    }
+    if details.get("scenario_controls_present"):
+        expected |= {"scenario_saved_through_ui", "scenario_loaded_through_ui"}
+    passed = expected <= set(checks) and all(checks.values())
+    return {
+        "passed": passed,
+        "checks": checks,
+        "details": details,
+        "internet": {
+            "probed": probe_internet,
+            "python_reachable": internet_reachable() if probe_internet else None,
+            "page_reachable": details.get("page_internet_reachable"),
+        },
     }
 
 
@@ -500,6 +860,12 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
                         help="ohne Fenster starten, Kernfunktionen prüfen und beenden")
     parser.add_argument("--window-test", action="store_true",
                         help="Fenster öffnen, Oberfläche darin prüfen und beenden")
+    parser.add_argument("--native-save-file", type=Path,
+                        help="mit --window-test: „Szenario speichern“ über den "
+                             "Speichern-Dialog; die Datei wird unter diesem Pfad erwartet")
+    parser.add_argument("--probe-internet", action="store_true",
+                        help="mit einem Selbsttest: zusätzlich prüfen, ob ein "
+                             "öffentlicher Host erreichbar ist (für Offline-Prüfungen)")
     parser.add_argument("--result-file", type=Path,
                         help="Ergebnis des Selbsttests als JSON in diese Datei schreiben")
     parser.add_argument("--url-file", type=Path,
@@ -527,11 +893,14 @@ def main(argv: list[str] | None = None) -> int:
             arguments.url_file.write_text(server.url, encoding="utf-8")
         if arguments.smoke_test or arguments.window_test:
             try:
-                result = (
-                    run_window_test(server.url)
-                    if arguments.window_test
-                    else smoke_test(server)
-                )
+                if arguments.window_test:
+                    result = run_window_test(
+                        server.url,
+                        probe_internet=arguments.probe_internet,
+                        native_save_file=arguments.native_save_file,
+                    )
+                else:
+                    result = smoke_test(server, probe_internet=arguments.probe_internet)
             except Exception as error:  # noqa: BLE001
                 logger.exception("Selbsttest abgebrochen.")
                 result = {"passed": False, "error": repr(error)}
@@ -543,6 +912,13 @@ def main(argv: list[str] | None = None) -> int:
         if arguments.browser or not run_window(server.url):
             run_in_browser(server.url)
         return 0
+    except Exception:  # noqa: BLE001
+        logger.exception("Unerwarteter Fehler.")
+        _show_error(
+            "Das Programm wurde wegen eines Fehlers beendet.\n"
+            f"Einzelheiten stehen im Protokoll:\n{log_file}"
+        )
+        return 1
     finally:
         server.stop()
 
