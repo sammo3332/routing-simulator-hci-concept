@@ -55,6 +55,15 @@ export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode })
     zoomBy(Math.exp(-limitedDelta * 0.002), point);
   }, [zoomBy]);
 
+  // React registriert onWheel passiv; preventDefault wirkt dort nicht und die
+  // Seite würde beim Zoomen mitscrollen.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [onWheel, resetKey]);
+
   const onPointerDown = useCallback(event => {
     if (event.button !== 0 || drag.current) return;
     suppressClick.current = false;
@@ -138,7 +147,6 @@ export function useGraphViewport({ width, height, nodes, resetKey, onMoveNode })
     zoomOut,
     fit,
     svgHandlers: {
-      onWheel,
       onPointerDown,
       onPointerMove,
       onPointerUp: finishPan,
