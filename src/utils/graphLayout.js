@@ -52,6 +52,20 @@ export function clampPointToRect(point, rect, margin = 0) {
   };
 }
 
+// Endpunkt einer Strecke, um `distance` vor dem Ziel verkürzt. Damit endet ein
+// Pfeil am Rand des Zielknotens statt verdeckt in dessen Mitte.
+export function shortenSegmentEnd(from, to, distance) {
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  if (!Number.isFinite(length) || length <= distance * 2) {
+    return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  }
+  const ratio = (length - distance) / length;
+  return {
+    x: from.x + (to.x - from.x) * ratio,
+    y: from.y + (to.y - from.y) * ratio,
+  };
+}
+
 // Sichtbarer Ausschnitt in Graphkoordinaten für die aktuelle Ansicht.
 export function visibleGraphBounds(viewport, width, height) {
   return {

@@ -95,7 +95,10 @@ module.exports = {
       x2: Number(line.getAttribute("x2")), y2: Number(line.getAttribute("y2")),
     }));
     const arrowBefore = await arrow();
+    const distanceToTarget = Math.hypot(arrowBefore.x2 - movedT.x, arrowBefore.y2 - movedT.y);
     check("N-7a", "Aboreszenzpfeil beginnt am verschobenen Knoten", same({ x: arrowBefore.x1, y: arrowBefore.y1 }, movedB));
+    check("N-7b", "Pfeilspitze endet sichtbar am Rand des Zielknotens (Radius 16)",
+      distanceToTarget > 16 && distanceToTarget < 24, `Abstand zur Knotenmitte ${distanceToTarget.toFixed(1)}`);
     await dragNode("B", 30, -60);
     const draggedB = await graphPosition("B");
     const arrowAfter = await arrow();

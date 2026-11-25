@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  clampPointToRect, placeNodeTooltip, visibleGraphBounds,
+  clampPointToRect, placeNodeTooltip, shortenSegmentEnd, visibleGraphBounds,
 } from "../../src/utils/graphLayout.js";
 
 const rect = { left: 300, top: 150, right: 1400, bottom: 830 };
@@ -18,6 +18,18 @@ test("pointer outside the graph area is held at its edge", () => {
 test("a graph area smaller than the margin keeps the pointer centred", () => {
   const tiny = { left: 0, top: 0, right: 20, bottom: 20 };
   assert.deepEqual(clampPointToRect({ x: 90, y: -90 }, tiny, 14), { x: 10, y: 10 });
+});
+
+test("arrow ends at the node edge and keeps its direction", () => {
+  const end = shortenSegmentEnd({ x: 0, y: 0 }, { x: 100, y: 0 }, 19);
+  assert.deepEqual(end, { x: 81, y: 0 });
+  const diagonal = shortenSegmentEnd({ x: 0, y: 0 }, { x: 30, y: 40 }, 10);
+  assert.ok(Math.abs(diagonal.x - 24) < 1e-9 && Math.abs(diagonal.y - 32) < 1e-9);
+});
+
+test("arrow between overlapping nodes ends between them", () => {
+  assert.deepEqual(shortenSegmentEnd({ x: 0, y: 0 }, { x: 20, y: 0 }, 19), { x: 10, y: 0 });
+  assert.deepEqual(shortenSegmentEnd({ x: 5, y: 5 }, { x: 5, y: 5 }, 19), { x: 5, y: 5 });
 });
 
 test("visible bounds follow zoom and pan", () => {

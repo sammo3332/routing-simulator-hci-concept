@@ -11,10 +11,12 @@ import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { S } from "./styles/sharedStyles";
 import { buildInterpretation } from "./utils/interpretation";
-import { placeNodeTooltip, visibleGraphBounds } from "./utils/graphLayout";
+import { placeNodeTooltip, shortenSegmentEnd, visibleGraphBounds } from "./utils/graphLayout";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
+// Knotenradius 16 plus Abstand: die Pfeilspitze endet sichtbar am Knotenrand.
+const TREE_ARROW_INSET = 19;
 
 const panel = {
   background: "#131720",
@@ -413,7 +415,11 @@ export default function App() {
                     data-pan-surface="true"
                   />
                   <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
-                  {visibleGraphLinks.map(link => (
+                  {visibleGraphLinks.map(link => {
+                    const arcStart = link.treeArc?.source === link.source ? link.sourcePosition : link.targetPosition;
+                    const arcTarget = link.treeArc?.target === link.target ? link.targetPosition : link.sourcePosition;
+                    const arcEnd = link.treeArc ? shortenSegmentEnd(arcStart, arcTarget, TREE_ARROW_INSET) : null;
+                    return (
                     <g
                       key={link.id}
                       role="button"
@@ -468,10 +474,10 @@ export default function App() {
                       />
                       {link.treeArc && !link.failed && (
                         <line
-                          x1={link.treeArc.source === link.source ? link.sourcePosition.x : link.targetPosition.x}
-                          y1={link.treeArc.source === link.source ? link.sourcePosition.y : link.targetPosition.y}
-                          x2={link.treeArc.target === link.target ? link.targetPosition.x : link.sourcePosition.x}
-                          y2={link.treeArc.target === link.target ? link.targetPosition.y : link.sourcePosition.y}
+                          x1={arcStart.x}
+                          y1={arcStart.y}
+                          x2={arcEnd.x}
+                          y2={arcEnd.y}
                           stroke="#a78bfa"
                           strokeWidth={3}
                           opacity={.92}
@@ -502,7 +508,8 @@ export default function App() {
                         </g>
                       )}
                     </g>
-                  ))}
+                    );
+                  })}
                   {visibleGraphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
                     const nodeName = node.label || node.id;
