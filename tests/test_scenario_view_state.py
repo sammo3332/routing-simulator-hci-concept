@@ -114,3 +114,19 @@ def test_malformed_view_state_is_rejected() -> None:
 
     assert on_import.status_code == 422
     assert on_export.status_code == 422
+
+
+def test_display_positions_far_outside_the_drawing_area_are_rejected() -> None:
+    client = new_client()
+    session = shortest_path_session(client)
+    far = {"show_labels": False, "node_display_positions": {"1": {"x": 1e6, "y": 0}}}
+
+    on_export = client.post(
+        f"/api/sessions/{session['session_id']}/scenario", json={"visualization": far}
+    )
+    scenario = export_with_view(client, session["session_id"], VIEW)
+    scenario["visualization"]["node_display_positions"] = far["node_display_positions"]
+    on_import = load(new_client(), scenario)
+
+    assert on_export.status_code == 422
+    assert on_import.status_code == 422

@@ -49,6 +49,10 @@ from .failover_core.validation import (
 )
 
 
+# Anzeigekoordinaten liegen in der Zeichenfläche 800 x 410 und ihrer Umgebung.
+DISPLAY_POSITION_LIMIT = 100_000
+
+
 @dataclass(frozen=True, slots=True)
 class SimulationSession:
     session_id: str
@@ -163,8 +167,8 @@ class SessionUpdate(BaseModel):
 class DisplayPosition(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
-    x: float
-    y: float
+    x: float = Field(ge=-DISPLAY_POSITION_LIMIT, le=DISPLAY_POSITION_LIMIT)
+    y: float = Field(ge=-DISPLAY_POSITION_LIMIT, le=DISPLAY_POSITION_LIMIT)
 
 
 class ScenarioViewState(BaseModel):

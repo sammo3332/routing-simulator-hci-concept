@@ -9,6 +9,7 @@ test("restored display positions keep only complete finite coordinates", () => {
       B: { x: Number.NaN, y: 2 },
       C: { x: 3 },
       D: null,
+      E: { x: 1e6, y: 0 },
     }),
     { A: { x: 1, y: 2 } },
   );
