@@ -2,6 +2,7 @@ import { useState } from "react";
 import AlgorithmSelector from "./components/AlgorithmSelector";
 import DetailsPanelHandle from "./components/DetailsPanelHandle";
 import FileUploader from "./components/FileUploader";
+import ScenarioControls from "./components/ScenarioControls";
 import GraphZoomControls from "./components/GraphZoomControls";
 import SelectField from "./components/SelectField";
 import SidebarSection from "./components/SidebarSection";
@@ -11,9 +12,12 @@ import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { EDGE_IDLE, S } from "./styles/sharedStyles";
 import { buildInterpretation } from "./utils/interpretation";
+import { placeNodeTooltip, shortenSegmentEnd, visibleGraphBounds } from "./utils/graphLayout";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
+// Knotenradius 16 plus Abstand: die Pfeilspitze endet sichtbar am Knotenrand.
+const TREE_ARROW_INSET = 19;
 
 const panel = {
   background: "#131720",
@@ -39,18 +43,18 @@ function EmptyState() {
         <div style={{ color: "#7a8499", maxWidth: 470, lineHeight: 1.6 }}>
           Lade links eine TopoHub-JSON-, SNDlib-XML- oder GraphML-Datei. Danach kannst du
           Zielknoten wählen, Kanten ausfallen lassen und die tatsächlich berechneten
-          Routingzustände vergleichen.
+          Routingzustände vergleichen. Ein gespeichertes Szenario öffnest du über
+          „Szenario laden“.
         </div>
       </div>
     </div>
   );
 }
 
-function GraphNodeTooltip({ node, widthLimit }) {
+function GraphNodeTooltip({ node, bounds }) {
   const label = node.label || node.id;
   const width = Math.min(190, Math.max(72, label.length * 6.2 + 20));
-  const x = Math.min(widthLimit - width - 6, Math.max(6, node.position.x - width / 2));
-  const y = node.position.y > 54 ? node.position.y - 45 : node.position.y + 25;
+  const { x, y } = placeNodeTooltip(node.position, { width, height: 25 }, bounds);
   return (
     <g pointerEvents="none" aria-hidden="true">
       <rect x={x} y={y} width={width} height={25} rx={5} fill="#080b12" stroke="#64748b" strokeWidth={1.5} />
@@ -67,7 +71,8 @@ export default function App() {
   const simulator = useRoutingSimulator();
   const {
     simulation, topology, loading, error, eventLog, eventLogEndRef,
-    handleTopologyFile, setTargetNode, setRoutingStrategy, setWeightMode,
+    handleTopologyFile, topologyFileName, loadedScenario, scenarioError,
+    loadScenarioFile, saveScenario, setTargetNode, setRoutingStrategy, setWeightMode,
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
     selectedLinkId, setSelectedLinkId, selectedLinkFailed,
     routingLinkOptions, nodeOptions, simulateLinkFailure, restoreSelectedLink,
@@ -229,7 +234,7 @@ export default function App() {
           </div>
 
           <SidebarSection title="Topologie laden" accent="#3b82f6">
-            <FileUploader onFile={handleTopologyFile} disabled={loading} />
+            <FileUploader onFile={handleTopologyFile} fileName={topologyFileName} disabled={loading} />
             {error && (
               <div role="alert" style={{ padding: "8px 9px", border: "1px solid rgba(255,64,64,.35)", background: "rgba(255,64,64,.08)", borderRadius: 6, color: "#ff8080", fontSize: 10, lineHeight: 1.45 }}>
                 {error}
@@ -237,8 +242,27 @@ export default function App() {
             )}
           </SidebarSection>
 
+          <SidebarSection title="Szenario" accent="#64708a">
+            <ScenarioControls
+              canSave={Boolean(simulation)}
+              disabled={loading}
+              loadedScenario={loadedScenario}
+              error={scenarioError}
+              onSave={() => saveScenario({
+                show_labels: showAllNodeNames,
+                node_display_positions: graphLayout.positions,
+              })}
+              onLoad={file => loadScenarioFile(file, next => {
+                const view = next.scenario?.visualization;
+                setShowAllNodeNames(Boolean(view?.show_labels));
+                setHighlightedSourceNodeId("");
+                graphLayout.restore(next.session_id, view?.node_display_positions);
+              })}
+            />
+          </SidebarSection>
+
           <SidebarSection title="Routing-Einstellungen" accent="#a78bfa">
-            <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} />
+            <SelectField label="Zielknoten" value={targetNodeId} onChange={setTargetNode} options={nodeOptions} disabled={loading} />
             <AlgorithmSelector
               value={routingStrategy}
               onChange={setRoutingStrategy}
@@ -248,7 +272,7 @@ export default function App() {
               label="Routingmetrik"
               value={weightMode}
               onChange={setWeightMode}
-              disabled={routingStrategy === "bonsai_greedy"}
+              disabled={loading || routingStrategy === "bonsai_greedy"}
               options={[
                 { value: "hop_count", label: "Hop-Anzahl" },
                 { value: "edge_weight", label: "Kantengewicht" },
@@ -413,7 +437,11 @@ export default function App() {
                     data-pan-surface="true"
                   />
                   <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
-                  {visibleGraphLinks.map(link => (
+                  {visibleGraphLinks.map(link => {
+                    const arcStart = link.treeArc?.source === link.source ? link.sourcePosition : link.targetPosition;
+                    const arcTarget = link.treeArc?.target === link.target ? link.targetPosition : link.sourcePosition;
+                    const arcEnd = link.treeArc ? shortenSegmentEnd(arcStart, arcTarget, TREE_ARROW_INSET) : null;
+                    return (
                     <g
                       key={link.id}
                       role="button"
@@ -467,10 +495,10 @@ export default function App() {
                       />
                       {link.treeArc && !link.failed && (
                         <line
-                          x1={link.treeArc.source === link.source ? link.sourcePosition.x : link.targetPosition.x}
-                          y1={link.treeArc.source === link.source ? link.sourcePosition.y : link.targetPosition.y}
-                          x2={link.treeArc.target === link.target ? link.targetPosition.x : link.sourcePosition.x}
-                          y2={link.treeArc.target === link.target ? link.targetPosition.y : link.sourcePosition.y}
+                          x1={arcStart.x}
+                          y1={arcStart.y}
+                          x2={arcEnd.x}
+                          y2={arcEnd.y}
                           stroke="#a78bfa"
                           strokeWidth={3}
                           opacity={.92}
@@ -501,7 +529,8 @@ export default function App() {
                         </g>
                       )}
                     </g>
-                  ))}
+                    );
+                  })}
                   {visibleGraphNodes.map(node => {
                     const color = node.target ? GOLD : node.affected ? RED : node.changed ? T2 : "#7a8499";
                     const nodeName = node.label || node.id;
@@ -526,7 +555,10 @@ export default function App() {
                     );
                   })}
                   {hoveredNode && !hoveredNodeLabelVisible && (
-                    <GraphNodeTooltip node={hoveredNode} widthLimit={SVG_W} />
+                    <GraphNodeTooltip
+                      node={hoveredNode}
+                      bounds={visibleGraphBounds(graphViewport.viewport, SVG_W, SVG_H)}
+                    />
                   )}
                   </g>
                 </svg>
@@ -536,6 +568,7 @@ export default function App() {
               <strong style={{ color: "#9aa5bb" }}>Legende</strong>
               <span><span style={{ color: T2 }}>━━</span> Route vor dem Ausfall</span>
               <span><span style={{ color: T1 }}>━━</span> Aktuelle Route</span>
+              <span><span style={{ color: EDGE_IDLE }}>━━</span> Kante ohne Route</span>
               <span><span style={{ color: RED }}>┄✕┄</span> Ausgefallene Kante</span>
               <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
               <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>

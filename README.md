@@ -108,6 +108,10 @@ Oberfläche sind im [Studienprotokoll](docs/hci/USER_STUDY_PROTOCOL.md) und in d
 
 ## Dokumentation
 
+Die Dokumente unter `docs/weiterentwicklung/` und `docs/WINDOWS_APP.md`
+beschreiben Änderungen nach der Bachelorarbeit. Sie gehören nicht zum damals
+evaluierten Stand.
+
 | Dokument | Inhalt |
 |---|---|
 | [REQUIREMENTS.md](REQUIREMENTS.md) | implementierter und geprüfter Anforderungsumfang |
@@ -116,7 +120,9 @@ Oberfläche sind im [Studienprotokoll](docs/hci/USER_STUDY_PROTOCOL.md) und in d
 | [docs/BONSAI_VALIDATION.md](docs/BONSAI_VALIDATION.md) | fachliche und automatisierte Validierung |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | gemeinsames Docker- und Render-Deployment |
 | [docs/DRAGGABLE_NODES.md](docs/DRAGGABLE_NODES.md) | Knoten manuell verschieben (nach der Bachelorarbeit) |
-| [docs/weiterentwicklung/AENDERUNGSPROTOKOLL.md](docs/weiterentwicklung/AENDERUNGSPROTOKOLL.md) | Änderungen nach der Bachelorarbeit mit Vorher-/Nachher-Vergleich |
+| [docs/WINDOWS_APP.md](docs/WINDOWS_APP.md) | Windows-Programm: Starten, Voraussetzungen, Build (nach der Bachelorarbeit) |
+| [docs/weiterentwicklung/UEBERGABE.md](docs/weiterentwicklung/UEBERGABE.md) | Weiterentwicklung nach der Bachelorarbeit: Pakete, Zweige, offene Punkte |
+| [docs/weiterentwicklung/PRUEFBERICHT.md](docs/weiterentwicklung/PRUEFBERICHT.md) | Testzahlen je Commit und Ergebnisse der unabhängigen Prüfung |
 | [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Entwicklung und Evaluationsdesign |
 | [docs/hci/USER_STUDY_PROTOCOL.md](docs/hci/USER_STUDY_PROTOCOL.md) | Aufgaben, SUS und Auswertungsplan der Benutzerstudie |
 

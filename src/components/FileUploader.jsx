@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import { T1, S } from "../styles/sharedStyles";
 
-export default function FileUploader({ onFile, disabled = false }) {
+// `fileName` nennt die zuletzt erfolgreich geladene Topologiedatei. Die Anzeige
+// folgt damit dem tatsächlich dargestellten Zustand und nicht der Auswahl.
+export default function FileUploader({ onFile, fileName = null, disabled = false }) {
   const [drag, setDrag]   = useState(false);
-  const [fname, setFname] = useState(null);
+  const fname             = fileName;
   const inputRef          = useRef(null);
 
   const handle = f => {
     if (!f) return;
-    setFname(f.name);
     onFile?.(f);
   };
 

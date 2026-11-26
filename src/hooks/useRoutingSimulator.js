@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { describeScenario, downloadJson, scenarioFileName } from "../utils/scenarioFile";
 import {
+  exportScenario,
+  importScenario,
   importTopology,
   searchCriticalFailures,
   updateSimulationSession,
@@ -56,6 +59,11 @@ export function useRoutingSimulator() {
   const [criticalSearchResult, setCriticalSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Name der zuletzt erfolgreich geladenen Topologiedatei; leer, wenn der
+  // Zustand aus einem Szenario stammt.
+  const [topologyFileName, setTopologyFileName] = useState(null);
+  const [loadedScenario, setLoadedScenario] = useState(null);
+  const [scenarioError, setScenarioError] = useState("");
   const [eventLog, setEventLog] = useState([
     { id: 1, time: timestamp(), type: "info", msg: "Bereit. Bitte TopoHub-JSON, SNDlib-XML oder GraphML laden." },
   ]);
@@ -73,12 +81,19 @@ export function useRoutingSimulator() {
     ]);
   };
 
+  // Nur die zuletzt gestartete Anfrage darf den Zustand setzen. Eine verspätete
+  // Antwort darf zum Beispiel ein inzwischen geladenes Szenario nicht ersetzen.
+  const latestRequest = useRef(0);
+
   const run = async (description, operation) => {
+    const requestId = ++latestRequest.current;
     setLoading(true);
     setError("");
+    setScenarioError("");
     addLog("info", description);
     try {
       const next = await operation();
+      if (requestId !== latestRequest.current) return null;
       setSimulation(next);
       if (!selectedLinkId || !next.topology.edges.some(edge => edge.id === selectedLinkId)) {
         setSelectedLinkId(next.topology.edges[0]?.id ?? "");
@@ -86,22 +101,27 @@ export function useRoutingSimulator() {
       return next;
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      if (requestId !== latestRequest.current) return null;
       setError(message);
       addLog("alert", `FEHLER: ${message}`);
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   };
 
   const handleTopologyFile = async file => {
     const importTime = timestamp();
-    setCriticalSearchResult(null);
     const next = await run(
       `Importiere „${file.name}“…`,
       () => importTopology(file),
     );
     if (next) {
+      // Erst nach erfolgreichem Import: ein fehlgeschlagener Import lässt den
+      // bisherigen Zustand samt Suchergebnis unverändert.
+      setCriticalSearchResult(null);
+      setTopologyFileName(file.name);
+      setLoadedScenario(null);
       setCriticalSearchMaxK(String(Math.min(2, next.topology.edges.length)));
       setEventLog([
         {
@@ -117,6 +137,75 @@ export function useRoutingSimulator() {
           msg: `Topologie geladen: ${next.topology.nodes.length} Knoten, ${next.topology.edges.length} Kanten.`,
         },
       ]);
+    }
+  };
+
+  // Stellt einen gespeicherten fachlichen Zustand wieder her. Schlägt das
+  // Laden fehl, bleibt der bisherige Zustand vollständig erhalten.
+  // `onLoaded` erhält die Antwort unmittelbar vor der Übernahme, damit die
+  // Ansicht (z. B. Knotenpositionen) im selben Schritt gesetzt werden kann.
+  const loadScenarioFile = async (file, onLoaded) => {
+    const importTime = timestamp();
+    const requestId = ++latestRequest.current;
+    setLoading(true);
+    setError("");
+    setScenarioError("");
+    addLog("info", `Lade Szenario „${file.name}“…`);
+    try {
+      const next = await importScenario(file);
+      if (requestId !== latestRequest.current) return null;
+      onLoaded?.(next);
+      setSimulation(next);
+      setSelectedLinkId(next.topology.edges[0]?.id ?? "");
+      setSelectedTreeId("T1");
+      setCriticalSearchResult(null);
+      setCriticalSearchMaxK(String(Math.min(2, next.topology.edges.length)));
+      setTopologyFileName(null);
+      setLoadedScenario({ fileName: file.name, snapshot: next.scenario?.snapshot ?? "absent" });
+      const entries = [
+        { type: "info", time: importTime, msg: `Lade Szenario „${file.name}“…` },
+        { type: "success", time: timestamp(), msg: `Szenario geladen: ${describeScenario(next)}.` },
+        {
+          type: "success",
+          time: timestamp(),
+          msg: `Routing neu berechnet: ${next.result.reachable_node_count}/${next.result.node_count} Knoten erreichen das Ziel.`,
+        },
+      ];
+      if (next.scenario?.snapshot === "differs") {
+        entries.push({
+          type: "alert",
+          time: timestamp(),
+          msg: "Gespeicherte Ergebnisse weichen von der Neuberechnung ab; angezeigt wird die Neuberechnung.",
+        });
+      }
+      setEventLog(entries.map(entry => ({ ...entry, id: ++logId.current })));
+      return next;
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      if (requestId !== latestRequest.current) return null;
+      setScenarioError(message);
+      addLog("alert", `FEHLER: Szenario nicht geladen. ${message}`);
+      return null;
+    } finally {
+      if (requestId === latestRequest.current) setLoading(false);
+    }
+  };
+
+  const saveScenario = async (visualization = null) => {
+    if (!simulation) return;
+    setLoading(true);
+    setScenarioError("");
+    try {
+      const scenario = await exportScenario(simulation.session_id, visualization);
+      const fileName = scenarioFileName(simulation.topology.name || simulation.topology.topology_id);
+      downloadJson(fileName, scenario);
+      addLog("success", `Szenario gespeichert: ${fileName} (${describeScenario(simulation)}).`);
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
+      setScenarioError(message);
+      addLog("alert", `FEHLER: Szenario nicht gespeichert. ${message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -328,6 +417,11 @@ export function useRoutingSimulator() {
     eventLog,
     eventLogEndRef,
     handleTopologyFile,
+    topologyFileName,
+    loadedScenario,
+    scenarioError,
+    loadScenarioFile,
+    saveScenario,
     setTargetNode,
     setRoutingStrategy,
     setWeightMode,

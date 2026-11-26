@@ -1,0 +1,83 @@
+name: Windows-App
+
+# Baut das Windows-Programm und prüft es auf einem Windows-Runner.
+# Läuft nur auf den Zweigen der Weiterentwicklung oder von Hand.
+# Reine Dokumentationsänderungen lösen keinen neuen Lauf aus.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "claude/paket-4-windows-app"
+      - "claude/integration-gesamtvorschlag"
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Node.js 22 einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Programm bauen und Selbsttest ausführen
+        shell: pwsh
+        run: ./desktop/build_windows.ps1
+
+      - name: Launcher-Tests unter Windows ausführen
+        shell: pwsh
+        run: |
+          ./.venv-desktop/Scripts/python.exe -m pip install pytest httpx -c build/constraints-desktop.txt
+          ./.venv-desktop/Scripts/python.exe -m pytest -q tests/test_desktop_launcher.py
+
+      # Das Paket steht bereit, sobald Build, Selbsttest und Launcher-Tests
+      # bestanden sind. Ob auch Fenster- und Offline-Prüfung bestanden sind,
+      # zeigt der Gesamtstatus des Laufs; maßgeblich ist ein grüner Lauf.
+      - name: Windows-Paket bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: FailoverRoutingVisualizer-windows
+          path: |
+            build/desktop/FailoverRoutingVisualizer.exe
+            build/desktop/FailoverRoutingVisualizer.exe.sha256
+            build/desktop/selbsttest.json
+            build/desktop/paketversionen.txt
+          if-no-files-found: error
+
+      - name: Fenstertest unter Windows
+        shell: pwsh
+        run: ./desktop/test_windows_window.ps1
+
+      - name: Prüfung ohne Internetzugang
+        shell: pwsh
+        run: ./desktop/test_windows_offline.ps1
+
+      - name: Prüfnachweise bereitstellen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-pruefnachweise
+          path: |
+            build/desktop/selbsttest.json
+            build/desktop/paketversionen.txt
+            build/desktop/FailoverRoutingVisualizer.exe.sha256
+            build/desktop/fenstertest*.json
+            build/desktop/fenstertest.png
+            build/desktop/gespeichertes-szenario.json
+            build/desktop/speichern-dialog.log
+            build/desktop/offline-*.json
+          if-no-files-found: warn

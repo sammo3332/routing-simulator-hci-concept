@@ -1,5 +1,17 @@
 # Änderungsprotokoll der Weiterentwicklung
 
+> **Überholt.** Dieses Protokoll beschreibt den ersten Arbeitsstand der
+> Weiterentwicklung (Commits `c09e312` und `4f8f4d1`). Seine Änderungen wurden
+> danach neu aufgeteilt: Die Fehlerbehebungen und die Textkorrektur stehen in
+> [BASIS.md](BASIS.md), die Sichtbarkeit der Kanten in
+> [PAKET_1_KANTENLESBARKEIT.md](PAKET_1_KANTENLESBARKEIT.md). Maßgeblich sind
+> [UEBERGABE.md](UEBERGABE.md) und [PRUEFBERICHT.md](PRUEFBERICHT.md).
+>
+> Das hier genannte Prüfskript `tests/browser/interaction-checks.cjs` ist in
+> `tests/browser/checks/` aufgegangen und wird nicht mehr gepflegt. Die
+> Referenzstände sind inzwischen als Zweige auf GitHub gesichert, siehe
+> [BASIS.md](BASIS.md). Der folgende Text ist unverändert.
+
 Stand: 25. November 2026
 
 Dieses Protokoll dokumentiert Änderungen nach der Bachelorarbeit. Es gehört

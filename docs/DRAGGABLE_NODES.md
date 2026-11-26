@@ -11,6 +11,7 @@ damals evaluierten Referenzstand.
   Ausfallmarkierungen verwenden die angepasste Anzeigegeometrie.
 - Nachbarknoten bewegen sich nicht mit.
 - Ziehen auf freier Fläche verschiebt weiterhin die gesamte Ansicht.
+- Ein Knoten bleibt beim Ziehen innerhalb der sichtbaren Graphfläche.
 - Änderungen von Ziel, Routingverfahren, Metrik und Kantenausfällen erhalten
   die manuell angeordneten Positionen derselben Sitzung.
 - „Einpassen“ berücksichtigt die aktuelle Anordnung; es setzt sie nicht zurück.
@@ -54,17 +55,14 @@ Ausführungsumgebung blockiert.
 
 ## Nachgeholte Browserprüfung vom 25. November 2026
 
-Die Interaktionsprüfungen wurden mit `tests/browser/interaction-checks.cjs`
-in Chromium 158 (headless, 1440 × 900) nachgeholt. Die Punkte 1 bis 10 der
-folgenden Liste sind dort bestanden, mit zwei Einschränkungen:
-
-- Punkt 4: Der Wechsel der angezeigten Aboreszenz wurde nicht gesondert geprüft.
-- Punkt 8: Dieselbe Datei direkt erneut zu importieren, löste im Stand
-  `ba4c99a` keinen Import aus. Das ist behoben.
-
-Einzelergebnisse, Umgebung und Grenzen stehen im
-[Änderungsprotokoll](weiterentwicklung/AENDERUNGSPROTOKOLL.md). Geprüft wurde
-ein automatisierter Ablauf in einem Browser, keine Nutzung durch Personen.
+Die Interaktionsprüfungen wurden mit `tests/browser/checks/30-knoten.cjs` in
+Chromium 158 (headless, 1440 × 900) nachgeholt. Alle zehn Punkte der folgenden
+Liste sind dort bestanden. Drei dabei gefundene Fehler wurden behoben:
+Knoten ließen sich aus der sichtbaren Fläche ziehen, der Tooltip weit
+verschobener Knoten erschien an falscher Stelle, und die Pfeilspitzen der
+Aboreszenz waren verdeckt. Einzelergebnisse und Grenzen stehen in
+[Paket 2](weiterentwicklung/PAKET_2_KNOTENVERSCHIEBEN.md). Geprüft wurde ein
+automatisierter Ablauf in einem Browser, keine Nutzung durch Personen.
 
 ## Prüfschritte
 
