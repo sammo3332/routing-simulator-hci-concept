@@ -1,106 +1,109 @@
 # Übersicht für Erik
 
-Weiterentwicklung des Failover Routing Visualizers · Stand: 26. November 2026
+Failover Routing Visualizer · Weiterentwicklung nach der Bachelorarbeit ·
+Stand: 26. November 2026
 
-Nach der Bachelorarbeit wurde das Tool am 25. und 26. November 2026 an fünf Stellen
-weiterentwickelt. Die Oberfläche blieb wiedererkennbar; neue Bedienelemente gibt es
-nur für die beschriebenen Funktionen. Die Ergebnisse der Benutzerstudie gehören zum
-damals untersuchten Stand und belegen keine Verbesserung durch die neuen Funktionen;
-keine Änderung wurde mit Nutzenden geprüft. Die Referenzstände der Arbeit (`ed3b68c`,
-`99c2962`), der Hauptzweig `main` und das Deployment blieben unverändert.
+Nach der Bachelorarbeit wurde der Visualizer an fünf Stellen
+weiterentwickelt. Alles liegt auf dem Zweig
+[`claude/paket-5-bildexport`](https://github.com/sammo3332/routing-simulator-hci-concept/tree/claude/paket-5-bildexport).
+In `main` und in der Webanwendung ist davon bisher nur das Verschieben
+einzelner Knoten enthalten, noch ohne die Korrekturen aus Punkt 2. Die
+Referenzstände der Arbeit sind unverändert. Die Ergebnisse der Benutzerstudie
+beziehen sich auf den damals untersuchten Stand; die neuen Funktionen wurden
+nicht mit Nutzenden geprüft.
 
-## Die fünf Punkte
+**Ausprobieren** lässt sich alles am einfachsten mit dem
+[Windows-Testpaket](../../README.md#windows-testpaket) oder im Browser nach dem
+[lokalen Start](../../README.md#lokal-im-browser). Passende Testdateien liegen
+in [`tests/fixtures/`](../../tests/fixtures/).
 
-Der Anlass zu den Punkten 1, 2 und 5 ist meine Erinnerung an die Abschlusspräsentation:
-meine Schilderung, kein unabhängiger Nachweis und keine persönliche Aussage von Erik.
-Testdateien liegen in [`tests/fixtures/`](../../tests/fixtures/); vorgeführt wird im
-Windows-Programm (Punkt 4) oder im Browser ([Start](UEBERGABE.md#7-starten)).
+## 1. Graue Kanten sind besser zu erkennen
 
-### 1. Sichtbarkeit der grauen Kanten
-
-- **Anlass (meine Schilderung):** Graue Kanten waren bei der Beamer-Darstellung
-  schlecht erkennbar.
-- **Änderung:** Kanten ohne Route sind jetzt deckend im vorhandenen Grauton `#64708a`
-  gezeichnet (Kontrast zum Hintergrund 3,61:1 statt 1,14:1), dazu gibt es einen
-  Legendeneintrag.
-- **Vorführen:** `synthetic_50_nodes.json` laden, „Keine Route hervorheben“ wählen.
+In der Abschlusspräsentation kam nach meiner Erinnerung die Rückmeldung, dass
+die grauen Kanten über den Beamer kaum zu sehen waren. Das betraf alle Kanten
+ohne Route, bei „Keine Route hervorheben“ also die ganze Topologie. Diese
+Kanten sind jetzt deckend in einem helleren, in der Oberfläche schon
+vorhandenen Grau gezeichnet, und die Legende erklärt sie als „Kante ohne
+Route“. Am deutlichsten wird der Unterschied mit `synthetic_50_nodes.json` und
+„Keine Route hervorheben“.
 
 | Vorher | Nachher |
 |---|---|
-| <img src="screenshots/paket-1/gross_keine_route_vorher.png" width="220" alt="50 Knoten, Keine Route hervorheben, vorher"> | <img src="screenshots/paket-1/gross_keine_route_nachher.png" width="220" alt="50 Knoten, Keine Route hervorheben, nachher"> |
+| <img src="screenshots/paket-1/gross_keine_route_vorher.png" width="260" alt="50 Knoten mit „Keine Route hervorheben“, vorher"> | <img src="screenshots/paket-1/gross_keine_route_nachher.png" width="260" alt="50 Knoten mit „Keine Route hervorheben“, nachher"> |
 
-*Gleiche Topologie. Weitere Bilder: Paketdokumente; Windows-Programm: keine.*
+## 2. Einzelne Knoten lassen sich verschieben
 
-### 2. Einzelne Knoten verschieben
+Auch der Wunsch, einzelne Knoten verschieben zu können, geht nach meiner
+Erinnerung auf die Abschlusspräsentation zurück. Die Funktion war schon in
+`main` enthalten, hatte aber drei Schwächen: Knoten ließen sich aus der
+Graphfläche hinausziehen, der Tooltip eines weit verschobenen Knotens erschien
+an der falschen Stelle, und die Pfeilspitzen der Aboreszenz verschwanden unter
+dem Knoten. Das ist auf dem Zweig behoben. Zum Ausprobieren
+`bonsai_routing_failure.json` laden, „Bonsai (Greedy)“ wählen, einen Knoten
+ziehen und danach „Knotenpositionen zurücksetzen“ drücken.
 
-- **Anlass (meine Schilderung):** Ein Professor schlug vor, einzelne Knoten
-  verschieben zu können.
-- **Änderung:** Die Funktion war schon in `main`; behoben wurden drei Mängel: Knoten
-  ließen sich aus der Fläche ziehen, Tooltips erschienen weit entfernt,
-  Pfeilspitzen waren verdeckt.
-- **Vorführen:** `bonsai_routing_failure.json` laden, einen Knoten ziehen,
-  „Knotenpositionen zurücksetzen“ wählen.
+## 3. Szenarien lassen sich speichern und wieder laden
 
-### 3. Szenarien speichern und laden
+Ein besprochener Anwendungsfall war, eine Konfiguration weiterzugeben und auf
+einem anderen Rechner mit denselben Einstellungen und Ausfällen zu öffnen.
+Bisher ging der Zustand beim Schließen verloren. Jetzt gibt es in der
+Seitenleiste „Szenario speichern“ und „Szenario laden“. Die JSON-Datei enthält
+Topologie, Zielknoten, Verfahren, Metrik und Ausfälle, auf Wunsch auch die
+Namensanzeige und verschobene Knoten. Beim Laden rechnet das Programm alle
+Ergebnisse neu aus, statt gespeicherte Ergebnisse anzuzeigen; auf dem Server
+bleibt nichts gespeichert. Der Ablauf: Topologie laden, eine Kante ausfallen
+lassen, speichern, Programm schließen oder Seite neu laden, dann die Datei über
+„Szenario laden“ öffnen.
 
-- **Anlass:** ein besprochener Anwendungsfall: eine Konfiguration exportieren,
-  weitergeben und auf einem anderen Rechner mit denselben Einstellungen und
-  Ausfällen öffnen.
-- **Änderung:** „Szenario speichern“ und „Szenario laden“ in der Seitenleiste; die
-  JSON-Datei enthält Topologie, Zielknoten, Verfahren, Metrik und Ausfälle, beim
-  Laden wird das Routing neu berechnet.
-- **Vorführen:** `bonsai_routing_failure.json` laden, Kante ausfallen lassen,
-  speichern, Programm neu starten, „Szenario laden“ wählen.
+## 4. Ein Windows-Programm, das auch ohne Internet läuft
 
-### 4. Windows-Programm, auch ohne Internet
+Das war mein eigener Ergänzungswunsch: das Werkzeug per Doppelklick starten,
+ohne zwei Terminals und ohne Internetverbindung.
+`FailoverRoutingVisualizer.exe` startet die vorhandene Oberfläche und den
+vorhandenen Python-Kern in einem eigenen Fenster. Der lokale Server ist nur
+vom eigenen Rechner aus erreichbar, und alle Dateien der Oberfläche stecken in
+der Programmdatei. Das Programm ist nicht signiert; bei der SmartScreen-Warnung
+führen „Weitere Informationen“ und „Trotzdem ausführen“ weiter. Danach kann man
+das Netzwerk trennen und eine Topologie laden. Mehr dazu in der
+[Windows-Anleitung](../WINDOWS_APP.md).
 
-- **Anlass:** mein eigener Ergänzungswunsch: das Tool per Doppelklick starten, ohne
-  zwei Terminals, und auch ohne Internet nutzen.
-- **Änderung:** `FailoverRoutingVisualizer.exe` startet Backend und Oberfläche in
-  einem eigenen Fenster; der Server hört nur auf `127.0.0.1`, alle
-  Oberflächendateien sind eingebaut.
-- **Vorführen:** Programm starten (nicht signiert: bei SmartScreen „Weitere
-  Informationen“, „Trotzdem ausführen“), Netzwerk trennen, Topologie laden.
+## 5. Der Graph lässt sich als PNG oder SVG exportieren
 
-### 5. Graph als SVG und PNG exportieren
+Auch ein Bildexport wurde nach meiner Erinnerung in der Abschlusspräsentation
+angeregt. Bisher blieben nur Bildschirmfotos; sie zeigen lediglich den
+sichtbaren Ausschnitt samt Bedienelementen. Die Schaltflächen „SVG“ und „PNG“
+über dem Graphen laden jetzt ein Bild der gesamten Topologie im aktuellen
+Zustand herunter, mit Kopfzeile und Legende und unabhängig vom Zoom. Das Bild
+ist eine Kopie der angezeigten Zeichnung; dafür wird kein Routing neu
+berechnet. Probieren lässt sich das, indem man nach dem Laden einer Topologie
+stark hineinzoomt, „PNG“ klickt und die Datei öffnet. Beispielbilder liegen in
+[`bildexport-beispiele/`](bildexport-beispiele/).
 
-- **Anlass (meine Schilderung):** Auch ein Bildexport wurde bei der
-  Abschlusspräsentation vorgeschlagen; umgesetzt wurden PNG und SVG.
-- **Änderung:** „SVG“ und „PNG“ in der Werkzeugleiste laden die gesamte Topologie
-  im aktuellen Zustand herunter, unabhängig vom Zoom, mit Kopfzeile und Legende.
-  Beim Bildexport wird das Routing nicht neu berechnet.
-- **Vorführen:** Topologie laden, hineinzoomen, „PNG“ klicken, Datei öffnen.
-  Beispiele: [`bildexport-beispiele/`](bildexport-beispiele/).
+<img src="bildexport-beispiele/bonsai-ausfall.png" width="420" alt="Exportiertes Bild: Bonsai-Topologie mit einem Ausfall, Kopfzeile und Legende">
 
-## Prüfung, Grenzen und Nachweise
+## Was geprüft ist und was nicht
 
-Geprüft wurde technisch am Zweig
-[`claude/paket-5-bildexport`](https://github.com/sammo3332/routing-simulator-hci-concept/tree/claude/paket-5-bildexport)
-(alle fünf Punkte, Code bis Commit
-[`7cf4166`](https://github.com/sammo3332/routing-simulator-hci-concept/commit/7cf416607d83453f856b6e3ba5299f3f47f04241)).
-Das Windows-Programm stammt aus
+**Automatisiert** bestanden am Code-Stand
+[`7cf4166`](https://github.com/sammo3332/routing-simulator-hci-concept/commit/7cf416607d83453f856b6e3ba5299f3f47f04241)
+alle Backend-, Frontend- und Browserprüfungen. Das Windows-Programm wurde im
 [Lauf Nr. 8](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074)
-(Artefakt nur mit GitHub-Anmeldung, bis 24. Februar 2027); dort lief es auf einem
-GitHub-Runner (Windows Server 2025), auch bei per Firewall gesperrtem Internet.
-Nachweise: [Übergabe](UEBERGABE.md), [Prüfbericht](PRUEFBERICHT.md), Pakete
-[1](PAKET_1_KANTENLESBARKEIT.md), [2](PAKET_2_KNOTENVERSCHIEBEN.md),
-[3](PAKET_3_SZENARIEN.md), [4](PAKET_4_WINDOWS_APP.md),
-[5](PAKET_5_BILDEXPORT.md).
+auf einem Windows-Server-Rechner von GitHub gebaut und im eigenen Fenster
+geprüft, auch bei gesperrtem Internetzugang.
 
-Grenzen: Nicht untersucht ist, ob Nutzende Kanten schneller finden oder den Export
-besser verstehen. Nicht automatisch geprüft sind andere Browser als Chromium und
-WebView2, eine Szenariodatei auf einem zweiten Rechner, Windows 10 und 11 auf einem
-Arbeitsplatzrechner, ein Rechner ganz ohne Netzwerk und der Windows-Dialog
-„Speichern unter“. Befunde zu lokaler Absicherung, ungültigen Zahlen, extremen Koordinaten und
-großen Rechenlasten sind nicht behoben.
+**Von Hand** habe ich auf meinem eigenen Windows-Rechner ausprobiert: Start,
+Szenario speichern und nach einem Neustart wiederherstellen, Laden und
+Neuberechnung ohne Internet sowie SVG und PNG speichern und öffnen, auch ohne
+Internet. Das hat funktioniert. Windows-Version und genaue Programmdatei habe
+ich nicht notiert; das war keine umfassende Abnahme.
 
-## Meine manuelle Rückmeldung
+**Offen** sind eine Untersuchung mit Nutzenden, eine automatisierte Prüfung des
+Windows-Dialogs „Speichern unter“, Windows 10 und 11 auf einem
+Arbeitsplatzrechner, andere Browser als Chromium und WebView2 sowie eine
+Szenariodatei auf einem zweiten Rechner. Bekannte Schwächen bei der lokalen
+Absicherung, bei ungültigen Zahlen, extremen Koordinaten und sehr großen
+Topologien sind nicht behoben.
 
-Von Hand auf meinem Windows-Rechner ausprobiert:
-
-- Start, Szenariospeicherung und Wiederherstellung nach Neustart funktionierten.
-- Laden und Neuberechnung funktionierten ohne Internet.
-- SVG und PNG ließen sich speichern und öffnen, auch ohne Internet.
-
-Das sind Prüfungen der ausprobierten Abläufe, keine umfassende Abnahme und keine
-Benutzerstudie; Windows-Version und Programmstand sind nicht festgehalten.
+Einzelheiten: [Übergabe](UEBERGABE.md), [Prüfbericht](PRUEFBERICHT.md) und die
+Paketdokumente [1](PAKET_1_KANTENLESBARKEIT.md),
+[2](PAKET_2_KNOTENVERSCHIEBEN.md), [3](PAKET_3_SZENARIEN.md),
+[4](PAKET_4_WINDOWS_APP.md) und [5](PAKET_5_BILDEXPORT.md).

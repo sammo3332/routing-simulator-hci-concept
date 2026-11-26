@@ -21,7 +21,9 @@ damals evaluierten Referenzstand.
 - Ein neuer erfolgreicher Topologieimport verwirft die vorherige Anordnung,
   auch wenn beide Topologien dieselben Knoten-IDs besitzen.
 - Beim Neuladen der Seite geht die Anordnung wie der übrige Frontendzustand
-  verloren. Es gibt keine zusätzliche Speicherung.
+  verloren. Eine automatische Speicherung gibt es nicht. Auf dem
+  Entwicklungszweig lässt sich die Anordnung mit „Szenario speichern“ in der
+  Szenariodatei mitsichern ([Paket 3](weiterentwicklung/PAKET_3_SZENARIEN.md)).
 
 Die Positionsänderungen liegen ausschließlich im React-Darstellungszustand.
 Sie lösen keine API-Anfrage aus und verändern weder die importierten

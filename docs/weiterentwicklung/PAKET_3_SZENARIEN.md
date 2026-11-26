@@ -257,7 +257,9 @@ Routen“ gesetzt.
   solches Szenario wird abgewiesen.
 - Sitzungen werden wie bisher nie aus dem Arbeitsspeicher entfernt; jedes
   Laden legt eine weitere an.
-- `ARCHITECTURE.md` und `REQUIREMENTS.md` beschreiben den Stand der
-  Bachelorarbeit und wurden nicht um die neuen Schnittstellen ergänzt.
+- `ARCHITECTURE.md` und `REQUIREMENTS.md` beschreiben die neuen Schnittstellen
+  in einem eigenen Abschnitt „Ergänzungen nach der Bachelorarbeit“ (ergänzt
+  auf `claude/docs-weiterentwicklung`); ihre übrigen Teile beschreiben weiter
+  den Stand der Arbeit.
 - Die Datei ist nicht signiert. Sie kann von Hand verändert werden; geprüft
   wird ihre Gültigkeit, nicht ihre Herkunft.

@@ -6,9 +6,14 @@ Dieses Dokument fasst zusammen, was vorliegt, wie die Teile zusammenhängen
 und was offen ist. Belege und Einzelheiten stehen im
 [Prüfbericht](PRUEFBERICHT.md) und in den Paketdokumenten.
 
-Eine kurze Übersicht für das Gespräch mit Erik (Herkunft der Punkte,
-Vorführung, Prüfung, Grenzen) steht in
+Eine kurze Übersicht für Erik (was sich geändert hat, wie es sich ausprobieren
+lässt, was geprüft ist) steht in
 [UEBERSICHT_FUER_ERIK.md](UEBERSICHT_FUER_ERIK.md).
+
+**Dokumentation überarbeitet am 27. November 2026:** README, `ARCHITECTURE.md`,
+`REQUIREMENTS.md`, die Windows-Anleitung und die Übersicht für Erik wurden auf
+dem Zweig `claude/docs-weiterentwicklung` an den Stand von Paket 5 angepasst.
+Der Code entspricht dort unverändert `7cf4166`.
 
 **Ergänzt am 26. November 2026 (Paket 5):** Bildexport als SVG und PNG und
 Korrektur der Speichermeldung nach „Szenario speichern“. Beides liegt auf dem
@@ -38,6 +43,7 @@ Alle Zweige liegen auf GitHub unter
 | `claude/paket-4-windows-app` | Basis + Paket 4 | `095a242`, danach nur Dokumentation |
 | `claude/integration-gesamtvorschlag` | Basis + alle vier Pakete + Prüfskripte der unabhängigen Prüfung | `439da19`, danach nur Dokumentation |
 | `claude/paket-5-bildexport` | Integrationsstand + Korrektur der Speichermeldung + Bildexport + Erweiterung des Fenstertests | Code `7cf4166`, danach nur Dokumentation |
+| `claude/docs-weiterentwicklung` | Stand von `claude/paket-5-bildexport` mit überarbeiteter Dokumentation | Code wie `7cf4166`; nur Dokumentation geändert |
 | `claude/gallant-fermat-h4hdmg` | Sitzungszweig: Integrationsstand per Merge; zusätzlich aus der ersten Sitzung das frühere Änderungsprotokoll mit seinen Bildschirmfotos und das frühere Prüfskript `tests/browser/interaction-checks.cjs` | Anwendung und Tests wie Integrationszweig; der Unterschied besteht nur aus den genannten Dateien |
 
 Die vollständigen Commit-Kennungen und alle Testzahlen stehen im
@@ -95,7 +101,7 @@ werden.
 | Commits | `8b883fc` API · `a0496c0` Oberfläche · `3d3ce76` Korrekturen aus der unabhängigen Prüfung · `aa84a79`, `f17fb2e` Dokumentation · `45873d9`, `4e21d7d` Ansichtszustand (optional) |
 | Abhängigkeiten | Basis; kein anderes Paket. Der Ansichtszustand nutzt das Knotenverschieben aus `main`, nicht Paket 2. |
 | Ausgeführte Tests | vollständig: 31 Frontend-Tests, 96 Backend-Tests, 37 von 37 Browserprüfungen · ohne Ansichtszustand: 30, 89, 28 von 28 · jeweils Lint und Build · vollständiger Ablauf mit neu gestartetem Backend für beide Verfahren |
-| Offene Punkte | Rechenzeit sehr großer Topologien ist nicht begrenzt; nicht endliche Zahlen im Rumpf einer Anfrage führen zu Serverfehler 500; `ARCHITECTURE.md` und `REQUIREMENTS.md` nennen die neuen Schnittstellen nicht; nur Formatversion 1.0; nicht auf zwei verschiedenen Rechnern geprüft |
+| Offene Punkte | Rechenzeit sehr großer Topologien ist nicht begrenzt; nicht endliche Zahlen im Rumpf einer Anfrage führen zu Serverfehler 500; nur Formatversion 1.0; nicht auf zwei verschiedenen Rechnern geprüft. Die neuen Schnittstellen stehen inzwischen in `ARCHITECTURE.md` und `REQUIREMENTS.md` (Zweig `claude/docs-weiterentwicklung`). |
 | Dokument | [PAKET_3_SZENARIEN.md](PAKET_3_SZENARIEN.md) |
 
 ### Paket 4: Windows-App
@@ -314,7 +320,8 @@ unter [`tests/review/`](../../tests/review/README.md).
 
 ## 7. Starten
 
-Entwicklung (zwei Terminals), auf jedem Zweig gleich:
+Entwicklung (zwei Terminals), auf jedem Zweig gleich. Die Python-Umgebung wird
+vorher wie im [README](../../README.md#lokal-im-browser) eingerichtet.
 
 ```bash
 npm ci
@@ -371,9 +378,10 @@ Playwright-Installation.
    vierte Teil des Fenstertests in jedem Lauf „nicht bestanden“.
 7. Welcher der beiden Referenz-Commits (`ed3b68c` oder `99c2962`) ist der
    abgegebene Stand der Arbeit? Beide sind gesichert.
-8. Sollen `ARCHITECTURE.md` und `REQUIREMENTS.md` bei der Übernahme um die
-   neuen Schnittstellen ergänzt werden, oder bleiben sie Dokumente des
-   Standes der Arbeit?
+8. Erledigt: `ARCHITECTURE.md` und `REQUIREMENTS.md` haben auf
+   `claude/docs-weiterentwicklung` je einen gekennzeichneten Abschnitt
+   „Ergänzungen nach der Bachelorarbeit“; die Teile zum Stand der Arbeit sind
+   unverändert.
 9. Sollen die offenen Befunde der unabhängigen Prüfung behoben werden
    (Prüfbericht, Abschnitt 5: A2b, A6, A7, A7b, A11, A12, A13, B11, B12, B14,
    B16)? Paket 5 hat A2b, A6, A7, A7b und B12 auftragsgemäß nicht bearbeitet.
