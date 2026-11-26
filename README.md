@@ -121,6 +121,7 @@ evaluierten Stand.
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | gemeinsames Docker- und Render-Deployment |
 | [docs/DRAGGABLE_NODES.md](docs/DRAGGABLE_NODES.md) | Knoten manuell verschieben (nach der Bachelorarbeit) |
 | [docs/WINDOWS_APP.md](docs/WINDOWS_APP.md) | Windows-Programm: Starten, Voraussetzungen, Build (nach der Bachelorarbeit) |
+| [docs/weiterentwicklung/UEBERSICHT_FUER_ERIK.md](docs/weiterentwicklung/UEBERSICHT_FUER_ERIK.md) | Kurzübersicht der Weiterentwicklung für Erik: Herkunft, Vorführung, Prüfung, Grenzen (nach der Bachelorarbeit) |
 | [docs/weiterentwicklung/UEBERGABE.md](docs/weiterentwicklung/UEBERGABE.md) | Weiterentwicklung nach der Bachelorarbeit: Pakete, Zweige, offene Punkte |
 | [docs/weiterentwicklung/PRUEFBERICHT.md](docs/weiterentwicklung/PRUEFBERICHT.md) | Testzahlen je Commit und Ergebnisse der unabhängigen Prüfung |
 | [docs/weiterentwicklung/PAKET_5_BILDEXPORT.md](docs/weiterentwicklung/PAKET_5_BILDEXPORT.md) | Bildexport des Graphen als SVG und PNG sowie Korrektur der Speichermeldung (nach der Bachelorarbeit) |

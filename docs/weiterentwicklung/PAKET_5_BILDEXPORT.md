@@ -323,8 +323,8 @@ der drei Bildexport-Prüfungen; der Export lieferte dieselben Werte wie ohne Spe
 (PNG 1760 × 1104, 123 460 Bytes, 0 Anfragen an die API).
 
 Nicht belegt: der Windows-Dialog „Speichern unter“ für Bilder (der Fenstertest
-fängt die Downloads ab) und der Betrieb auf einem Arbeitsplatzrechner mit
-Windows 10 oder 11.
+fängt die Downloads ab; zur Rückmeldung von Hand siehe unten) und der Betrieb
+auf einem Arbeitsplatzrechner mit Windows 10 oder 11.
 
 Ein früherer Lauf am Commit `fe3e356`
 ([Nr. 7](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45837535630), vor der Korrektur für lange Namen) war ebenfalls insgesamt
@@ -388,6 +388,15 @@ eine Angabe aus der Rückmeldung, ohne Protokoll; Rechner, Windows-Version und
 Programmstand sind nicht genannt. Sie ist **kein Nachweis für den Bildexport**
 und ersetzt nicht die automatisierte Prüfung des Speichern-Dialogs, die offen
 bleibt ([PRUEFBERICHT.md](PRUEFBERICHT.md), 4.3).
+
+**Nachtrag vom 26. November 2026:** Eine weitere manuelle Rückmeldung meldet für
+den eigenen Windows-Rechner, dass sich SVG und PNG speichern und öffnen ließen,
+auch ohne Internet. Das ist ebenfalls eine Angabe ohne Protokoll (Windows-Version,
+genaue Programmdatei, Art der Internettrennung und die Kontrolle am geöffneten
+Bild sind nicht festgehalten) und keine umfassende Abnahme. Sie betrifft den
+Bildexport, ersetzt aber die automatisierte Prüfung des Speichern-Dialogs nicht
+([PRUEFBERICHT.md](PRUEFBERICHT.md), 4.3;
+[UEBERSICHT_FUER_ERIK.md](UEBERSICHT_FUER_ERIK.md)).
 
 ## Bewusst zurückgestellt
 

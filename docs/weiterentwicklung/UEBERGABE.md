@@ -6,6 +6,10 @@ Dieses Dokument fasst zusammen, was vorliegt, wie die Teile zusammenhängen
 und was offen ist. Belege und Einzelheiten stehen im
 [Prüfbericht](PRUEFBERICHT.md) und in den Paketdokumenten.
 
+Eine kurze Übersicht für das Gespräch mit Erik (Herkunft der Punkte,
+Vorführung, Prüfung, Grenzen) steht in
+[UEBERSICHT_FUER_ERIK.md](UEBERSICHT_FUER_ERIK.md).
+
 **Ergänzt am 26. November 2026 (Paket 5):** Bildexport als SVG und PNG und
 Korrektur der Speichermeldung nach „Szenario speichern“. Beides liegt auf dem
 Zweig `claude/paket-5-bildexport` (Abschnitte 1, 2 und 5). Die Zweige und
@@ -115,7 +119,7 @@ werden.
 | Commits | `598946d` Meldungskorrektur · `6b67840` Bildexport · `fe3e356` Fenstertest · `7cf4166` lange Namen · danach Dokumentation |
 | Abhängigkeiten | baut auf dem Integrationsstand auf. Meldungskorrektur: Paket 3. Bildexport: funktional Paket 1 (Legende), im Text Pakete 2 und 3; nur auf dem Integrationsstand ohne Konflikt übertragbar. Beide Commits hängen nicht voneinander ab. |
 | Ausgeführte Tests | 58 Frontend-Tests, 128 Backend-Tests, 113 von 113 Browserprüfungen (auch ohne Netzwerkschnittstelle), Vergleich der Oberfläche vor und nach der Änderung (8 von 8 Zuständen identisch), Windows-Runner (Abschnitt 4), Lint, Build |
-| Offene Punkte | Speichern-Dialog von Windows für Bilder nicht geprüft; nur Chromium und WebView2; nur dunkle Darstellung; die in Paket 3 und 4 genannten Befunde bleiben offen |
+| Offene Punkte | Speichern-Dialog von Windows für Bilder nicht automatisiert geprüft (Rückmeldung von Hand ohne Protokoll, Abschnitt 4); nur Chromium und WebView2; nur dunkle Darstellung; die in Paket 3 und 4 genannten Befunde bleiben offen |
 | Dokumente | [PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md) · [KORREKTUR_SPEICHERMELDUNG.md](KORREKTUR_SPEICHERMELDUNG.md) · [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md) |
 
 ## 3. Was lässt sich einzeln übernehmen?
@@ -192,11 +196,19 @@ wurde nicht von Hand gestartet. Kurzanleitung und Voraussetzungen: siehe unten
 | **Bildexport im Programmfenster:** SVG (als XML geprüft) und PNG (1760 × 1104 Pixel, im Fenster dekodiert, Rand sauber), Zustand unverändert, 0 Anfragen an die API; Downloads in der Seite abgefangen | bestanden |
 | „Szenario speichern“ und „Szenario laden“ im Programmfenster (abgefangener Download) | bestanden |
 | dieselben Funktionen einschließlich Bildexport, während Programm und WebView2 per Firewall vom Internet getrennt sind | bestanden |
-| Windows-Dialog „Speichern unter“ bis zur Datei auf dem Datenträger (Szenario und Bilder) | **nicht automatisiert belegt**; für Szenarien liegt eine Rückmeldung von Hand vor (26. November 2026), für Bilder nicht |
+| Windows-Dialog „Speichern unter“ bis zur Datei auf dem Datenträger (Szenario und Bilder) | **nicht automatisiert belegt**; für Szenarien und für Bilder liegt je eine Rückmeldung von Hand vor (26. November 2026, ohne Protokoll, siehe unten) |
 
 Grenzen wie bisher: Windows Server 2025 auf dem Runner, kein Arbeitsplatzrechner,
 kein Windows-Rechner ganz ohne Netzwerkverbindung, nicht signiert. Das
 Bildschirmfoto des Laufs wurde nicht gesichtet.
+
+Rückmeldung von Hand (26. November 2026, eigener Windows-Rechner, ohne
+Protokoll): Start, Szenariospeicherung und Wiederherstellung nach Neustart
+funktionierten; Laden und Neuberechnung funktionierten ohne Internet; SVG und
+PNG ließen sich speichern und öffnen, auch ohne Internet. Windows-Version,
+genaue Programmdatei und die Art der Internettrennung sind nicht festgehalten.
+Das sind Prüfungen der ausprobierten Abläufe, keine umfassende Abnahme und keine
+Benutzerstudie ([Prüfbericht](PRUEFBERICHT.md), 4.3).
 
 ### Programmdatei ohne Bildexport (Integrationsstand)
 
@@ -287,9 +299,9 @@ oder Pull Request vorhanden). Beschreibung, Beispiele, Prüfung und Grenzen:
 [PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md); der ursprüngliche Plan mit den
 Abweichungen: [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md).
 
-Offen beim Bildexport: der Windows-Dialog „Speichern unter“ für Bilder (nicht
-automatisiert geprüft, Abschnitt 4), Firefox und Safari, eine helle Variante
-für den Druck.
+Offen beim Bildexport: die automatisierte Prüfung des Windows-Dialogs „Speichern
+unter“ für Bilder (nur eine Rückmeldung von Hand ohne Protokoll, Abschnitt 4),
+Firefox und Safari, eine helle Variante für den Druck.
 
 ## 6. Unabhängige Prüfung
 
@@ -351,9 +363,10 @@ Playwright-Installation.
    ein Release angelegt werden, damit die Programmdatei ohne Ablaufdatum
    bereitsteht?
 6. Windows-Programm: Das Speichern über den Windows-Dialog ist nicht
-   automatisiert belegt (Abschnitt 4). Für Szenarien liegt eine Rückmeldung von
-   Hand vor (26. November 2026), für den Bildexport nicht. Genügt die Prüfung von
-   Hand, oder soll das Hilfsskript des Fenstertests weiter angepasst werden?
+   automatisiert belegt (Abschnitt 4). Für Szenarien und für den Bildexport liegt
+   je eine Rückmeldung von Hand vor (26. November 2026, ohne Protokoll). Genügt
+   die Prüfung von Hand, oder soll das Hilfsskript des Fenstertests weiter
+   angepasst werden?
    Solange es den Dialog nicht bedienen kann, meldet der nicht blockierende
    vierte Teil des Fenstertests in jedem Lauf „nicht bestanden“.
 7. Welcher der beiden Referenz-Commits (`ed3b68c` oder `99c2962`) ist der

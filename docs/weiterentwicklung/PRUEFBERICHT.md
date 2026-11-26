@@ -259,7 +259,20 @@ Wiederherstellung nach Neustart sowie Laden und Neuberechnung ohne Internet beim
 getesteten Ablauf funktioniert hätten. Das ist eine Angabe ohne Protokoll;
 Rechner, Windows-Version und Programmstand sind nicht genannt. Die
 automatisierte Prüfung des Dialogs bleibt „nicht belegt“. Für den Bildexport
-liegt keine solche Rückmeldung vor.
+enthielt diese Rückmeldung nichts; siehe den zweiten Nachtrag.
+
+Zweiter Nachtrag vom 26. November 2026: Eine weitere manuelle Rückmeldung (siehe
+[UEBERSICHT_FUER_ERIK.md](UEBERSICHT_FUER_ERIK.md)) meldet für den eigenen
+Windows-Rechner: Start, Szenariospeicherung und Wiederherstellung nach Neustart
+funktionierten, Laden und Neuberechnung funktionierten ohne Internet, SVG und PNG
+ließen sich speichern und öffnen, auch ohne Internet. Das sind Prüfungen der
+ausprobierten Abläufe, keine umfassende Abnahme und keine Benutzerstudie. Auch
+hier gibt es kein Protokoll; Windows-Version, genaue Programmdatei, die Art der
+Internettrennung und was am geöffneten Bild kontrolliert wurde sind nicht
+festgehalten. Damit liegt für das Speichern der Bilder erstmals eine Rückmeldung
+von Hand vor, und es liegt eine Rückmeldung von einem Windows-Rechner außerhalb
+des Runners vor; Windows 10 und 11 sind wegen der fehlenden Versionsangabe nicht
+einzeln belegt. Die automatisierte Prüfung des Dialogs bleibt „nicht belegt“.
 
 Im vorherigen Lauf am Integrationsstand `340ea4a`
 ([Nr. 4](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45722169773))
@@ -451,5 +464,6 @@ Windows-Paket und dessen Tests.
 - Ein Windows-Rechner ohne Netzwerkverbindung.
 - Touch-Bedienung, andere Browser als Chromium, Bildschirmleser.
 - Nutzung durch Personen.
-- Bildexport: Firefox und Safari; Speichern-Dialog von Windows für Bilder;
+- Bildexport: Firefox und Safari; Speichern-Dialog von Windows für Bilder
+  (automatisiert; nur eine Rückmeldung von Hand ohne Protokoll, 4.3);
   Windows-Arbeitsplatzrechner.
