@@ -12,6 +12,7 @@ import {
   graphImageFileName,
   pngScale,
   sanitizeXmlText,
+  shortenLabel,
 } from "./imageExport";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -50,6 +51,11 @@ export function readGraphScene(svgElement, { showAllNodeNames }) {
   });
   [clone, ...clone.querySelectorAll("*")].forEach(node => {
     INTERACTION_ATTRIBUTES.forEach(name => node.removeAttribute(name));
+  });
+  // Überlange Namen werden gekürzt, damit sie das Bild nicht beliebig verbreitern.
+  clone.querySelectorAll("text").forEach(node => {
+    const shortened = shortenLabel(node.textContent);
+    if (shortened !== node.textContent) node.textContent = shortened;
   });
 
   const defs = svgElement.querySelector(":scope > defs")?.cloneNode(true);

@@ -8,8 +8,10 @@ import {
   flowLayout,
   graphImageFileName,
   IMAGE_LAYOUT,
+  MAX_LABEL_LENGTH,
   pngScale,
   sanitizeXmlText,
+  shortenLabel,
   truncateToWidth,
 } from "../../src/utils/imageExport.js";
 
@@ -56,6 +58,30 @@ test("long texts are shortened to the available width", () => {
   assert.ok(shortened.endsWith("…"));
   assert.ok(width(shortened) <= 100);
   assert.equal(truncateToWidth("abc", 5, width), "…");
+});
+
+test("a name with 100000 characters is shortened quickly, not after quadratic work", () => {
+  let calls = 0;
+  const width = text => { calls += 1; return text.length * 7; };
+  const started = Date.now();
+  const shortened = truncateToWidth("N".repeat(100_000), 832, width);
+  assert.ok(Date.now() - started < 500);
+  assert.ok(calls < 40, `${calls} Messungen`);
+  assert.ok(shortened.endsWith("…") && width(shortened) <= 832);
+});
+
+test("overlong node names are shortened by characters, not by UTF-16 units", () => {
+  assert.equal(shortenLabel("Berlin"), "Berlin");
+  assert.equal(shortenLabel("x".repeat(MAX_LABEL_LENGTH)), "x".repeat(MAX_LABEL_LENGTH));
+  const shortened = shortenLabel("x".repeat(5000));
+  assert.equal(Array.from(shortened).length, MAX_LABEL_LENGTH);
+  assert.ok(shortened.endsWith("…"));
+  // Ein Emoji besteht aus zwei UTF-16-Einheiten und darf nicht geteilt werden.
+  const emoji = shortenLabel("🕸".repeat(100), 10);
+  assert.equal(emoji, `${"🕸".repeat(9)}…`);
+  assert.equal(sanitizeXmlText(emoji), emoji);
+  assert.equal(shortenLabel("🕸".repeat(40), 80), "🕸".repeat(40));
+  assert.equal(shortenLabel(undefined), "undefined");
 });
 
 test("items flow into rows that stay within the width", () => {

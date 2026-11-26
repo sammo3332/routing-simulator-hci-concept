@@ -40,7 +40,22 @@ export const IMAGE_LAYOUT = {
   glyphGap: 6,
 };
 
+// Namen an den Knoten werden im Bild auf diese Zahl von Zeichen gekürzt. Ein
+// einziger überlanger Name aus einer importierten Datei machte das Bild sonst
+// beliebig breit und das PNG unlesbar klein.
+export const MAX_LABEL_LENGTH = 80;
+
 const round = value => Math.round(value * 100) / 100;
+
+// Kürzt einen Namen auf höchstens `limit` Zeichen (Unicode-Zeichen, nicht
+// UTF-16-Einheiten, damit kein Emoji zerschnitten wird) und hängt „…“ an.
+export function shortenLabel(text, limit = MAX_LABEL_LENGTH) {
+  const value = String(text);
+  if (value.length <= limit) return value;
+  const characters = Array.from(value);
+  if (characters.length <= limit) return value;
+  return `${characters.slice(0, limit - 1).join("").trimEnd()}…`;
+}
 
 export function escapeXml(value) {
   return String(value)
@@ -85,13 +100,22 @@ export function graphImageFileName(topologyName, extension, date = new Date()) {
   return `graph-${slug || "topologie"}-${stamp}.${extension}`;
 }
 
-// Kürzt einen Text auf eine Breite; `measure(text)` liefert die Breite.
+// Kürzt einen Text auf eine Breite; `measure(text)` liefert die Breite. Die Länge
+// des Präfixes wird per Halbierung gesucht und nach oben durch die Breite
+// begrenzt (ein Zeichen ist mindestens eine Einheit breit); sonst brauchte ein
+// Name mit 100 000 Zeichen aus einer importierten Datei Minuten und den ganzen
+// Arbeitsspeicher der Seite.
 export function truncateToWidth(text, maxWidth, measure) {
   const value = String(text);
   if (measure(value) <= maxWidth) return value;
-  let end = value.length;
-  while (end > 0 && measure(`${value.slice(0, end)}…`) > maxWidth) end -= 1;
-  return `${value.slice(0, end).trimEnd()}…`;
+  let low = 0;
+  let high = Math.min(value.length, Math.max(0, Math.ceil(maxWidth)));
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (measure(`${value.slice(0, middle)}…`) <= maxWidth) low = middle;
+    else high = middle - 1;
+  }
+  return `${value.slice(0, low).trimEnd()}…`;
 }
 
 // Ordnet Elemente der Reihe nach in Zeilen an, die höchstens `maxWidth` breit

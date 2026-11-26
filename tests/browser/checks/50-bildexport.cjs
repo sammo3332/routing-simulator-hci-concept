@@ -547,6 +547,31 @@ module.exports = {
         && (await pixels(specialPng.bytes)).nonBackgroundRatio > 0.005,
       specialData.error || `${invalidCharacters.length} ungültige Zeichen`);
 
+    // --- Überlange Namen ----------------------------------------------------------------
+    const longName = "Sehr langer Name ".repeat(300);
+    const long = {
+      ...special,
+      graph: { name: longName },
+      nodes: special.nodes.map((node, index) => ({ ...node, name: index === 0 ? longName : node.name })),
+    };
+    const longFile = path.join(workDirectory, "lang.json");
+    fs.writeFileSync(longFile, JSON.stringify(long));
+    await upload(longFile);
+    const longStarted = Date.now();
+    const longSvg = await exportSvg();
+    const longPng = await exportPng();
+    const longData = await analyseSvg(longSvg.text);
+    const longPixels = await pixels(longPng.bytes);
+    // Der Name an der Zeichnung wird auf 80 Zeichen gekürzt, die Werte der Kopfzeile auf die Breite des Bildes.
+    const longLabel = longData.scene.nodes.find(node => node.id === "n1").label ?? "";
+    const longHeaderValues = longData.texts.filter(text => text.startsWith("Sehr langer Name") && text !== longLabel);
+    check("E-35", "Überlange Namen (4800 Zeichen): Namen und Kopfzeile werden gekürzt, das Bild bleibt schmal und lesbar, kein Abbruch",
+      longData.wellFormed && Array.from(longLabel).length <= 80 && longLabel.endsWith("…")
+        && longHeaderValues.length >= 2 && longHeaderValues.every(text => text.endsWith("…") && text.length < 200)
+        && longData.width < 1400 && pngSize(longPng.bytes).width >= 1600 && pngSize(longPng.bytes).height > 600
+        && longPixels.dirtyFrame === 0 && Date.now() - longStarted < 8000,
+      `Breite ${longData.width}, Name ${Array.from(longLabel).length} Zeichen, ${longHeaderValues.length} gekürzte Kopfzeilenwerte, ${Date.now() - longStarted} ms`);
+
     // --- Tooltip und Fokus gehören nicht ins Bild --------------------------------------
     await page.getByRole("button", { name: "Namen", exact: true }).click();
     const quiet = (await liveScene()).nodes.find(node => node.label === null);
