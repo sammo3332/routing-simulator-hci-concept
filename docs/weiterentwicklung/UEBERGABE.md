@@ -120,6 +120,11 @@ diesem Zustand wurde er geprüft (Abschnitt 2). Damit gilt:
 Kein Paket lässt sich ohne die Basis über seinen Zweig übernehmen. Paket 4
 hängt technisch nicht von den Korrekturen der Basis ab.
 
+Die vorhandene CI ist für diese Zweige nicht gelaufen: Sie startet nur bei
+Pull Requests und auf `main`, und ein Pull Request wurde nicht angelegt. Ihre
+Schritte wurden lokal nachgestellt, bis auf den Bau des Container-Images
+([Prüfbericht](PRUEFBERICHT.md), Abschnitt 1).
+
 Inhaltliche Berührungspunkte, die keine Abhängigkeit sind:
 
 - Paket 4 erlaubt Downloads im Fenster, damit „Szenario speichern“ aus
