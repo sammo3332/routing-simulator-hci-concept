@@ -14,6 +14,7 @@ import json
 import logging
 import logging.handlers
 import os
+import re
 import socket
 import sys
 import threading
@@ -22,6 +23,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any, Callable
+from xml.etree import ElementTree
 
 import uvicorn
 
@@ -541,9 +543,12 @@ WINDOW_STATE_SCRIPT = """
     failures: failures ? Number(failures[1]) : null,
     loading: body.indexOf("Berechnung l\\u00e4uft") !== -1,
     hasScenario: Boolean(button("Szenario speichern")),
+    hasExport: Boolean(button("SVG") && button("PNG")),
     loadedScenario: body.indexOf("Geladenes Szenario:") !== -1,
     capturedName: captured ? captured.name : null,
     capturedText: captured ? captured.text : null,
+    capturedImage: captured && captured.image ? captured.image : null,
+    apiCalls: window.__frvApiCalls === undefined ? null : window.__frvApiCalls,
     internet: window.__frvInternet === undefined ? null : window.__frvInternet,
     userAgent: navigator.userAgent
   });
@@ -579,21 +584,90 @@ WINDOW_FILE_SCRIPT = """
 })()
 """
 
-# Fängt den Download von „Szenario speichern“ ab und hält den Inhalt fest.
-# Der Speichern-Dialog des Fensters wird damit umgangen; ihn prüft der
-# getrennte Lauf mit --native-save-file.
+# Fängt Downloads der Oberfläche ab und hält den Inhalt fest: den von „Szenario
+# speichern“ und den des Bildexports („SVG“, „PNG“). Der Speichern-Dialog des
+# Fensters wird damit umgangen; ihn prüft der getrennte Lauf mit
+# --native-save-file. Ein PNG wird im Fenster selbst dekodiert und ausgewertet
+# (Signatur, Größe, Pixel), weil sich Bilddaten nicht sinnvoll als Text durch die
+# Schnittstelle schicken lassen. Zusätzlich werden Anfragen an die API gezählt,
+# damit sich zeigen lässt, dass der Export keine auslöst.
 WINDOW_CAPTURE_SCRIPT = """
 (function () {
   if (window.__frvCaptureInstalled) { return "ok"; }
   window.__frvCaptureInstalled = true;
   window.__frvCaptured = null;
+  window.__frvApiCalls = 0;
+  var originalFetch = window.fetch;
+  window.fetch = function (input) {
+    var url = typeof input === "string" ? input : ((input && input.url) || "");
+    if (url.indexOf("/api/") !== -1) { window.__frvApiCalls += 1; }
+    return originalFetch.apply(window, arguments);
+  };
+  function describe(name, blob) {
+    if (String(blob.type).indexOf("image/png") !== 0) {
+      return blob.text().then(function (content) {
+        return { name: name, type: blob.type, text: content };
+      });
+    }
+    return blob.slice(0, 24).arrayBuffer().then(function (head) {
+      var view = new DataView(head);
+      var image = {
+        size: blob.size,
+        signature: Array.prototype.slice.call(new Uint8Array(head, 0, 8)),
+        width: view.getUint32(16),
+        height: view.getUint32(20)
+      };
+      return createImageBitmap(blob).then(function (bitmap) {
+        var canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(bitmap, 0, 0);
+        var pixels = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+        function near(offset, r, g, b, tolerance) {
+          return Math.abs(pixels[offset] - r) + Math.abs(pixels[offset + 1] - g)
+            + Math.abs(pixels[offset + 2] - b) <= tolerance;
+        }
+        var frame = 8, dirtyFrame = 0, background = 0, gold = 0, red = 0, opaque = true;
+        for (var y = 0; y < bitmap.height; y += 1) {
+          for (var x = 0; x < bitmap.width; x += 1) {
+            var offset = (y * bitmap.width + x) * 4;
+            if (pixels[offset + 3] !== 255) { opaque = false; }
+            var isBackground = near(offset, 19, 23, 32, 3);
+            if (isBackground) { background += 1; }
+            // Die Trennlinien zwischen Kopfzeile, Zeichnung und Legende laufen
+            // über die ganze Breite und gehören zum Bild.
+            if ((x < frame || y < frame || x >= bitmap.width - frame || y >= bitmap.height - frame)
+                && !isBackground && !near(offset, 37, 43, 59, 8)) { dirtyFrame += 1; }
+            if (near(offset, 251, 191, 36, 14)) { gold += 1; }
+            if (near(offset, 255, 64, 64, 14)) { red += 1; }
+          }
+        }
+        image.decoded = {
+          width: bitmap.width,
+          height: bitmap.height,
+          corner: [pixels[0], pixels[1], pixels[2]],
+          opaque: opaque,
+          nonBackground: 1 - background / (bitmap.width * bitmap.height),
+          gold: gold,
+          red: red,
+          dirtyFrame: dirtyFrame
+        };
+        return { name: name, type: blob.type, image: image };
+      });
+    });
+  }
   var original = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function () {
     if (this.download && String(this.href).indexOf("blob:") === 0) {
       var name = this.download;
-      fetch(this.href)
-        .then(function (response) { return response.text(); })
-        .then(function (content) { window.__frvCaptured = { name: name, text: content }; });
+      originalFetch.call(window, this.href)
+        .then(function (response) { return response.blob(); })
+        .then(function (blob) { return describe(name, blob); })
+        .then(function (captured) { window.__frvCaptured = captured; })
+        .catch(function (error) {
+          window.__frvCaptured = { name: name, type: "", error: String(error) };
+        });
       return undefined;
     }
     return original.apply(this, arguments);
@@ -601,6 +675,10 @@ WINDOW_CAPTURE_SCRIPT = """
   return "ok";
 })()
 """
+
+# Vergisst den zuletzt abgefangenen Download, damit der nächste nicht mit ihm
+# verwechselt wird.
+WINDOW_FORGET_CAPTURE_SCRIPT = "(function () { window.__frvCaptured = null; return 'ok'; })()"
 
 # Nur mit --probe-internet: Kann die Seite einen öffentlichen Host erreichen?
 WINDOW_INTERNET_SCRIPT = """
@@ -655,6 +733,69 @@ def scenario_text_is_expected(text: str | None) -> bool:
         return False
 
 
+EXPORT_FILE_NAME = re.compile(r"^graph-smoke-test-\d{8}-\d{4}\.(svg|png)$")
+SVG_NAMESPACE = "{http://www.w3.org/2000/svg}"
+PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10]
+
+
+def exported_svg_is_expected(text: str | None) -> bool:
+    """Ist der Text eine eigenständige SVG-Datei der Topologie im eingestellten Zustand?
+
+    Geprüft wird als XML (nicht nur die Endung): Namensraum und Größe, die vier
+    Knoten, mindestens ein Aboreszenzpfeil, Kopfzeile und Legende, keine
+    Verweise nach außen und keine Bedienelemente.
+    """
+    try:
+        root = ElementTree.fromstring(text or "")
+    except ElementTree.ParseError:
+        return False
+    if root.tag != f"{SVG_NAMESPACE}svg":
+        return False
+    texts = {element.text or "" for element in root.iter(f"{SVG_NAMESPACE}text")}
+    nodes = [e for e in root.iter(f"{SVG_NAMESPACE}g") if e.get("data-graph-node-id")]
+    arrows = [e for e in root.iter(f"{SVG_NAMESPACE}line") if e.get("marker-end")]
+    references = [
+        value for element in root.iter() for key, value in element.attrib.items()
+        if "href" in key or value.startswith(("http:", "https:"))
+    ]
+    interactive = [e for e in root.iter() if e.get("role") == "button" or e.get("tabindex")]
+    try:
+        sized = int(root.get("width", "0")) > 0 and int(root.get("height", "0")) > 0
+    except ValueError:
+        sized = False
+    return (
+        sized
+        and len(nodes) == 4
+        and bool(arrows)
+        and not references
+        and not interactive
+        and {"smoke-test", "Bonsai (Greedy)", "Legende", "Gewählte Aboreszenz"} <= texts
+    )
+
+
+def exported_png_is_expected(image: dict | None) -> bool:
+    """Ist das im Fenster ausgewertete PNG ein gültiges, nicht leeres Bild?
+
+    ``image`` stammt aus WINDOW_CAPTURE_SCRIPT: PNG-Signatur, Größe aus dem
+    Dateikopf und die vom Browser dekodierten Pixel.
+    """
+    try:
+        decoded = image["decoded"]
+        return (
+            image["signature"] == PNG_SIGNATURE
+            and image["width"] >= 1600
+            and (image["width"], image["height"]) == (decoded["width"], decoded["height"])
+            and decoded["corner"] == [19, 23, 32]
+            and decoded["opaque"] is True
+            and decoded["nonBackground"] > 0.01
+            and decoded["gold"] > 100
+            and decoded["red"] > 100
+            and decoded["dirtyFrame"] == 0
+        )
+    except (KeyError, TypeError):
+        return False
+
+
 def drive_window_test(
     evaluate: Callable[[str], Any],
     *,
@@ -667,9 +808,11 @@ def drive_window_test(
     """Bedient die Oberfläche über ``evaluate`` und prüft ihren Zustand.
 
     Ablauf: Oberfläche gezeichnet, Topologie über das Dateifeld importiert,
-    Bonsai gewählt und eine Kante ausfallen lassen, Szenario gespeichert,
-    Zustand verändert und das Szenario wieder geladen. ``evaluate`` führt
-    JavaScript in der Seite aus und liefert dessen Ergebnis.
+    Bonsai gewählt und eine Kante ausfallen lassen, Bild als SVG und als PNG
+    exportiert, Szenario gespeichert, Zustand verändert und das Szenario wieder
+    geladen. ``evaluate`` führt JavaScript in der Seite aus und liefert dessen
+    Ergebnis. Bildexport und Szenario laufen nur, wenn die Oberfläche die
+    Bedienelemente dafür hat.
     """
     checks: dict[str, bool] = {}
     details: dict[str, Any] = {}
@@ -741,11 +884,48 @@ def drive_window_test(
         and "Erreichbarkeit 4/4" in state.get("summary", "")
     )
 
+    # Bildexport als SVG und PNG. Die Downloads werden abgefangen; den Dialog des
+    # Fensters prüft nur der Lauf mit --native-save-file, der deshalb ohne
+    # Bildexport auskommt.
+    details["export_controls_present"] = bool(state.get("hasExport"))
+    if state.get("hasExport") and native_save_file is None:
+        evaluate(WINDOW_CAPTURE_SCRIPT)
+        api_calls_before = read_state().get("apiCalls")
+        exports: dict[str, dict] = {}
+        for kind, label in (("svg", "SVG"), ("png", "PNG")):
+            evaluate(WINDOW_FORGET_CAPTURE_SCRIPT)
+            details[f"click_export_{kind}"] = click(label)
+            exports[kind] = wait_for(lambda item: item.get("capturedName"))
+            details[f"export_{kind}_name"] = exports[kind].get("capturedName")
+        png = exports["png"].get("capturedImage") or {}
+        details["export_png"] = {
+            "size": png.get("size"), "width": png.get("width"), "height": png.get("height"),
+            "decoded": png.get("decoded"),
+        }
+        state = wait_for(idle)
+        details["api_calls_during_export"] = (
+            None if api_calls_before is None or state.get("apiCalls") is None
+            else state["apiCalls"] - api_calls_before
+        )
+        names = [details.get("export_svg_name") or "", details.get("export_png_name") or ""]
+        checks["image_export_svg_through_ui"] = (
+            bool(EXPORT_FILE_NAME.match(names[0])) and names[0].endswith(".svg")
+            and exported_svg_is_expected(exports["svg"].get("capturedText"))
+        )
+        checks["image_export_png_through_ui"] = (
+            bool(EXPORT_FILE_NAME.match(names[1])) and names[1].endswith(".png")
+            and exported_png_is_expected(png)
+        )
+        checks["image_export_leaves_state_unchanged"] = (
+            domain_state(state) == saved_state and details["api_calls_during_export"] == 0
+        )
+
     # Szenario speichern und laden (nur wenn die Bedienelemente vorhanden sind)
     details["scenario_controls_present"] = bool(state.get("hasScenario"))
     if state.get("hasScenario"):
         if native_save_file is None:
             evaluate(WINDOW_CAPTURE_SCRIPT)
+            evaluate(WINDOW_FORGET_CAPTURE_SCRIPT)
             details["click_save"] = click("Szenario speichern")
             state = wait_for(lambda item: item.get("capturedText"))
             text = state.get("capturedText")
@@ -844,6 +1024,11 @@ def run_window_test(
     }
     if details.get("scenario_controls_present"):
         expected |= {"scenario_saved_through_ui", "scenario_loaded_through_ui"}
+    if details.get("export_controls_present") and native_save_file is None:
+        expected |= {
+            "image_export_svg_through_ui", "image_export_png_through_ui",
+            "image_export_leaves_state_unchanged",
+        }
     passed = expected <= set(checks) and all(checks.values())
     return {
         "passed": passed,

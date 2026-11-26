@@ -310,9 +310,21 @@ def test_start_page_references_no_external_resources() -> None:
 class FakePage:
     """Answers the page scripts of the window test like the real interface."""
 
-    def __init__(self, *, scenario_controls: bool, broken_load: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        scenario_controls: bool,
+        broken_load: bool = False,
+        image_export: bool = False,
+        broken_export: str | None = None,
+        export_calls_api: bool = False,
+    ) -> None:
         self.scenario_controls = scenario_controls
         self.broken_load = broken_load
+        self.image_export = image_export
+        self.broken_export = broken_export
+        self.export_calls_api = export_calls_api
+        self.api_calls = 0
         self.nodes = 0
         self.bonsai = False
         self.failures = 0
@@ -331,6 +343,29 @@ class FakePage:
             "failures": {"failed_edge_ids": ["ab"] if self.failures else []},
         })
 
+    def exported_svg(self) -> str:
+        if self.broken_export == "svg":
+            return "<svg xmlns='http://www.w3.org/2000/svg'><g>"  # nicht wohlgeformt
+        labels = ["smoke-test", "Bonsai (Greedy)", "Legende", "Gewählte Aboreszenz"]
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="880" height="552">'
+            + "".join(f'<g data-graph-node-id="{node}"/>' for node in "ABCD")
+            + '<line marker-end="url(#tree-arrow)"/>'
+            + "".join(f"<text>{label}</text>" for label in labels)
+            + "</svg>"
+        )
+
+    def exported_png(self) -> dict:
+        width = 800 if self.broken_export == "png" else 1760
+        return {
+            "size": 150000, "signature": launcher.PNG_SIGNATURE, "width": width, "height": 1104,
+            "decoded": {
+                "width": width, "height": 1104, "corner": [19, 23, 32], "opaque": True,
+                "nonBackground": 0.1, "gold": 2500, "red": 5000, "dirtyFrame": 0,
+            },
+        }
+
     def state(self) -> str:
         status = "Failover aktiv" if self.failures else "Normalbetrieb"
         return json.dumps({
@@ -345,9 +380,12 @@ class FakePage:
             "failures": self.failures if self.nodes else None,
             "loading": False,
             "hasScenario": self.scenario_controls,
+            "hasExport": self.image_export,
             "loadedScenario": self.loaded_scenario,
             "capturedName": self.captured["name"] if self.captured else None,
-            "capturedText": self.captured["text"] if self.captured else None,
+            "capturedText": self.captured.get("text") if self.captured else None,
+            "capturedImage": self.captured.get("image") if self.captured else None,
+            "apiCalls": self.api_calls if self.capture_installed else None,
             "internet": self.internet,
             "userAgent": "Fake Edg/1",
         })
@@ -358,6 +396,18 @@ class FakePage:
             return self.state()
         if script == launcher.WINDOW_CAPTURE_SCRIPT:
             self.capture_installed = True
+            return "ok"
+        if script == launcher.WINDOW_FORGET_CAPTURE_SCRIPT:
+            self.captured = None
+            return "ok"
+        if script in (launcher.window_click_script("SVG"), launcher.window_click_script("PNG")):
+            if self.capture_installed:
+                if self.export_calls_api:
+                    self.api_calls += 1
+                if script == launcher.window_click_script("SVG"):
+                    self.captured = {"name": "graph-smoke-test-20261126-0915.svg", "text": self.exported_svg()}
+                else:
+                    self.captured = {"name": "graph-smoke-test-20261126-0915.png", "image": self.exported_png()}
             return "ok"
         if script == launcher.window_internet_script():
             self.internet = False
@@ -454,6 +504,99 @@ def test_window_test_stops_when_the_save_dialog_produced_no_file(tmp_path: Path)
     assert "nicht entstanden" in details["native_save"]
     # Nothing further is executed in the page while the dialog may be open.
     assert page.scripts[-1] == launcher.window_click_script("Szenario speichern")
+
+
+def test_window_test_exports_the_graph_as_svg_and_png_and_checks_the_files() -> None:
+    page = FakePage(scenario_controls=True, image_export=True)
+
+    checks, details = drive(page)
+
+    assert checks == {
+        "ui_rendered": True,
+        "file_import_through_ui": True,
+        "routing_through_ui": True,
+        "image_export_svg_through_ui": True,
+        "image_export_png_through_ui": True,
+        "image_export_leaves_state_unchanged": True,
+        "scenario_saved_through_ui": True,
+        "scenario_loaded_through_ui": True,
+    }
+    assert details["export_svg_name"].endswith(".svg") and details["export_png_name"].endswith(".png")
+    assert details["export_png"]["width"] >= 1600
+    assert details["api_calls_during_export"] == 0
+    # Der Export läuft nach dem Routing und vor dem Szenario.
+    clicks = [script for script in page.scripts if script.startswith("\n(function () {\n  var label")]
+    assert clicks.index(launcher.window_click_script("PNG")) < clicks.index(
+        launcher.window_click_script("Szenario speichern"))
+
+
+def test_window_test_skips_the_export_when_the_interface_has_no_export_buttons() -> None:
+    checks, details = drive(FakePage(scenario_controls=True, image_export=False))
+
+    assert not any(name.startswith("image_export") for name in checks)
+    assert details["export_controls_present"] is False
+
+
+def test_window_test_reports_an_export_that_is_not_valid_xml() -> None:
+    checks, _ = drive(FakePage(scenario_controls=False, image_export=True, broken_export="svg"))
+
+    assert checks["image_export_svg_through_ui"] is False
+    assert checks["image_export_png_through_ui"] is True
+
+
+def test_window_test_reports_a_png_that_is_too_small() -> None:
+    checks, _ = drive(FakePage(scenario_controls=False, image_export=True, broken_export="png"))
+
+    assert checks["image_export_png_through_ui"] is False
+    assert checks["image_export_svg_through_ui"] is True
+
+
+def test_window_test_reports_an_export_that_asks_the_backend() -> None:
+    checks, details = drive(FakePage(scenario_controls=False, image_export=True, export_calls_api=True))
+
+    assert details["api_calls_during_export"] == 2
+    assert checks["image_export_leaves_state_unchanged"] is False
+
+
+def test_native_save_run_does_not_intercept_downloads_for_the_export(tmp_path: Path) -> None:
+    page = FakePage(scenario_controls=True, image_export=True)
+    target = tmp_path / "gespeichert.json"
+    page.nodes, page.bonsai, page.failures = 4, True, 1
+    target.write_text(page.scenario(), encoding="utf-8")
+    page.nodes, page.bonsai, page.failures = 0, False, 0
+
+    checks, details = drive(page, native_save_file=target)
+
+    assert not any(name.startswith("image_export") for name in checks)
+    assert launcher.WINDOW_CAPTURE_SCRIPT not in page.scripts
+    assert details["scenario_saved_via"] == "Speichern-Dialog"
+
+
+def test_exported_svg_must_be_standalone_xml_with_the_expected_drawing() -> None:
+    page = FakePage(scenario_controls=False, image_export=True)
+    good = page.exported_svg()
+    assert launcher.exported_svg_is_expected(good) is True
+    assert launcher.exported_svg_is_expected(None) is False
+    assert launcher.exported_svg_is_expected("kein xml") is False
+    assert launcher.exported_svg_is_expected(good.replace("<svg ", "<svg role='x' ", 1).replace(
+        'width="880"', 'width="0"')) is False
+    # Verweise nach außen, Bedienelemente, fehlende Knoten oder Legende
+    assert launcher.exported_svg_is_expected(good.replace("<line ", '<image href="http://x/y.png"/><line ')) is False
+    assert launcher.exported_svg_is_expected(good.replace("<g data-graph-node-id=\"A\"/>", '<g role="button"/>')) is False
+    assert launcher.exported_svg_is_expected(good.replace("<text>Legende</text>", "")) is False
+    assert launcher.exported_svg_is_expected(good.replace('<line marker-end="url(#tree-arrow)"/>', "")) is False
+
+
+def test_exported_png_must_be_wide_decodable_and_not_empty() -> None:
+    page = FakePage(scenario_controls=False, image_export=True)
+    good = page.exported_png()
+    assert launcher.exported_png_is_expected(good) is True
+    assert launcher.exported_png_is_expected(None) is False
+    assert launcher.exported_png_is_expected({**good, "signature": [0] * 8}) is False
+    assert launcher.exported_png_is_expected({**good, "decoded": {**good["decoded"], "corner": [0, 0, 0]}}) is False
+    assert launcher.exported_png_is_expected({**good, "decoded": {**good["decoded"], "nonBackground": 0.0}}) is False
+    assert launcher.exported_png_is_expected({**good, "decoded": {**good["decoded"], "dirtyFrame": 3}}) is False
+    assert launcher.exported_png_is_expected({**good, "decoded": {**good["decoded"], "height": 5}}) is False
 
 
 def test_window_test_probes_the_internet_only_on_request() -> None:
