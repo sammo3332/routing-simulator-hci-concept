@@ -361,9 +361,11 @@ Als Dateiformat dient das vorhandene Szenarioschema
 `backend/schemas/failover-scenario.schema.json` mit der Formatversion „1.0“;
 serialisieren konnte der Domänenkern Szenarien schon vorher (FA-14). Eine
 Datei enthält Topologie, Zielknoten, Verfahren, Metrik, ausgefallene Kanten und
-einen `routing_snapshot`. Auf Wunsch kommt der Ansichtszustand hinzu: die
-Namensanzeige und die Positionen von Hand verschobener Knoten. Diese Positionen
-sind Anzeigekoordinaten und stehen getrennt von den Topologiekoordinaten.
+einen `routing_snapshot`. Im Dateiformat und in der API ist der Ansichtszustand
+optional. Beim Speichern über die Oberfläche werden die aktuelle Einstellung
+zur Namensanzeige und manuell verschobene Knotenpositionen automatisch
+mitgespeichert. Diese Positionen sind Anzeigekoordinaten und stehen getrennt
+von den Topologiekoordinaten.
 
 ```mermaid
 sequenceDiagram
@@ -391,10 +393,10 @@ sequenceDiagram
 Für die Einordnung wichtig:
 
 - **Keine dauerhafte serverseitige Sitzung.** Beim Speichern legt das Backend
-  nichts ab. Das Frontend lädt die Antwort als Datei herunter; wohin sie
-  gelangt, bestimmt der Browser oder im Windows-Programm der Dialog „Speichern
-  unter“. Sitzungen bleiben flüchtig und gehen beim Neustart des Backends
-  verloren.
+  keine dauerhafte Serversitzung ab. Das Frontend lädt die Antwort als Datei
+  herunter; wohin sie gelangt, bestimmt der Browser oder im Windows-Programm
+  der Dialog „Speichern unter“. Sitzungen bleiben flüchtig und gehen beim
+  Neustart des Backends verloren.
 - **Neuberechnung beim Laden.** Die angezeigten Ergebnisse stammen immer aus
   einer neuen Berechnung im Domänenkern. Der gespeicherte `routing_snapshot`
   wird nur verglichen; weicht er ab, zeigt die Oberfläche die Neuberechnung mit

@@ -43,7 +43,7 @@ Nach der Bachelorarbeit hinzugekommen:
 |---|---|---|
 | Knoten verschieben | Einzelne Knoten lassen sich mit der Maus ziehen; „Knotenpositionen zurücksetzen“ stellt die berechnete Anordnung wieder her. | `main` und Webanwendung; auf dem Entwicklungszweig zusätzlich stabilisiert |
 | Besser sichtbare graue Kanten | Kanten ohne Route sind deckend gezeichnet und in der Legende als „Kante ohne Route“ erklärt. | Entwicklungszweig |
-| Szenarien speichern und laden | „Szenario speichern“ lädt Topologie, Zielknoten, Verfahren, Metrik und Ausfälle als JSON-Datei herunter, auf Wunsch mit Namensanzeige und verschobenen Knoten. „Szenario laden“ stellt diesen Zustand wieder her und berechnet alle Ergebnisse neu. | Entwicklungszweig |
+| Szenarien speichern und laden | „Szenario speichern“ lädt Topologie, Zielknoten, Verfahren, Metrik und Ausfälle als JSON-Datei herunter. Die aktuelle Einstellung zur Namensanzeige und manuell verschobene Knotenpositionen werden ebenfalls mitgespeichert. „Szenario laden“ stellt diesen Zustand wieder her und berechnet alle Ergebnisse neu. | Entwicklungszweig |
 | Windows-Programm | `FailoverRoutingVisualizer.exe` startet die vorhandene Oberfläche und den Python-Kern in einem eigenen Fenster. Python, Node.js und eine Internetverbindung sind nicht nötig. | Entwicklungszweig, [Testpaket](#windows-testpaket) |
 | Graphexport als PNG und SVG | „PNG“ und „SVG“ in der Werkzeugleiste laden ein Bild der gesamten Topologie im aktuellen Zustand herunter, mit Kopfzeile und Legende und unabhängig vom Zoom. | Entwicklungszweig |
 

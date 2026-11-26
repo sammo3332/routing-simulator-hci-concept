@@ -48,12 +48,14 @@ Ein besprochener Anwendungsfall war, eine Konfiguration weiterzugeben und auf
 einem anderen Rechner mit denselben Einstellungen und Ausfällen zu öffnen.
 Bisher ging der Zustand beim Schließen verloren. Jetzt gibt es in der
 Seitenleiste „Szenario speichern“ und „Szenario laden“. Die JSON-Datei enthält
-Topologie, Zielknoten, Verfahren, Metrik und Ausfälle, auf Wunsch auch die
-Namensanzeige und verschobene Knoten. Beim Laden rechnet das Programm alle
-Ergebnisse neu aus, statt gespeicherte Ergebnisse anzuzeigen; auf dem Server
-bleibt nichts gespeichert. Der Ablauf: Topologie laden, eine Kante ausfallen
-lassen, speichern, Programm schließen oder Seite neu laden, dann die Datei über
-„Szenario laden“ öffnen.
+Topologie, Zielknoten, Verfahren, Metrik und Ausfälle. Die aktuelle Einstellung
+zur Namensanzeige und manuell verschobene Knotenpositionen werden ebenfalls
+mitgespeichert. Beim Laden rechnet das Programm alle Ergebnisse neu aus, statt
+gespeicherte Ergebnisse anzuzeigen. Die Szenariodatei kann lokal gespeichert
+werden. Die laufende Sitzung liegt weiterhin nur im Arbeitsspeicher des
+Backends und geht bei einem Backend-Neustart verloren. Der Ablauf: Topologie
+laden, eine Kante ausfallen lassen, speichern, Programm schließen oder Seite
+neu laden, dann die Datei über „Szenario laden“ öffnen.
 
 ## 4. Ein Windows-Programm, das auch ohne Internet läuft
 
