@@ -12,7 +12,10 @@ import { useResizableDetailsPanel } from "./hooks/useResizableDetailsPanel";
 import { useRoutingSimulator } from "./hooks/useRoutingSimulator";
 import { EDGE_IDLE, S } from "./styles/sharedStyles";
 import { buildInterpretation } from "./utils/interpretation";
+import { createGraphImage, downloadBlob } from "./utils/graphImageExport";
 import { placeNodeTooltip, shortenSegmentEnd, visibleGraphBounds } from "./utils/graphLayout";
+import { graphLegendItems } from "./utils/graphLegend";
+import { exportHeaderItems } from "./utils/imageExport";
 import { buildNodeAbbreviations, isNodeLabelVisible } from "./utils/nodePresentation";
 
 const ROUTE_HIGHLIGHT_NONE = "__hide_routes__";
@@ -56,7 +59,7 @@ function GraphNodeTooltip({ node, bounds }) {
   const width = Math.min(190, Math.max(72, label.length * 6.2 + 20));
   const { x, y } = placeNodeTooltip(node.position, { width, height: 25 }, bounds);
   return (
-    <g pointerEvents="none" aria-hidden="true">
+    <g pointerEvents="none" aria-hidden="true" data-export="skip">
       <rect x={x} y={y} width={width} height={25} rx={5} fill="#080b12" stroke="#64748b" strokeWidth={1.5} />
       <text x={x + width / 2} y={y + 16.5} textAnchor="middle" fill="#f8fafc" fontSize={10.5} fontWeight="800">{label}</text>
     </g>
@@ -68,9 +71,10 @@ export default function App() {
   const [showAllNodeNames, setShowAllNodeNames] = useState(false);
   const [highlightedSourceNodeId, setHighlightedSourceNodeId] = useState("");
   const [hoveredNodeId, setHoveredNodeId] = useState("");
+  const [exportingImage, setExportingImage] = useState(false);
   const simulator = useRoutingSimulator();
   const {
-    simulation, topology, loading, error, eventLog, eventLogEndRef,
+    simulation, topology, loading, error, eventLog, eventLogEndRef, logEvent,
     handleTopologyFile, topologyFileName, loadedScenario, scenarioError,
     loadScenarioFile, saveScenario, setTargetNode, setRoutingStrategy, setWeightMode,
     selectedTreeId, setSelectedTreeId, selectedTree, treeOptions,
@@ -195,6 +199,47 @@ export default function App() {
       return edge ? `${edge.id} ${edge.source}–${edge.target}` : edgeId;
     })
     : [];
+  const legendItems = graphLegendItems({ T1, T2, RED, GOLD, EDGE_IDLE }, Boolean(bonsai));
+
+  // Bild der gesamten Topologie als SVG oder PNG. Es wird nur aus der Ansicht
+  // gelesen: keine Berechnung, keine Anfrage, keine Änderung an Zustand oder Ansicht.
+  const exportGraphImage = async format => {
+    if (!simulation || loading || exportingImage) return;
+    setExportingImage(true);
+    try {
+      const topologyName = topology.name || topology.topology_id;
+      const targetOption = nodeOptions.find(option => option.value === targetNodeId);
+      const image = await createGraphImage({
+        format,
+        svgElement: graphViewport.svgRef.current,
+        showAllNodeNames,
+        topologyName,
+        legendItems,
+        headerItems: exportHeaderItems({
+          topologyName,
+          targetLabel: targetOption?.label ?? targetNodeId,
+          strategy: routingStrategy,
+          weightMode,
+          failureCount: failedCount,
+          treeId: bonsai ? (selectedTree?.tree_id ?? selectedTreeId) : "",
+          routeDisplay: hideRouteHighlights
+            ? "Keine Route hervorgehoben"
+            : activeSourceNodeId ? `Route von ${activeSourceNodeId}` : "",
+        }, {
+          topology: "#60a5fa", target: GOLD, strategy: "#a78bfa", failure: RED, ok: "#22c55e", muted: "#9aa5bb",
+        }),
+      });
+      downloadBlob(image.fileName, image.blob);
+      // Bestätigt ist nur der angestoßene Download, nicht die Datei auf dem Datenträger.
+      logEvent("info", `Download der ${format.toUpperCase()}-Datei gestartet: ${image.fileName}`
+        + (format === "png" ? ` (${image.pixelWidth} × ${image.pixelHeight} Pixel).` : "."));
+    } catch (exportError) {
+      const message = exportError instanceof Error ? exportError.message : "Unbekannter Fehler";
+      logEvent("alert", `FEHLER: ${format.toUpperCase()}-Bild nicht erzeugt. ${message}`);
+    } finally {
+      setExportingImage(false);
+    }
+  };
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d0f14", color: "#e2e8f4", fontFamily: "system-ui,-apple-system,sans-serif", fontSize: 13, overflow: "hidden" }}>
@@ -405,6 +450,9 @@ export default function App() {
                   onResetPositions={graphLayout.reset}
                   hasMovedNodes={graphLayout.hasChanges}
                   onToggleLabels={() => setShowAllNodeNames(current => !current)}
+                  onExportSvg={() => exportGraphImage("svg")}
+                  onExportPng={() => exportGraphImage("png")}
+                  exportDisabled={loading || exportingImage}
                 />
               )}
               {!simulation ? <EmptyState /> : (
@@ -436,7 +484,7 @@ export default function App() {
                     fill="transparent"
                     data-pan-surface="true"
                   />
-                  <g transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
+                  <g data-graph-scene="true" transform={`translate(${graphViewport.viewport.x} ${graphViewport.viewport.y}) scale(${graphViewport.viewport.scale})`}>
                   {visibleGraphLinks.map(link => {
                     const arcStart = link.treeArc?.source === link.source ? link.sourcePosition : link.targetPosition;
                     const arcTarget = link.treeArc?.target === link.target ? link.targetPosition : link.sourcePosition;
@@ -465,6 +513,7 @@ export default function App() {
                         strokeWidth={16}
                         pointerEvents="stroke"
                         vectorEffect="non-scaling-stroke"
+                        data-export="skip"
                       />
                       {link.baseline && !link.failed && (
                         <line
@@ -488,6 +537,7 @@ export default function App() {
                         y2={link.targetPosition.y}
                         stroke={link.failed ? RED : link.current ? T1 : link.baseline ? T2 : EDGE_IDLE}
                         strokeWidth={link.selected && !hideRouteHighlights ? 5 : link.current ? 3.5 : 2}
+                        data-export-stroke-width={link.current ? 3.5 : 2}
                         strokeDasharray={link.failed ? "8 6" : undefined}
                         strokeLinecap="round"
                         pointerEvents="none"
@@ -520,6 +570,7 @@ export default function App() {
                           strokeLinecap="round"
                           pointerEvents="none"
                           vectorEffect="non-scaling-stroke"
+                          data-export="skip"
                         />
                       )}
                       {link.failed && (
@@ -549,7 +600,7 @@ export default function App() {
                         <circle cx={node.position.x} cy={node.position.y} r={16} fill="#181c2c" stroke={color} strokeWidth={node.target || node.affected ? 3 : 2} />
                         <text x={node.position.x} y={node.position.y + 4} textAnchor="middle" fill="#f3f6fc" fontSize={8.5} fontWeight="800">{nodeAbbreviations[node.id]}</text>
                         {showNodeLabel && (
-                          <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9} fontWeight={importantNode ? 800 : 500}>{nodeName}</text>
+                          <text x={node.position.x} y={node.position.y + 30} textAnchor="middle" fill={color} fontSize={9} fontWeight={importantNode ? 800 : 500} data-export={importantNode ? undefined : "label-optional"}>{nodeName}</text>
                         )}
                       </g>
                     );
@@ -566,14 +617,9 @@ export default function App() {
             </div>
             <div style={{ padding: "7px 12px", borderTop: "1px solid #252b3b", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", color: "#7a8499", fontSize: 9.5 }}>
               <strong style={{ color: "#9aa5bb" }}>Legende</strong>
-              <span><span style={{ color: T2 }}>━━</span> Route vor dem Ausfall</span>
-              <span><span style={{ color: T1 }}>━━</span> Aktuelle Route</span>
-              <span><span style={{ color: EDGE_IDLE }}>━━</span> Kante ohne Route</span>
-              <span><span style={{ color: RED }}>┄✕┄</span> Ausgefallene Kante</span>
-              <span><span style={{ color: T2 }}>●</span> Umgeleiteter Knoten</span>
-              <span><span style={{ color: RED }}>●</span> Unerreichbarer Knoten</span>
-              <span><span style={{ color: GOLD }}>●</span> Zielknoten</span>
-              {bonsai && <span><span style={{ color: "#a78bfa" }}>━━▶</span> Gewählte Aboreszenz</span>}
+              {legendItems.map(item => (
+                <span key={item.id}><span style={{ color: item.color }}>{item.glyph}</span> {item.label}</span>
+              ))}
             </div>
           </section>
 

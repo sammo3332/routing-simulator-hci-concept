@@ -419,6 +419,7 @@ export function useRoutingSimulator() {
     error,
     eventLog,
     eventLogEndRef,
+    logEvent: addLog,
     handleTopologyFile,
     topologyFileName,
     loadedScenario,
