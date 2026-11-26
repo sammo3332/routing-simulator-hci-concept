@@ -123,6 +123,7 @@ evaluierten Stand.
 | [docs/WINDOWS_APP.md](docs/WINDOWS_APP.md) | Windows-Programm: Starten, Voraussetzungen, Build (nach der Bachelorarbeit) |
 | [docs/weiterentwicklung/UEBERGABE.md](docs/weiterentwicklung/UEBERGABE.md) | Weiterentwicklung nach der Bachelorarbeit: Pakete, Zweige, offene Punkte |
 | [docs/weiterentwicklung/PRUEFBERICHT.md](docs/weiterentwicklung/PRUEFBERICHT.md) | Testzahlen je Commit und Ergebnisse der unabhängigen Prüfung |
+| [docs/weiterentwicklung/PAKET_5_BILDEXPORT.md](docs/weiterentwicklung/PAKET_5_BILDEXPORT.md) | Bildexport des Graphen als SVG und PNG sowie Korrektur der Speichermeldung (nach der Bachelorarbeit) |
 | [docs/hci/HCI_EVALUATION.md](docs/hci/HCI_EVALUATION.md) | formative Entwicklung und Evaluationsdesign |
 | [docs/hci/USER_STUDY_PROTOCOL.md](docs/hci/USER_STUDY_PROTOCOL.md) | Aufgaben, SUS und Auswertungsplan der Benutzerstudie |
 

@@ -6,6 +6,11 @@ Dieses Dokument fasst zusammen, was vorliegt, wie die Teile zusammenhängen
 und was offen ist. Belege und Einzelheiten stehen im
 [Prüfbericht](PRUEFBERICHT.md) und in den Paketdokumenten.
 
+**Ergänzt am 26. November 2026 (Paket 5):** Bildexport als SVG und PNG und
+Korrektur der Speichermeldung nach „Szenario speichern“. Beides liegt auf dem
+Zweig `claude/paket-5-bildexport` (Abschnitte 1, 2 und 5). Die Zweige und
+Aussagen zu den Paketen 1 bis 4 gelten unverändert.
+
 `main`, das Deployment und die Referenzstände der Bachelorarbeit sind
 unverändert. Nichts wurde nach `main` übernommen. Die Evaluationsergebnisse
 der Arbeit beziehen sich weiterhin auf den damals untersuchten Stand; keines
@@ -28,6 +33,7 @@ Alle Zweige liegen auf GitHub unter
 | `claude/paket-3-szenarien-ohne-ansicht` | Basis + Paket 3 ohne Ansichtszustand | `f17fb2e` |
 | `claude/paket-4-windows-app` | Basis + Paket 4 | `095a242`, danach nur Dokumentation |
 | `claude/integration-gesamtvorschlag` | Basis + alle vier Pakete + Prüfskripte der unabhängigen Prüfung | `439da19`, danach nur Dokumentation |
+| `claude/paket-5-bildexport` | Integrationsstand + Korrektur der Speichermeldung + Bildexport + Erweiterung des Fenstertests | Code `7cf4166`, danach nur Dokumentation |
 | `claude/gallant-fermat-h4hdmg` | Sitzungszweig: Integrationsstand per Merge; zusätzlich aus der ersten Sitzung das frühere Änderungsprotokoll mit seinen Bildschirmfotos und das frühere Prüfskript `tests/browser/interaction-checks.cjs` | Anwendung und Tests wie Integrationszweig; der Unterschied besteht nur aus den genannten Dateien |
 
 Die vollständigen Commit-Kennungen und alle Testzahlen stehen im
@@ -100,6 +106,18 @@ werden.
 | Offene Punkte | nur auf Windows Server 2025 geprüft; Speichern über den Windows-Dialog nicht belegt (Abschnitt 4); nicht signiert; kein Installationsprogramm; Workflow läuft nach Übernahme in `main` nicht automatisch; keine Prüfung der Herkunft von Anfragen an den lokalen Port |
 | Dokumente | [PAKET_4_WINDOWS_APP.md](PAKET_4_WINDOWS_APP.md) · [WINDOWS_APP.md](../WINDOWS_APP.md) |
 
+### Paket 5: Bildexport und Korrektur der Speichermeldung
+
+| | |
+|---|---|
+| Funktion | Schaltflächen „SVG“ und „PNG“ in der Werkzeugleiste der Graphansicht: Bild der gesamten Topologie im aktuellen Zustand (verschobene Knoten, gewählte Routen- und Aboreszenzanzeige, Ausfälle) mit Kopfzeile und Legende, unabhängig von Zoom und Ausschnitt. Dazu die Meldung „Download der Szenariodatei gestartet“ statt „Szenario gespeichert“, denn die Seite kann nur den Download anstoßen. |
+| Zweig | `claude/paket-5-bildexport` |
+| Commits | `598946d` Meldungskorrektur · `6b67840` Bildexport · `fe3e356` Fenstertest · `7cf4166` lange Namen · danach Dokumentation |
+| Abhängigkeiten | baut auf dem Integrationsstand auf. Meldungskorrektur: Paket 3. Bildexport: funktional Paket 1 (Legende), im Text Pakete 2 und 3; nur auf dem Integrationsstand ohne Konflikt übertragbar. Beide Commits hängen nicht voneinander ab. |
+| Ausgeführte Tests | 58 Frontend-Tests, 128 Backend-Tests, 113 von 113 Browserprüfungen (auch ohne Netzwerkschnittstelle), Vergleich der Oberfläche vor und nach der Änderung (8 von 8 Zuständen identisch), Windows-Runner (Abschnitt 4), Lint, Build |
+| Offene Punkte | Speichern-Dialog von Windows für Bilder nicht geprüft; nur Chromium und WebView2; nur dunkle Darstellung; die in Paket 3 und 4 genannten Befunde bleiben offen |
+| Dokumente | [PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md) · [KORREKTUR_SPEICHERMELDUNG.md](KORREKTUR_SPEICHERMELDUNG.md) · [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md) |
+
 ## 3. Was lässt sich einzeln übernehmen?
 
 Jeder Paketzweig besteht aus `main`, der Basis und genau einem Paket. In
@@ -116,6 +134,8 @@ diesem Zustand wurde er geprüft (Abschnitt 2). Damit gilt:
 | Paket 4 | ja, zusammen mit der Basis | Zweig geprüft, zusätzlich auf dem Windows-Runner |
 | jede Kombination aus zwei oder drei Paketen | ja | ohne Konflikt zusammengeführt; Lint, Frontend- und Backend-Tests, Build bestanden; Browserprüfungen dafür nicht ausgeführt |
 | alle vier Pakete | ja | Integrationszweig vollständig geprüft |
+| Meldungskorrektur (Paket 5) | ja, zusammen mit Paket 3 | ohne Konflikt auf Paket 3 (beide Varianten) und Integration; auf den übrigen Zweigen nicht anwendbar |
+| Bildexport (Paket 5) | **nur auf dem Integrationsstand** | dort ohne Konflikt und geprüft; auf Zweigen mit einzelnen Paketen Konflikte in `src/App.jsx`, nicht gelöst und nicht geprüft; funktional von Paket 1 abhängig |
 
 Kein Paket lässt sich ohne die Basis über seinen Zweig übernehmen. Paket 4
 hängt technisch nicht von den Korrekturen der Basis ab.
@@ -150,10 +170,38 @@ Gesamtvorschlag genügt `origin/claude/integration-gesamtvorschlag`.
 
 ## 4. Windows-Programm
 
-### Programmdatei
+### Programmdatei mit Bildexport (Paket 5)
 
-`FailoverRoutingVisualizer.exe` mit allen vier Paketen, gebaut und geprüft im
-vollständig erfolgreichen Lauf am integrierten Stand:
+`FailoverRoutingVisualizer.exe` mit allen vier Paketen und Paket 5, gebaut und
+geprüft im vollständig erfolgreichen Lauf am Code-Stand von Paket 5:
+
+| | |
+|---|---|
+| Lauf | [Windows-App Nr. 8](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074), Commit `7cf4166`, 26. November 2026, von Hand ausgelöst, Ergebnis: erfolgreich |
+| Herunterladen | Artefakt [`FailoverRoutingVisualizer-windows`](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074/artifacts/15126998436) (ZIP, rund 20 MB); Anmeldung bei GitHub nötig; GitHub löscht das Artefakt am 24. Februar 2027 |
+| SHA-256 der Programmdatei | `3DF15124A54865705C50DFDE1FC9342F39BA7A70B78C0E367BE64E79F456BBD1` |
+
+Die Programmdatei ließ sich aus der Entwicklungsumgebung nicht herunterladen und
+wurde nicht von Hand gestartet. Kurzanleitung und Voraussetzungen: siehe unten
+(unverändert). Was an dieser Datei geprüft ist:
+
+| Funktion | Ergebnis |
+|---|---|
+| Start, eigenes Fenster, nur `127.0.0.1`, Beenden mit dem Fenster, Ausweichweg über den Browser | bestanden |
+| Dateiimport, Routing (Bonsai mit Ausfall) im Programmfenster | bestanden |
+| **Bildexport im Programmfenster:** SVG (als XML geprüft) und PNG (1760 × 1104 Pixel, im Fenster dekodiert, Rand sauber), Zustand unverändert, 0 Anfragen an die API; Downloads in der Seite abgefangen | bestanden |
+| „Szenario speichern“ und „Szenario laden“ im Programmfenster (abgefangener Download) | bestanden |
+| dieselben Funktionen einschließlich Bildexport, während Programm und WebView2 per Firewall vom Internet getrennt sind | bestanden |
+| Windows-Dialog „Speichern unter“ bis zur Datei auf dem Datenträger (Szenario und Bilder) | **nicht automatisiert belegt**; für Szenarien liegt eine Rückmeldung von Hand vor (26. November 2026), für Bilder nicht |
+
+Grenzen wie bisher: Windows Server 2025 auf dem Runner, kein Arbeitsplatzrechner,
+kein Windows-Rechner ganz ohne Netzwerkverbindung, nicht signiert. Das
+Bildschirmfoto des Laufs wurde nicht gesichtet.
+
+### Programmdatei ohne Bildexport (Integrationsstand)
+
+`FailoverRoutingVisualizer.exe` mit den vier Paketen 1 bis 4, gebaut und geprüft
+im vollständig erfolgreichen Lauf am integrierten Stand:
 
 | | |
 |---|---|
@@ -179,7 +227,9 @@ Eine Programmdatei nur mit Paket 4, ohne die Pakete 1 bis 3, liegt im
    „Trotzdem ausführen“. Die Datei ist nicht signiert.
 3. Nach einigen Sekunden öffnet sich das Fenster „Failover Routing
    Visualizer“ mit der bekannten Oberfläche. Bedienung wie im Browser.
-4. „Szenario speichern“ öffnet den Windows-Dialog „Speichern unter“.
+4. „Szenario speichern“ öffnet den Windows-Dialog „Speichern unter“, ebenso
+   „SVG“ und „PNG“ in der Werkzeugleiste über dem Graphen (nur die
+   Programmdatei mit Bildexport).
 5. Fenster schließen. Damit endet auch der lokale Server.
 
 Voraussetzungen: Windows 10 oder 11 (64 Bit) mit Microsoft Edge WebView2
@@ -187,7 +237,7 @@ Runtime; Python und Node.js sind nicht nötig. Fehlt WebView2, öffnet sich die
 Oberfläche im Standardbrowser. Einzelheiten, Aufrufoptionen und Buildanleitung
 stehen in [WINDOWS_APP.md](../WINDOWS_APP.md).
 
-### Was am integrierten Stand geprüft ist
+### Was an der Programmdatei ohne Bildexport geprüft ist (Integrationsstand)
 
 Auf einem Windows-Runner von GitHub (Windows Server 2025), Einzelheiten im
 [Prüfbericht](PRUEFBERICHT.md), Abschnitt 4:
@@ -200,7 +250,7 @@ Auf einem Windows-Runner von GitHub (Windows Server 2025), Einzelheiten im
 | „Szenario speichern“ und „Szenario laden“ im Programmfenster, mit in der Seite abgefangener Datei | bestanden |
 | dieselben Funktionen, während Programm und WebView2 per Firewall vom Internet getrennt sind | bestanden |
 | „Szenario speichern“ über den Windows-Dialog bis zur Datei auf dem Datenträger | **nicht belegt**: Der Dialog öffnet sich, ließ sich automatisiert aber nicht bestätigen |
-| Bildexport | nicht vorhanden (Abschnitt 5) |
+| Bildexport | in dieser Programmdatei nicht enthalten (siehe Paket 5 oben) |
 
 ### Grenzen der Prüfung
 
@@ -223,17 +273,23 @@ Auf einem Windows-Runner von GitHub (Windows Server 2025), Einzelheiten im
    Zielknoten, Verfahren und Ausfälle?
 5. Nach dem Schließen: Ist im Task-Manager kein Eintrag
    „FailoverRoutingVisualizer“ mehr vorhanden?
+6. Nur für die Programmdatei mit Bildexport (Paket 5): Auf „SVG“ und auf
+   „PNG“ klicken und jeweils den Dialog bestätigen. Liegt danach eine Datei mit
+   der Endung `.svg` beziehungsweise `.png` im gewählten Ordner? Zeigt sie beim
+   Öffnen (Browser, Bildbetrachter) die gesamte Topologie mit Kopfzeile und
+   Legende, auch wenn im Programm stark hineingezoomt war?
 
 ## 5. Bildexport als PNG oder SVG
 
-**Nicht vorhanden.** In keinem Zweig, keinem Issue und keinem Pull Request
-gibt es einen Bildexport; die Dokumentation erwähnt ihn nicht. Er war auch
-nicht Teil der vier Pakete. „Szenario speichern“ erzeugt eine JSON-Datei und
-ist kein Bildexport.
+**Umgesetzt in Paket 5** (Zweig `claude/paket-5-bildexport`), nachdem der
+Prüfauftrag ihn als offen gemeldet hatte (Stand davor: in keinem Zweig, Issue
+oder Pull Request vorhanden). Beschreibung, Beispiele, Prüfung und Grenzen:
+[PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md); der ursprüngliche Plan mit den
+Abweichungen: [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md).
 
-Der Punkt ist offen. Ein kurzer Umsetzungsplan mit Abnahmekriterien und den
-vorab nötigen Entscheidungen steht in [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md).
-Umgesetzt wurde davon nichts.
+Offen beim Bildexport: der Windows-Dialog „Speichern unter“ für Bilder (nicht
+automatisiert geprüft, Abschnitt 4), Firefox und Safari, eine helle Variante
+für den Druck.
 
 ## 6. Unabhängige Prüfung
 
@@ -281,21 +337,25 @@ Playwright-Installation.
 
 ## 8. Offene Entscheidungen
 
-1. Welche Pakete werden übernommen, und wann nach `main`? Bis dahin bleibt
-   das Deployment auf dem Stand von `main`.
+1. Welche Pakete werden übernommen (jetzt einschließlich Paket 5), und wann
+   nach `main`? Bis dahin bleibt das Deployment auf dem Stand von `main`.
 2. Paket 2: mit oder ohne die sichtbar geänderten Pfeilspitzen?
 3. Paket 3: mit oder ohne Ansichtszustand?
-4. Bildexport: Umsetzung nach [PLAN_BILDEXPORT.md](PLAN_BILDEXPORT.md)
-   freigeben? Dazu die vier dort genannten Vorabentscheidungen.
+4. Paket 5 (Bildexport und Meldungskorrektur): übernehmen? Der Bildexport
+   lässt sich ohne Konfliktlösung nur auf dem Integrationsstand übernehmen
+   (Abschnitt 3); soll er auf einzelne Pakete übertragen werden? Soll zusätzlich
+   eine helle Variante für den Druck folgen? Die Meldungskorrektur hängt nur von
+   Paket 3 ab.
 5. Windows-Programm: Soll der Build nach einer Übernahme auch für `main`
    laufen? Wird eine Signatur oder ein Installationsprogramm gewünscht? Soll
    ein Release angelegt werden, damit die Programmdatei ohne Ablaufdatum
    bereitsteht?
-6. Windows-Programm: Das Speichern über den Windows-Dialog ist nicht belegt
-   (Abschnitt 4). Genügt die Prüfung von Hand, oder soll das Hilfsskript des
-   Fenstertests weiter angepasst werden? Solange es den Dialog nicht bedienen
-   kann, meldet der nicht blockierende vierte Teil des Fenstertests in jedem
-   Lauf „nicht bestanden“.
+6. Windows-Programm: Das Speichern über den Windows-Dialog ist nicht
+   automatisiert belegt (Abschnitt 4). Für Szenarien liegt eine Rückmeldung von
+   Hand vor (26. November 2026), für den Bildexport nicht. Genügt die Prüfung von
+   Hand, oder soll das Hilfsskript des Fenstertests weiter angepasst werden?
+   Solange es den Dialog nicht bedienen kann, meldet der nicht blockierende
+   vierte Teil des Fenstertests in jedem Lauf „nicht bestanden“.
 7. Welcher der beiden Referenz-Commits (`ed3b68c` oder `99c2962`) ist der
    abgegebene Stand der Arbeit? Beide sind gesichert.
 8. Sollen `ARCHITECTURE.md` und `REQUIREMENTS.md` bei der Übernahme um die
@@ -303,7 +363,7 @@ Playwright-Installation.
    Standes der Arbeit?
 9. Sollen die offenen Befunde der unabhängigen Prüfung behoben werden
    (Prüfbericht, Abschnitt 5: A2b, A6, A7, A7b, A11, A12, A13, B11, B12, B14,
-   B16)?
+   B16)? Paket 5 hat A2b, A6, A7, A7b und B12 auftragsgemäß nicht bearbeitet.
 10. Aus der ersten Sitzung weiterhin offen: weißer Seitenrand von 8 Pixeln
     mit 16 Pixeln Überlauf (A11).
 11. Soll der Zweig `claude/pushtest-probe` gelöscht werden (Abschnitt 1)?

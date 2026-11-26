@@ -1,6 +1,6 @@
 # Prüfbericht zum integrierten Stand
 
-Stand: 26. November 2026
+Stand: 26. November 2026 (ergänzt um Paket 5)
 
 Dieser Bericht ordnet alle genannten Testzahlen einem genauen Commit und
 einem ausführbaren Skript zu und hält fest, was die unabhängige Prüfung
@@ -26,6 +26,7 @@ Dokumentation; das lässt sich mit
 | `claude/paket-3-szenarien` | `4e21d7d94c1b123c83dca775442e6a19879f48e9` | 31 | 96 | 37 von 37 |
 | `claude/paket-4-windows-app` | `095a2426c9efbe586b64684239d8d815e2789c65` | 27 | 76 | 5 von 5 |
 | `claude/integration-gesamtvorschlag` | `439da19a2fbd81dcfd18ae763b04dc64e7f3fa1f` | 41 | 120 | 77 von 77 |
+| `claude/paket-5-bildexport` | `7cf416607d83453f856b6e3ba5299f3f47f04241` | 58 | 128 | 113 von 113 |
 
 Auf jedem dieser Stände sind außerdem `npm run lint` und `npm run build`
 bestanden. Kein Test ist fehlgeschlagen oder übersprungen.
@@ -51,10 +52,16 @@ Zusammensetzung der Browserprüfungen:
 | Paket 2 | `30-knoten.cjs` | 33 | Paket 2, Integration |
 | Paket 3 | `40-szenario.cjs` | 23 | Paket 3 (beide Varianten), Integration |
 | Paket 3, Ansichtszustand | `45-szenario-ansicht.cjs` | 9 | Paket 3, Integration |
+| Paket 5, Bildexport | `50-bildexport.cjs` | 35 | Paket 5 |
+
+Auf dem Zweig von Paket 5 enthält `40-szenario.cjs` zusätzlich S-3b (24 statt 23
+Prüfungen, Meldungskorrektur); 77 + 1 + 35 = 113.
 
 Zusammensetzung der Backend-Tests: 52 aus dem Ausgangsstand, 37 in
 `tests/test_scenario_api.py`, 7 in `tests/test_scenario_view_state.py`, 24 in
-`tests/test_desktop_launcher.py`.
+`tests/test_desktop_launcher.py`. Auf dem Zweig von Paket 5 sind es 32 Tests im
+Launcher-Test (8 neu für die Prüfung des Bildexports im Fenster), insgesamt 128.
+Frontend-Tests: 58, davon 17 neu in `tests/frontend/imageExport.test.js`.
 
 ### Umgebung
 
@@ -143,6 +150,10 @@ kill %1'
 
 Das belegt die Nutzung ohne Internet für Oberfläche und Backend unter Linux
 in Chromium. Es ist kein Nachweis für das Windows-Programm.
+
+Derselbe Ablauf mit dem Stand von Paket 5 (`7cf4166`, am 26. November 2026):
+113 von 113 Browserprüfungen, darunter Export als SVG und PNG, und Selbsttest
+des Launchers bestanden (11 Prüfungen, öffentlicher Host nicht erreichbar).
 
 ### 3.2 Windows, ausgehender Verkehr gesperrt
 
@@ -242,6 +253,14 @@ auf einem Arbeitsplatzrechner einmal von Hand geprüft werden. Der Prüfteil ist
 im Skript als nicht blockierend gekennzeichnet und ändert das Gesamtergebnis
 des Laufs nicht.
 
+Nachtrag vom 26. November 2026: Der Auftraggeber meldete aus einer manuellen
+Prüfung des bisherigen Windows-Pakets, dass Start, Szenariospeicherung,
+Wiederherstellung nach Neustart sowie Laden und Neuberechnung ohne Internet beim
+getesteten Ablauf funktioniert hätten. Das ist eine Angabe ohne Protokoll;
+Rechner, Windows-Version und Programmstand sind nicht genannt. Die
+automatisierte Prüfung des Dialogs bleibt „nicht belegt“. Für den Bildexport
+liegt keine solche Rückmeldung vor.
+
 Im vorherigen Lauf am Integrationsstand `340ea4a`
 ([Nr. 4](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45722169773))
 fand das Hilfsskript das Namensfeld nicht. Die Fassung in `439da19` findet es
@@ -301,7 +320,39 @@ Die Läufe Nr. 1 bis 3 gehören zur Entstehung von Paket 4 und sind in
 - Rechner ohne Netzwerkverbindung: nicht geprüft (3.3).
 - Die Programmdatei ist nicht signiert.
 
+### 4.8 Lauf am Stand von Paket 5
+
+| Angabe | Wert |
+|---|---|
+| Lauf | [Windows-App Nr. 8](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074), 26. November 2026, von Hand ausgelöst, Ergebnis: erfolgreich |
+| Geprüfter Commit | `7cf416607d83453f856b6e3ba5299f3f47f04241` (`claude/paket-5-bildexport`) |
+| Betriebssystem, WebView2 | Microsoft Windows Server 2025 Datacenter (10.0.26100), WebView2 157.0.4341.46 |
+| Programmdatei | Artefakt [`FailoverRoutingVisualizer-windows`](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074/artifacts/15126998436) |
+| SHA-256 der Programmdatei | `3DF15124A54865705C50DFDE1FC9342F39BA7A70B78C0E367BE64E79F456BBD1` |
+| Nachweise | Artefakt [`windows-pruefnachweise`](https://github.com/sammo3332/routing-simulator-hci-concept/actions/runs/45839046074/artifacts/15128145313) |
+
+| Schritt | Ergebnis |
+|---|---|
+| Build, Selbsttest der gepackten Datei (12 Einzelprüfungen) | bestanden |
+| Launcher-Tests unter Windows | 32 bestanden |
+| Fenstertest, Teile 1 bis 3 (16 blockierende Prüfungen) | bestanden |
+| Bildexport im Fenster: SVG als XML geprüft, PNG im Fenster dekodiert (1760 × 1104, Rand sauber), Zustand unverändert, 0 Anfragen an die API | bestanden |
+| Szenario speichern und laden im Fenster (abgefangener Download) | bestanden |
+| Prüfung ohne Internetzugang: Selbsttest und Fenstertest mit gesperrtem ausgehendem Verkehr; Programm und Seite erreichen `github.com` nicht (ohne Sperre ja) | bestanden |
+| Fenstertest, Teil 4 (nicht blockierend): Windows-Dialog für das Szenario | **nicht bestanden**, unverändert gegenüber 4.3 |
+
+Der Bildexport wird im Fenster mit abgefangenen Downloads geprüft. Der
+Windows-Dialog „Speichern unter“ ist für Bilder wie für Szenarien nicht
+automatisiert belegt (4.3). Einzelheiten und Werte stehen in
+[PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md), Abschnitt „Windows“.
+
 ## 5. Unabhängige Prüfung
+
+Stand der Befunde nach Paket 5: unverändert. Paket 5 (Bildexport,
+Meldungskorrektur) hat A2b, A6, A7, A7b und B12 auftragsgemäß nicht bearbeitet;
+sie sind weiterhin offen. Der Bildexport wurde nicht von einem eigenen
+Prüflauf untersucht; seine Gegenproben stehen in
+[PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md).
 
 ### 5.1 Vorgehen
 
@@ -400,3 +451,5 @@ Windows-Paket und dessen Tests.
 - Ein Windows-Rechner ohne Netzwerkverbindung.
 - Touch-Bedienung, andere Browser als Chromium, Bildschirmleser.
 - Nutzung durch Personen.
+- Bildexport: Firefox und Safari; Speichern-Dialog von Windows für Bilder;
+  Windows-Arbeitsplatzrechner.
