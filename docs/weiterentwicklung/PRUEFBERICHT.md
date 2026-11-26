@@ -56,6 +56,38 @@ Zusammensetzung der Backend-Tests: 52 aus dem Ausgangsstand, 37 in
 `tests/test_scenario_api.py`, 7 in `tests/test_scenario_view_state.py`, 24 in
 `tests/test_desktop_launcher.py`.
 
+### Umgebung
+
+Die Zahlen oben entstanden unter Linux mit Python 3.13.18 und Node.js 22.23.5.
+
+### Gegenprobe unter den Bedingungen der vorhandenen CI
+
+Die vorhandene CI (`.github/workflows/ci.yml`) startet nur bei Pull Requests
+und auf `main`. Für die Zweige dieser Weiterentwicklung ist sie nicht
+gelaufen, weil kein Pull Request angelegt wurde. Ihre Schritte wurden am
+26. November 2026 lokal nachgestellt:
+
+| Schritt der CI | Nachgestellt | Ergebnis |
+|---|---|---|
+| Backend-Tests mit Python 3.12 und den Paketen aus `requirements-lock.txt`, vor dem Build der Oberfläche | alle sieben Stände der Tabelle oben; Python 3.12.3; Pakete mit Hash-Prüfung installiert (mit `uv` statt `pip`); jeweils in einem frischen Export des Commits ohne `dist/` | dieselben Zahlen: 52, 52, 52, 89, 96, 76 und 120; kein Fehlschlag |
+| Frontend-Tests, Lint und Build mit Node.js 22 | durch die Prüfung oben abgedeckt (Node.js 22.23.5) | bestanden |
+| Container-Image bauen | **nicht ausgeführt**: In der Entwicklungsumgebung läuft kein Docker. | – |
+
+Ersatzweise für den Container-Build wurde der Integrationsstand `439da19` so
+ausgeführt, wie das `Dockerfile` ihn zusammensetzt:
+
+- Die Oberfläche wurde nur aus den Dateien gebaut, die das `Dockerfile`
+  kopiert (`package.json`, `package-lock.json`, `index.html`,
+  `vite.config.js`, `public/`, `src/`): erfolgreich.
+- Das Backend lief in einem Verzeichnis, das wie das Image nur `backend/` und
+  `dist/` enthält, mit Python 3.12.3 und den Paketen der Lock-Datei:
+  77 von 77 Browserprüfungen bestanden.
+- `Dockerfile`, `requirements-lock.txt`, `package.json`, `package-lock.json`,
+  `vite.config.js` und `index.html` sind gegenüber `main` unverändert.
+
+Das ist kein Nachweis für den Container-Build selbst und keiner für das
+Deployment. Beides zeigt erst die CI eines Pull Requests.
+
 ## 2. Kombinationen der Pakete
 
 Jede Kombination wurde ab `claude/basis-fehlerbehebungen` neu zusammengeführt
