@@ -62,6 +62,12 @@ Andere Programme auf demselben Rechner und Webseiten im Browser desselben
 Rechners können die lokale Adresse aufrufen, solange das Programm läuft. Eine
 Anmeldung gibt es nicht.
 
+Die Schaltflächen „SVG“ und „PNG“ in der Werkzeugleiste über dem Graphen (Paket 5)
+laden ein Bild der gesamten Topologie herunter; im Programmfenster öffnet sich
+dafür wie beim Szenario der Windows-Dialog „Speichern unter“. Der Fenstertest
+prüft den Export mit abgefangenen Downloads; das Öffnen und Bestätigen des
+Dialogs für Bilder wurde nicht automatisiert geprüft.
+
 „Szenario speichern“ (Paket 3) öffnet im Programmfenster den Windows-Dialog
 „Speichern unter“. Vorgeschlagen werden der Ordner „Downloads“ und der
 Dateiname des Szenarios. Das Öffnen des Dialogs wurde auf dem Windows-Runner
@@ -76,7 +82,7 @@ Einsatz einmal von Hand prüfen.
 | `--browser` | Standardbrowser statt eines eigenen Fensters |
 | `--port 8765` | fester Port statt eines freien Ports |
 | `--smoke-test --result-file ergebnis.json` | ohne Fenster starten, Kernfunktionen prüfen, Ergebnis schreiben, beenden |
-| `--window-test --result-file ergebnis.json` | Fenster öffnen, Oberfläche darin bedienen und prüfen, beenden |
+| `--window-test --result-file ergebnis.json` | Fenster öffnen, Oberfläche darin bedienen und prüfen (Dateiimport, Routing, Bildexport, Szenario speichern und laden, soweit vorhanden), beenden |
 | `--probe-internet` | mit einem der beiden Tests: zusätzlich melden, ob `github.com` erreichbar ist (für Prüfungen ohne Internetzugang) |
 | `--url-file adresse.txt` | Adresse des lokalen Servers in eine Datei schreiben |
 

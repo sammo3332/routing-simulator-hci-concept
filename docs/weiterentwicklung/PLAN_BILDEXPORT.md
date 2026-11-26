@@ -1,6 +1,11 @@
-# Offen: Bildexport des Graphen als PNG und SVG
+# Bildexport des Graphen als PNG und SVG: Plan
 
-Stand: 25. November 2026 · Status: **nicht umgesetzt**, Plan zur Abstimmung
+Stand des Plans: 25. November 2026 · Status am 26. November 2026: **umgesetzt**
+in [Paket 5](PAKET_5_BILDEXPORT.md), Zweig `claude/paket-5-bildexport`.
+
+Der Plan steht unten unverändert, wie er am 25. November vorgelegt wurde. Die
+Festlegungen des Auftraggebers und die Abweichungen der Umsetzung stehen am
+Ende. Der Befund unter „Befund“ galt für den Stand vor Paket 5.
 
 ## Befund
 
@@ -75,3 +80,30 @@ und Dokumentation.
    Oberfläche vor.
 4. Platz der Schaltflächen: Werkzeugleiste der Graphansicht (Vorschlag) oder
    Seitenleiste?
+
+## Festlegungen und Abweichungen bei der Umsetzung (26. November 2026)
+
+Der Auftraggeber hat die vier offenen Fragen so beantwortet:
+
+1. gesamte Topologie, unabhängig von Zoom und Ausschnitt;
+2. Legende und Kopfzeile im Bild (Topologie, Zielknoten, Routingverfahren, Zahl
+   der Ausfälle);
+3. eine helle Variante für den Druck wurde nicht beauftragt und ist nicht
+   umgesetzt;
+4. die Schaltflächen stehen in der Werkzeugleiste, die bei kleinen Fenstern
+   bedienbar bleiben muss.
+
+Abweichungen vom Plan:
+
+| Plan | Umsetzung |
+|---|---|
+| unabhängig von den Paketen 1 bis 4, aufbauend auf der Basis | baut auf dem Integrationsstand auf; nur dort ohne Konflikt übertragbar, funktional von Paket 1 abhängig (Legende), siehe [PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md), „Abhängigkeiten“ |
+| ohne Topologie inaktive Schaltflächen | ohne Topologie gibt es die Werkzeugleiste und damit die Schaltflächen nicht |
+| Kopfzeile mit Topologie, Zielknoten, Routingverfahren, Ausfällen | zusätzlich bei Bonsai die gezeigte Aboreszenz und, wenn nicht alle Routen zu sehen sind, die Routenanzeige |
+| – | Namen an Knoten werden im Bild auf 80 Zeichen gekürzt (ein Name mit 100 000 Zeichen ließ die Seite abstürzen) |
+| Schaltflächen „SVG“ und „PNG“ | wie geplant; die Beschriftung bleibt kurz, damit die Werkzeugleiste bei 900 Pixel Breite einzeilig bleibt |
+| Prüfung durch eigene Browserprüfgruppe und Erweiterung des Fenstertests | wie geplant (`50-bildexport.cjs`, Fenstertest); zusätzlich ein Vergleich der Oberfläche vor und nach der Änderung |
+| Aufwand ein halber bis ein Arbeitstag | nicht gemessen |
+
+Die Abnahmekriterien B-1 bis B-8 und ihr Stand stehen in
+[PAKET_5_BILDEXPORT.md](PAKET_5_BILDEXPORT.md).

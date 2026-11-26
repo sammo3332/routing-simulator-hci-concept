@@ -48,7 +48,7 @@ Eingebaute Prüfungen (laufen nur mit der jeweiligen Option):
 | Option | Was geprüft wird |
 |---|---|
 | `--smoke-test` | ohne Fenster: Oberfläche und ihre Dateien werden ausgeliefert, Dateiimport, kürzester Pfad mit Ausfall, Bonsai mit Ausfall, Bindung an `127.0.0.1`, Port über die Netzwerkadresse des Rechners nicht erreichbar. Mit Paket 3 zusätzlich: Szenario speichern und laden, Schemaprüfung aktiv, Formatversion wird geprüft. |
-| `--window-test` | im echten Fenster: Oberfläche gezeichnet, Topologie über das Dateifeld importiert und dargestellt, Bonsai gewählt und eine Kante ausfallen lassen. Mit Paket 3 zusätzlich: „Szenario speichern“, Zustand verändern, Szenario wieder laden, Zustand vergleichen. |
+| `--window-test` | im echten Fenster: Oberfläche gezeichnet, Topologie über das Dateifeld importiert und dargestellt, Bonsai gewählt und eine Kante ausfallen lassen. Mit dem Bildexport (Paket 5) zusätzlich: Export als SVG und als PNG, die Dateien werden im Fenster geprüft. Mit Paket 3 zusätzlich: „Szenario speichern“, Zustand verändern, Szenario wieder laden, Zustand vergleichen. |
 | `--native-save-file <Pfad>` | wie `--window-test`, aber „Szenario speichern“ läuft über den echten Speichern-Dialog, den ein Hilfsskript (`desktop/windows_save_dialog_helper.ps1`) bedienen soll. Auf dem Runner ist das bisher nicht gelungen; siehe Grenzen. |
 | `--probe-internet` | zusätzlich melden, ob Programm und Seite einen öffentlichen Host (`github.com`) erreichen. Nur für die Prüfung ohne Internetzugang; im normalen Betrieb baut das Programm keine Verbindung nach außen auf. |
 
