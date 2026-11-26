@@ -61,6 +61,20 @@ module.exports = {
       /^szenario-bonsai-routing-failure-demo-\d{8}-\d{4}\.json$/.test(bonsaiFile.suggested), bonsaiFile.suggested);
     check("S-4", "Bonsai-Zustand zeigt vor dem Speichern einen Routingfehler", /Bonsai-Schleife/.test(bonsaiState.table));
 
+    // Die Seite weiß nur, dass der Download angestoßen wurde, nicht, ob die Datei
+    // auf dem Datenträger liegt. Die Meldung darf deshalb kein Speichern behaupten.
+    await page.getByRole("button", { name: /Aufklappen/ }).click();
+    const statusLine = (await page.locator("#routing-detail-panels").getByText(/^Letzter Status:/).innerText()).replace(/\s+/g, " ");
+    await page.getByRole("button", { name: /Ereignisprotokoll anzeigen/ }).click();
+    const logLines = (await page.locator("#event-log-panel").innerText()).split("\n").filter(line => /Szenariodatei|Szenario gespeichert/.test(line));
+    await page.getByRole("button", { name: /Ereignisprotokoll ausblenden/ }).click();
+    await page.getByRole("button", { name: /Einklappen/ }).click();
+    check("S-3b", "Nach „Szenario speichern“ meldet die Oberfläche den gestarteten Download, nicht ein erfolgreiches Speichern",
+      /^Letzter Status: Download der Szenariodatei gestartet: szenario-.*\.json \(4 Knoten/.test(statusLine)
+        && logLines.length === 1 && /Download der Szenariodatei gestartet/.test(logLines[0])
+        && !/gespeichert/i.test(statusLine) && !/gespeichert/i.test(logLines[0]),
+      statusLine.slice(0, 110));
+
     // --- Kürzester Pfad auf großer Topologie ---------------------------------
     await upload(FIXTURES.large);
     await choose("Zielknoten", "7");

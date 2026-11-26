@@ -199,7 +199,10 @@ export function useRoutingSimulator() {
       const scenario = await exportScenario(simulation.session_id, visualization);
       const fileName = scenarioFileName(simulation.topology.name || simulation.topology.topology_id);
       downloadJson(fileName, scenario);
-      addLog("success", `Szenario gespeichert: ${fileName} (${describeScenario(simulation)}).`);
+      // Bestätigt ist nur, dass der Download angestoßen wurde. Ob die Datei auf
+      // dem Datenträger liegt, entscheidet der Browser bzw. der Speichern-Dialog
+      // (der auch abgebrochen werden kann); dahin reicht die Seite nicht.
+      addLog("info", `Download der Szenariodatei gestartet: ${fileName} (${describeScenario(simulation)}).`);
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : "Unbekannter Fehler";
       setScenarioError(message);
