@@ -13,36 +13,6 @@ class ScenarioValidationError(ValueError):
         return "Invalid scenario: " + "; ".join(self.errors)
 
 
-SUPPORTED_FORMAT_VERSIONS: tuple[str, ...] = ("1.0",)
-
-
-@dataclass(frozen=True, slots=True)
-class ScenarioFormatVersionError(ScenarioValidationError):
-    """The scenario file has no or an unsupported ``format_version``.
-
-    ``found`` is ``None`` when the field is missing.
-    """
-
-    found: object | None = None
-    supported: tuple[str, ...] = SUPPORTED_FORMAT_VERSIONS
-
-
-def check_format_version(data: object) -> None:
-    found = data.get("format_version") if isinstance(data, dict) else None
-    if found is None:
-        raise ScenarioFormatVersionError(
-            ("format_version is missing",), found=None
-        )
-    if not isinstance(found, str) or found not in SUPPORTED_FORMAT_VERSIONS:
-        raise ScenarioFormatVersionError(
-            (
-                f"unsupported format_version {found!r}; supported: "
-                + ", ".join(SUPPORTED_FORMAT_VERSIONS),
-            ),
-            found=found,
-        )
-
-
 def _topology_errors(topology: Topology) -> list[str]:
     errors: list[str] = []
     if not topology.topology_id.strip():
@@ -110,16 +80,6 @@ def validate_scenario(scenario: Scenario) -> None:
         errors.append(
             "failed_edge_ids contain unknown IDs: " + ", ".join(unknown_failures)
         )
-
-    if scenario.visualization is not None:
-        unknown_positions = sorted(
-            set(scenario.visualization.node_display_positions) - node_id_set
-        )
-        if unknown_positions:
-            errors.append(
-                "visualization.node_display_positions contain unknown node IDs: "
-                + ", ".join(unknown_positions)
-            )
 
     if scenario.search_configuration is not None:
         max_k = scenario.search_configuration.max_k

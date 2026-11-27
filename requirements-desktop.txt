@@ -1,9 +1,0 @@
-# Zusätzliche Pakete für das Desktop-Programm (siehe docs/WINDOWS_APP.md).
-# Installation zusammen mit den Laufzeitpaketen und den Versionen der Lock-Datei:
-#   python desktop/make_constraints.py
-#   python -m pip install -r requirements-desktop.txt -c build/constraints-desktop.txt
-fastapi>=0.115,<1
-uvicorn>=0.30,<1
-jsonschema==4.26.0
-pywebview==6.2.1
-pyinstaller==6.22.3

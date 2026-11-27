@@ -20,9 +20,6 @@ export default function GraphZoomControls({
   onResetPositions,
   hasMovedNodes,
   onToggleLabels,
-  onExportSvg,
-  onExportPng,
-  exportDisabled,
 }) {
   return (
     <div
@@ -86,28 +83,6 @@ export default function GraphZoomControls({
       >
         Namen
       </button>
-      <div role="group" aria-label="Graph als Bild herunterladen" style={{ display: "flex", gap: 5 }}>
-        <button
-          type="button"
-          onClick={onExportSvg}
-          disabled={exportDisabled}
-          aria-label="Graph als SVG-Bild herunterladen"
-          title="Gesamte Topologie als SVG-Bild (Vektorgrafik) herunterladen"
-          style={buttonStyle}
-        >
-          SVG
-        </button>
-        <button
-          type="button"
-          onClick={onExportPng}
-          disabled={exportDisabled}
-          aria-label="Graph als PNG-Bild herunterladen"
-          title="Gesamte Topologie als PNG-Bild herunterladen (mindestens 1600 Pixel breit)"
-          style={buttonStyle}
-        >
-          PNG
-        </button>
-      </div>
     </div>
   );
 }

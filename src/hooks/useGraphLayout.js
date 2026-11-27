@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { validPositions } from "../utils/displayPositions";
 import { applyNodePositions } from "../utils/graphLayout";
 
 export function useGraphLayout({ nodes, links, resetKey }) {
@@ -21,17 +20,10 @@ export function useGraphLayout({ nodes, links, resetKey }) {
     setLayout({ resetKey, positions: {} });
   }, [resetKey]);
 
-  // Setzt gespeicherte Positionen für eine Sitzung, die gleich geladen wird.
-  const restore = useCallback((nextResetKey, nextPositions) => {
-    setLayout({ resetKey: nextResetKey, positions: validPositions(nextPositions) });
-  }, []);
-
   return {
     ...applyNodePositions(nodes, links, positions),
-    positions,
     moveNode,
     reset,
-    restore,
     hasChanges: Object.keys(positions).length > 0,
   };
 }
