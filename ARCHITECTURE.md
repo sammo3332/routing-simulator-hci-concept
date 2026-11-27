@@ -68,6 +68,10 @@ bereitgestellt. Oberfläche und API verwenden dort dieselbe Basis-URL. Wegen des
 prozesslokalen `SessionStore` darf der Prototyp nicht auf mehrere Instanzen
 oder Worker skaliert werden.
 
+Das Deployment folgt `main`. Die Ergänzungen des Entwicklungszweigs (siehe
+[Ergänzungen nach der Bachelorarbeit](#ergänzungen-nach-der-bachelorarbeit))
+sind in der Webanwendung nicht enthalten.
+
 ## Schichten und Verantwortlichkeiten
 
 ### 1. Präsentationsschicht: React und Vite
@@ -103,6 +107,11 @@ bereit:
 Die API validiert Eingaben, koordiniert Sessionzustand und Domänenkern und
 liefert eine für das Frontend normalisierte Antwort.
 
+Nach der Bachelorarbeit kamen auf dem Entwicklungszweig drei Endpunkte für
+Szenarien hinzu. Sie sind unter
+[Ergänzungen nach der Bachelorarbeit](#ergänzungen-nach-der-bachelorarbeit)
+beschrieben.
+
 ### 3. Sessionzustand: In-Memory `SessionStore`
 
 Jeder Topologieimport erzeugt eine `SimulationSession` mit:
@@ -124,6 +133,9 @@ folgen bewusst akzeptierte Grenzen:
 - Sessions werden nicht zwischen mehreren Backend-Prozessen geteilt,
 - es gibt derzeit keine Ablauf- oder Löschstrategie,
 - die Session-ID muss im Browser verfügbar bleiben.
+
+Daran ändert die spätere Szenariospeicherung nichts: Eine Szenariodatei liegt
+bei den Nutzenden, nicht im Backend.
 
 ### 4. Domänenschicht: `backend/failover_core`
 
@@ -252,6 +264,10 @@ Die API liefert nach jeder Änderung einen vollständigen konsistenten Zustand.
 Damit benötigt das Frontend keine eigene Rekonstruktion fachlicher
 Zwischenergebnisse.
 
+Die später hinzugekommenen Abläufe zum Speichern und Laden von Szenarien und
+zum Bildexport stehen unter
+[Ergänzungen nach der Bachelorarbeit](#ergänzungen-nach-der-bachelorarbeit).
+
 ## Import und Validierung
 
 Unterstützte Eingabeformate:
@@ -290,3 +306,136 @@ verteilte Sessions, Mehrbenutzerbetrieb, eine neue Routingheuristik und eine
 vollständige mobile Optimierung. Diese Punkte sind mögliche Erweiterungen, aber
 keine Voraussetzung für die Untersuchung der HCI-orientierten
 Failover-Visualisierung.
+
+## Ergänzungen nach der Bachelorarbeit
+
+Stand: 26. November 2026 · Entwicklungszweig `claude/paket-5-bildexport`,
+Code-Stand `7cf4166`
+
+Dieser Abschnitt beschreibt Änderungen nach der Bachelorarbeit. Sie gehören
+nicht zum evaluierten Stand und sind, mit Ausnahme des Knotenverschiebens,
+weder in `main` noch in der Webanwendung enthalten. Die Abschnitte oben
+beschreiben weiterhin den damaligen Stand.
+
+| Ergänzung | Betroffene Teile | Neue Schnittstelle oder neuer Ablauf |
+| --- | --- | --- |
+| Knoten verschieben (in `main` seit `ba4c99a`, auf dem Entwicklungszweig stabilisiert) | Frontend | keine API; Anzeigepositionen im React-Zustand |
+| Kanten ohne Route deckend grau, mit Legendeneintrag | Frontend | keine |
+| Szenarien speichern und laden | Frontend, API, Domänenkern | drei Endpunkte, Download und Upload einer Datei |
+| Bildexport als SVG und PNG | Frontend | keine API; Kopie der angezeigten Zeichnung |
+| Windows-Programm | neuer Starter unter `desktop/` | startet die vorhandene FastAPI-Anwendung lokal in einem Fenster |
+
+```mermaid
+flowchart TB
+    U["Nutzer:in"] --> W["Browser oder Windows-Fenster"]
+    W --> F["React-Frontend"]
+    F -->|"HTTP /api"| A["FastAPI"]
+    A --> S["In-Memory SessionStore"]
+    A --> C["Domänenkern"]
+    F -->|"Szenario speichern: Download"| D[("Szenariodatei, JSON")]
+    D -->|"Szenario laden: Upload"| F
+    F -->|"Bildexport im Frontend: Download"| B[("SVG- oder PNG-Datei")]
+    L["Windows-Starter desktop/launcher.py"] -.->|"startet auf 127.0.0.1"| A
+    L -.->|"öffnet"| W
+```
+
+### Knoten verschieben
+
+Das Verschieben ändert nur Anzeigepositionen im React-Zustand
+(`src/hooks/useGraphLayout.js`, `src/utils/graphLayout.js`). Es löst keine
+API-Anfrage aus und verändert weder die importierten Koordinaten noch das
+Routing. Auf dem Entwicklungszweig bleiben gezogene Knoten in der sichtbaren
+Fläche, der Tooltip erscheint am verschobenen Knoten, und die Pfeilspitzen der
+Aboreszenz enden am Knotenrand. Einzelheiten stehen in
+[docs/DRAGGABLE_NODES.md](docs/DRAGGABLE_NODES.md).
+
+### Szenarien speichern und laden
+
+| Methode | Endpunkt | Aufgabe |
+| --- | --- | --- |
+| `GET` | `/api/sessions/{session_id}/scenario` | aktuellen Zustand der Sitzung als Szenario ausgeben |
+| `POST` | `/api/sessions/{session_id}/scenario` | wie `GET`, zusätzlich mit dem Ansichtszustand aus der Oberfläche |
+| `POST` | `/api/sessions/import-scenario` | Szenariodatei prüfen, Ergebnisse neu berechnen und als neue Sitzung anlegen |
+
+Als Dateiformat dient das vorhandene Szenarioschema
+`backend/schemas/failover-scenario.schema.json` mit der Formatversion „1.0“;
+serialisieren konnte der Domänenkern Szenarien schon vorher (FA-14). Eine
+Datei enthält Topologie, Zielknoten, Verfahren, Metrik, ausgefallene Kanten und
+einen `routing_snapshot`. Im Dateiformat und in der API ist der Ansichtszustand
+optional. Beim Speichern über die Oberfläche werden die aktuelle Einstellung
+zur Namensanzeige und manuell verschobene Knotenpositionen automatisch
+mitgespeichert. Diese Positionen sind Anzeigekoordinaten und stehen getrennt
+von den Topologiekoordinaten.
+
+```mermaid
+sequenceDiagram
+    actor U as Nutzer:in
+    participant F as React-Frontend
+    participant A as FastAPI
+    participant S as SessionStore
+    participant C as Domänenkern
+
+    U->>F: Szenario speichern
+    F->>A: POST /api/sessions/{session_id}/scenario mit Ansichtszustand
+    A->>S: Sitzung lesen
+    A->>C: Zustand auswerten und als Szenario serialisieren
+    A-->>F: Szenario als JSON
+    F-->>U: Download der Datei
+
+    U->>F: Szenario laden und Datei wählen
+    F->>A: POST /api/sessions/import-scenario mit dem Dateiinhalt
+    A->>C: Formatversion, Schema und Inhalt prüfen
+    A->>C: Routing neu berechnen, routing_snapshot nur vergleichen
+    A->>S: neue Sitzung anlegen
+    A-->>F: Sitzung, Ergebnis, Ansichtszustand und Ergebnis des Vergleichs
+```
+
+Für die Einordnung wichtig:
+
+- **Keine dauerhafte serverseitige Sitzung.** Beim Speichern legt das Backend
+  keine dauerhafte Serversitzung ab. Das Frontend lädt die Antwort als Datei
+  herunter; wohin sie gelangt, bestimmt der Browser oder im Windows-Programm
+  der Dialog „Speichern unter“. Sitzungen bleiben flüchtig und gehen beim
+  Neustart des Backends verloren.
+- **Neuberechnung beim Laden.** Die angezeigten Ergebnisse stammen immer aus
+  einer neuen Berechnung im Domänenkern. Der gespeicherte `routing_snapshot`
+  wird nur verglichen; weicht er ab, zeigt die Oberfläche die Neuberechnung mit
+  einem Hinweis.
+- **Neue Sitzung erst nach vollständiger Prüfung.** Eine abgewiesene Datei
+  verändert weder den `SessionStore` noch die Oberfläche. Prüfung und
+  Neuberechnung laufen außerhalb der Ereignisschleife, sodass andere Anfragen
+  weiter beantwortet werden.
+
+### Bildexport
+
+Der Export liegt vollständig im Frontend (`src/utils/graphImageExport.js`,
+`src/utils/imageExport.js`). Er kopiert die angezeigte Zeichnung, entfernt
+Bedienelemente und ergänzt Kopfzeile und Legende; die Legende stammt aus
+derselben Liste wie unter dem Graphen (`src/utils/graphLegend.js`). Das PNG
+entsteht, indem der Browser dieses SVG auf eine Zeichenfläche malt. Der Export
+stellt keine Anfrage an die API, berechnet kein neues Routing und verändert
+weder Zustand noch Ansicht.
+
+### Windows-Programm
+
+`desktop/launcher.py` startet die vorhandene FastAPI-Anwendung
+(`backend.api.create_app`) mit der gebauten Oberfläche aus `dist/`. Es gibt
+keine zweite Oberfläche und keine zweite Routingimplementierung.
+
+- Der Server läuft als Thread im Programm und lauscht nur auf `127.0.0.1` an
+  einem frei gewählten Port.
+- Die Oberfläche erscheint in einem Fenster mit Microsoft Edge WebView2
+  (pywebview). Fehlt WebView2, öffnet sich der Standardbrowser.
+- Das Schließen des Fensters beendet Server und Programm. Sitzungen liegen wie
+  bisher nur im Arbeitsspeicher.
+- Downloads sind im Fenster zugelassen; Szenario- und Bildexport öffnen dort
+  den Windows-Dialog „Speichern unter“.
+- PyInstaller packt Oberfläche, Backend und Szenarioschema in eine
+  Programmdatei. Die Startseite verweist auf keine externe Adresse.
+- Andere Programme und Webseiten auf demselben Rechner können den lokalen Port
+  erreichen, solange das Programm läuft. `Origin` und `Host` werden nicht
+  geprüft.
+
+Bedienung, Build und Prüfskripte stehen in
+[docs/WINDOWS_APP.md](docs/WINDOWS_APP.md), Testzahlen und Windows-Läufe im
+[Prüfbericht](docs/weiterentwicklung/PRUEFBERICHT.md).

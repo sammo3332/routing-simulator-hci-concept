@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import { T1, S } from "../styles/sharedStyles";
 
-export default function FileUploader({ onFile, disabled = false }) {
+// `fileName` nennt die zuletzt erfolgreich geladene Topologiedatei. Die Anzeige
+// folgt damit dem tatsächlich dargestellten Zustand und nicht der Auswahl.
+export default function FileUploader({ onFile, fileName = null, disabled = false }) {
   const [drag, setDrag]   = useState(false);
-  const [fname, setFname] = useState(null);
+  const fname             = fileName;
   const inputRef          = useRef(null);
 
   const handle = f => {
     if (!f) return;
-    setFname(f.name);
     onFile?.(f);
   };
 
@@ -25,7 +26,11 @@ export default function FileUploader({ onFile, disabled = false }) {
         transition:"all .18s", marginBottom:10,
       }}
     >
-      <input ref={inputRef} type="file" accept=".json,.xml,.graphml" disabled={disabled} style={{ display:"none" }} onChange={e => handle(e.target.files[0])} />
+      <input ref={inputRef} type="file" accept=".json,.xml,.graphml" disabled={disabled} style={{ display:"none" }} onChange={e => {
+        handle(e.target.files[0]);
+        // Sonst meldet der Browser keine Änderung, wenn dieselbe Datei erneut gewählt wird.
+        e.target.value = "";
+      }} />
       <div style={{ fontSize:17, marginBottom:5 }}>{fname ? "📄" : "📁"}</div>
       {fname
         ? <div style={{ fontSize:10, color:T1, fontWeight:700, ...S.mono, wordBreak:"break-all" }}>{fname}</div>

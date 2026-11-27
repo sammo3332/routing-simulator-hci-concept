@@ -11,6 +11,7 @@ damals evaluierten Referenzstand.
   Ausfallmarkierungen verwenden die angepasste Anzeigegeometrie.
 - Nachbarknoten bewegen sich nicht mit.
 - Ziehen auf freier Fläche verschiebt weiterhin die gesamte Ansicht.
+- Ein Knoten bleibt beim Ziehen innerhalb der sichtbaren Graphfläche.
 - Änderungen von Ziel, Routingverfahren, Metrik und Kantenausfällen erhalten
   die manuell angeordneten Positionen derselben Sitzung.
 - „Einpassen“ berücksichtigt die aktuelle Anordnung; es setzt sie nicht zurück.
@@ -20,7 +21,9 @@ damals evaluierten Referenzstand.
 - Ein neuer erfolgreicher Topologieimport verwirft die vorherige Anordnung,
   auch wenn beide Topologien dieselben Knoten-IDs besitzen.
 - Beim Neuladen der Seite geht die Anordnung wie der übrige Frontendzustand
-  verloren. Es gibt keine zusätzliche Speicherung.
+  verloren. Eine automatische Speicherung gibt es nicht. Auf dem
+  Entwicklungszweig lässt sich die Anordnung mit „Szenario speichern“ in der
+  Szenariodatei mitsichern ([Paket 3](weiterentwicklung/PAKET_3_SZENARIEN.md)).
 
 Die Positionsänderungen liegen ausschließlich im React-Darstellungszustand.
 Sie lösen keine API-Anfrage aus und verändern weder die importierten
@@ -49,11 +52,21 @@ Manuell verschobene Positionen sind keine geografischen Ortsangaben.
 Die zusätzlichen Logiktests prüfen unter anderem ein- und ausgehende
 Kantenendpunkte, Ausfallmittelpunkte, unveränderte Topologiedaten und
 Routingmerkmale, Zurücksetzen sowie Bewegungen bei verschiedenen Zoomstufen.
-Ein Browserstart für die Mausprüfung wurde durch die Ausführungsumgebung
-blockiert. Die folgenden Interaktionsprüfungen sind daher noch offen und
-werden nicht als bestanden ausgewiesen.
+Ein Browserstart für die Mausprüfung wurde damals durch die
+Ausführungsumgebung blockiert.
 
-## Noch lokal im Browser prüfen
+## Nachgeholte Browserprüfung vom 25. November 2026
+
+Die Interaktionsprüfungen wurden mit `tests/browser/checks/30-knoten.cjs` in
+Chromium 158 (headless, 1440 × 900) nachgeholt. Alle zehn Punkte der folgenden
+Liste sind dort bestanden. Drei dabei gefundene Fehler wurden behoben:
+Knoten ließen sich aus der sichtbaren Fläche ziehen, der Tooltip weit
+verschobener Knoten erschien an falscher Stelle, und die Pfeilspitzen der
+Aboreszenz waren verdeckt. Einzelergebnisse und Grenzen stehen in
+[Paket 2](weiterentwicklung/PAKET_2_KNOTENVERSCHIEBEN.md). Geprüft wurde ein
+automatisierter Ablauf in einem Browser, keine Nutzung durch Personen.
+
+## Prüfschritte
 
 1. Eine Topologie importieren und einen Knoten ziehen. Nur dieser Knoten soll
    sich bewegen; alle verbundenen Linien und die Beschriftung sollen folgen.
