@@ -1,16 +1,11 @@
 # Implementierter Anforderungsumfang
 
-Stand: 24. September 2026 · ergänzt am 27. November 2026 um den Abschnitt
-[Ergänzungen nach der Bachelorarbeit](#ergänzungen-nach-der-bachelorarbeit)
+Stand: 24. September 2026
 
 Dieses Dokument beschreibt ausschließlich den im aktuellen Repository
 implementierten und überprüften Funktionsumfang des Failover Routing
 Visualizers. Maßgeblich sind der Code auf `main`, die automatisierten Tests und
 die aktuelle [Architekturdokumentation](ARCHITECTURE.md).
-
-Die Abschnitte bis einschließlich „Automatisierte Nachweise“ beschreiben den
-Stand der Bachelorarbeit; ihre IDs bleiben unverändert. Was danach auf dem
-Entwicklungszweig hinzukam, steht gesondert am Ende.
 
 ## Produktziel
 
@@ -114,9 +109,6 @@ Topologie-, Pfad- und Statusdaten ab.
 | `PATCH /api/sessions/{session_id}` | Ziel, Routingstrategie, Metrik oder ausgefallene Kanten aktualisieren und das Ergebnis neu berechnen |
 | `POST /api/sessions/{session_id}/critical-failure-search` | Kleinste kritische Ausfallkombination bis zur angegebenen Suchgrenze ermitteln |
 
-Die später hinzugekommenen Endpunkte für Szenarien stehen unter
-[Ergänzungen nach der Bachelorarbeit](#ergänzungen-nach-der-bachelorarbeit).
-
 ## Validierung und Reproduzierbarkeit
 
 - Importdateien sind auf 10 MiB begrenzt.
@@ -152,60 +144,3 @@ Weitere Nachweise befinden sich in der
 [Bonsai-Validierung](docs/BONSAI_VALIDATION.md), der
 [HCI-Evaluation](docs/hci/HCI_EVALUATION.md) und der
 [Architekturdokumentation](ARCHITECTURE.md).
-
-## Ergänzungen nach der Bachelorarbeit
-
-Stand: 26. November 2026 · Entwicklungszweig `claude/paket-5-bildexport`,
-Code-Stand `7cf4166`
-
-Die folgenden Anforderungen kamen nach der Bachelorarbeit hinzu. Sie gehören
-nicht zum evaluierten Stand und wurden nicht in einer Benutzerstudie
-untersucht. Ihre IDs beginnen mit `WE` (Weiterentwicklung), damit sie sich
-nicht mit den Anforderungen der Arbeit vermischen.
-
-| ID | Anforderung | Umsetzung und sichtbares Verhalten | Enthalten in |
-|---|---|---|---|
-| WE-01 | Knoten einzeln verschieben | Ein Knoten lässt sich mit der linken Maustaste ziehen; Kanten, Routen und Markierungen folgen. „Knotenpositionen zurücksetzen“ stellt die berechnete Anordnung wieder her. Die Positionen sind reine Anzeigedaten; Topologie und Routing bleiben unverändert. Auf dem Entwicklungszweig bleibt ein gezogener Knoten in der sichtbaren Fläche, sein Tooltip erscheint am Knoten, und die Pfeilspitzen der Aboreszenz sind sichtbar. | `main` (`ba4c99a`); Stabilisierung nur auf dem Entwicklungszweig |
-| WE-02 | Lesbare Kanten ohne Route | Kanten, die auf keiner angezeigten Route liegen, sind deckend im vorhandenen Grauton gezeichnet. Die Legende erklärt sie als „Kante ohne Route“. | Entwicklungszweig |
-| WE-03 | Szenario speichern | „Szenario speichern“ lädt den fachlichen Zustand als JSON-Datei im vorhandenen Szenarioformat 1.0 herunter: Topologie, Zielknoten, Verfahren, Metrik, Ausfälle und die Pfade zum Zeitpunkt des Speicherns. Die aktuelle Einstellung zur Namensanzeige und manuell verschobene Knotenpositionen werden ebenfalls mitgespeichert. Die Szenariodatei kann lokal gespeichert werden; die laufende Sitzung liegt weiterhin nur im Arbeitsspeicher des Backends und geht bei einem Backend-Neustart verloren. Es entsteht keine dauerhaft gespeicherte Serversitzung. Die Anforderung erweitert FA-14 um API und Bedienelement. | Entwicklungszweig |
-| WE-04 | Szenario laden | „Szenario laden“ prüft Formatversion, Schema und Inhalt, berechnet alle Ergebnisse im Domänenkern neu und legt eine neue Sitzung an. Gespeicherte Pfade werden nur verglichen; bei einer Abweichung erscheint ein Hinweis. Eine abgewiesene Datei verändert den Zustand nicht und erhält eine verständliche Fehlermeldung. | Entwicklungszweig |
-| WE-05 | Graphexport als SVG und PNG | „SVG“ und „PNG“ in der Werkzeugleiste laden ein Bild der gesamten Topologie im aktuellen Zustand herunter, unabhängig von Zoom und Ausschnitt, mit Kopfzeile und Legende. Das SVG ist eigenständig, das PNG mindestens 1600 Pixel breit. Der Export stellt keine Anfrage an die API und berechnet kein Routing. | Entwicklungszweig |
-| WE-06 | Windows-Programm | `FailoverRoutingVisualizer.exe` startet die vorhandene Oberfläche und den vorhandenen Python-Kern in einem eigenen Fenster. Der Server lauscht nur auf `127.0.0.1` und endet mit dem Fenster; ohne WebView2 öffnet sich der Standardbrowser. Python, Node.js und eine Internetverbindung sind zur Laufzeit nicht nötig. | Entwicklungszweig, Testpaket |
-
-### Zusätzliche HTTP-Schnittstellen
-
-| Methode und Pfad | Implementierte Funktion |
-|---|---|
-| `GET /api/sessions/{session_id}/scenario` | aktuellen Zustand der Sitzung als Szenario ausgeben |
-| `POST /api/sessions/{session_id}/scenario` | wie `GET`, zusätzlich mit dem Ansichtszustand aus der Oberfläche |
-| `POST /api/sessions/import-scenario` | Szenariodatei prüfen, Ergebnisse neu berechnen und als neue Sitzung anlegen |
-
-### Zusätzliche Validierung
-
-- Szenariodateien sind auf 10 MiB begrenzt.
-- Gelesen wird nur die Formatversion „1.0“; eine fehlende oder andere Version
-  wird mit eigener Meldung abgewiesen.
-- Nicht endliche Zahlen und übertief verschachtelte Dateien werden abgewiesen.
-- Anzeigepositionen für unbekannte Knoten und Werte jenseits von ±100 000
-  Einheiten werden beim Speichern und beim Laden abgewiesen.
-
-### Automatisierte Nachweise der Weiterentwicklung
-
-Für den Code-Stand `7cf416607d83453f856b6e3ba5299f3f47f04241` wurden am
-26. November 2026 folgende Ergebnisse dokumentiert. Die Tabelle zum Stand der
-Arbeit oben bleibt davon unberührt.
-
-| Prüfung | Ergebnis |
-|---|---:|
-| Python-/Backend-/API-Tests | 128 bestanden |
-| Frontend-Logiktests | 58 bestanden |
-| Browserprüfungen in Chromium | 113 von 113 bestanden |
-| JavaScript-Linting mit Oxlint | bestanden |
-| Produktions-Build mit Vite | bestanden |
-| Windows-Runner von GitHub, Lauf Nr. 8: Build, Selbsttest, Launcher-Tests, blockierende Teile des Fenstertests mit Szenario und Bildexport, Betrieb bei gesperrtem Internetzugang | bestanden |
-
-Der nicht blockierende Teil des Fenstertests zum Windows-Dialog „Speichern
-unter“ ist nicht bestanden; das Speichern über diesen Dialog ist damit nicht
-automatisiert belegt. Manuelle Rückmeldungen und weitere Grenzen stehen im
-[Prüfbericht](docs/weiterentwicklung/PRUEFBERICHT.md) und in der
-[Übergabe](docs/weiterentwicklung/UEBERGABE.md).

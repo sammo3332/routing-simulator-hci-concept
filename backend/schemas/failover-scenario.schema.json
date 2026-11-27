@@ -157,20 +157,7 @@
       "properties": {
         "show_baseline_routes": {"type": "boolean"},
         "show_current_routes": {"type": "boolean"},
-        "show_labels": {"type": "boolean"},
-        "node_display_positions": {
-          "description": "Optional manual node positions in the 800 x 410 drawing area of the user interface, keyed by node ID. Display state only; topology node positions keep the imported coordinates.",
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["x", "y"],
-            "properties": {
-              "x": {"type": "number", "minimum": -100000, "maximum": 100000},
-              "y": {"type": "number", "minimum": -100000, "maximum": 100000}
-            }
-          }
-        }
+        "show_labels": {"type": "boolean"}
       }
     }
   }

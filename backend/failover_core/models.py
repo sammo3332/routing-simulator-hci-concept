@@ -73,9 +73,6 @@ class VisualizationState:
     show_baseline_routes: bool = True
     show_current_routes: bool = True
     show_labels: bool = True
-    # Manual positions in the drawing area of the user interface. They are
-    # display state and never replace ``Node.position``.
-    node_display_positions: Mapping[str, Position] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
